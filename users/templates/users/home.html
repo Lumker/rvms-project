@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Dashboard - Rural Village Management System{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/plugins/datatables/datatables.min.css' %}">
+
+<style>
+    .dash-widget-icon {
+        background-color: rgba(0, 123, 255, 0.2);
+        border-radius: 100%;
+        color: #007bff;
+        display: inline-block;
+        font-size: 30px;
+        height: 60px;
+        line-height: 60px;
+        text-align: center;
+        width: 60px;
+    }
+    .dash-count h3 {
+        font-size: 30px;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    .dash-widget-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .dash-count {
+        margin-left: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Dashboard</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item active">Home</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="row">
+        <div class="col-xl-3 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_villages|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Total Villages</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon">
+                            <i class="fas fa-users"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_users|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Total Users</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon">
+                            <i class="fas fa-home"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_households|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Total Households</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-3 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon">
+                            <i class="fas fa-chart-line"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ active_projects|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Active Projects</h6>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activities -->
+    <div class="row">
+        <div class="col-md-12 d-flex">
+            <div class="card card-table flex-fill">
+                <div class="card-header">
+                    <h4 class="card-title">Recent Activities</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-center mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Activity</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% if recent_activities %}
+                                    {% for activity in recent_activities %}
+                                    <tr>
+                                        <td>{{ activity.description }}</td>
+                                        <td>{{ activity.created_at|date:"M d, Y H:i" }}</td>
+                                        <td>
+                                            <span class="badge badge-{{ activity.status_class }}">
+                                                {{ activity.status }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                {% else %}
+                                    <tr>
+                                        <td colspan="3" class="text-center">No recent activities</td>
+                                    </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

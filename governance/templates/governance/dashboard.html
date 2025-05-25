@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Governance Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dash-widget-icon {
+        background-color: rgba(0, 123, 255, 0.2);
+        border-radius: 100%;
+        color: #007bff;
+        display: inline-block;
+        font-size: 30px;
+        height: 60px;
+        line-height: 60px;
+        text-align: center;
+        width: 60px;
+    }
+    .dash-count h3 {
+        font-size: 30px;
+        font-weight: 700;
+        margin-bottom: 0;
+    }
+    .dash-widget-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    .dash-count {
+        margin-left: 15px;
+    }
+    .quick-action-card {
+        transition: all 0.3s ease;
+        border: 2px solid transparent;
+    }
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        border-color: #007bff;
+    }
+    .stats-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    .governance-overview {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Governance Dashboard</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item active">Dashboard</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Governance Overview -->
+    <div class="governance-overview">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3">Rural Village Management System</h2>
+                <p class="mb-3">Comprehensive governance and administration platform for South African rural communities</p>
+                <p class="mb-0">
+                    <i class="fas fa-calendar"></i> Last updated: {{ "now"|date:"F d, Y" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-landmark" style="font-size: 4rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-primary border-primary">
+                            <i class="fas fa-map"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_provinces|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Provinces</h6>
+                        <a href="{% url 'governance:province_list' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-success border-success">
+                            <i class="fas fa-city"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_districts|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Districts</h6>
+                        <a href="{% url 'governance:district_list' %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- In your dashboard template, update this section -->
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-warning border-warning">
+                            <i class="fas fa-building"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_municipalities|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Municipalities</h6>
+                        <a href="{% url 'governance:municipality_list' %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-info border-info">
+                            <i class="fas fa-users"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_councils|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Traditional Councils</h6>
+                        <a href="{% url 'governance:council_list' %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-danger border-danger">
+                            <i class="fas fa-home"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_villages|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Villages</h6>
+                        <a href="{% url 'governance:village_list' %}" class="btn btn-sm btn-outline-danger">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-secondary border-secondary">
+                            <i class="fas fa-calendar-check"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ recent_meetings.count|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Recent Meetings</h6>
+                        <a href="{% url 'governance:meeting_list' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+   <!-- Quick Actions -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="card-title">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h4>
+                <small class="text-muted">Frequently used governance management actions</small>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                        <div class="card quick-action-card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-map text-primary stats-icon"></i>
+                                <h6>Add Province</h6>
+                                <a href="{% url 'governance:province_create' %}" class="btn btn-primary btn-sm">
+                                    <i class="fas fa-plus"></i> Create
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                        <div class="card quick-action-card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-city text-success stats-icon"></i>
+                                <h6>Add District</h6>
+                                <a href="{% url 'governance:district_create' %}" class="btn btn-success btn-sm">
+                                    <i class="fas fa-plus"></i> Create
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                        <div class="card quick-action-card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-building text-warning stats-icon"></i>
+                                <h6>Add Municipality</h6>
+                                <a href="{% url 'governance:municipality_create' %}" class="btn btn-warning btn-sm">
+                                    <i class="fas fa-plus"></i> Create
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                        <div class="card quick-action-card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-users text-info stats-icon"></i>
+                                <h6>Add Council</h6>
+                                <a href="{% url 'governance:council_create' %}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-plus"></i> Create
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                        <div class="card quick-action-card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-home text-danger stats-icon"></i>
+                                <h6>Add Village</h6>
+                                <a href="{% url 'governance:village_create' %}" class="btn btn-danger btn-sm">
+                                    <i class="fas fa-plus"></i> Create
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                        <div class="card quick-action-card h-100 text-center">
+                            <div class="card-body">
+                                <i class="fas fa-calendar-plus text-secondary stats-icon"></i>
+                                <h6>Schedule Meeting</h6>
+                                <a href="" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-plus"></i> Create
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Recent Meetings -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Recent Council Meetings</h4>
+                    <a href="" class="btn btn-primary btn-sm float-right">
+                        <i class="fas fa-plus"></i> Schedule Meeting
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Meeting</th>
+                                    <th>Council</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for meeting in recent_meetings %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ meeting.title }}</strong>
+                                        <br><small class="text-muted">{{ meeting.time|time:"H:i" }}</small>
+                                    </td>
+                                    <td>{{ meeting.council.name }}</td>
+                                    <td>{{ meeting.date|date:"M d, Y" }}</td>
+                                    <td>
+                                        {% if meeting.status == 'scheduled' %}
+                                            <span class="badge badge-primary">{{ meeting.get_status_display }}</span>
+                                        {% elif meeting.status == 'completed' %}
+                                            <span class="badge badge-success">{{ meeting.get_status_display }}</span>
+                                        {% elif meeting.status == 'cancelled' %}
+                                            <span class="badge badge-danger">{{ meeting.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">{{ meeting.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'governance:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                                        <br>
+                                        <span class="text-muted">No recent meetings</span>
+                                        <br>
+                                        <a href="" class="btn btn-sm btn-primary mt-2">
+                                            <i class="fas fa-plus"></i> Schedule First Meeting
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% if recent_meetings %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'governance:meeting_list' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-list"></i> View All Meetings
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats and Links -->
+        <div class="col-lg-4">
+            <!-- Pending Resolutions -->
+            <div class="card mb-2">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-circle text-warning"></i> Pending Resolutions
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <h2 class="text-warning">{{ pending_resolutions|default:0 }}</h2>
+                    <p class="text-muted">Resolutions awaiting approval</p>
+                    {% if pending_resolutions %}
+                    <a href="{% url 'governance:meeting_list' %}" class="btn btn-sm btn-warning">
+                        <i class="fas fa-eye"></i> Review
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- System Status -->
+            <div class="card mb-2">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-line text-success"></i> System Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <small class="text-muted">Data Completeness</small>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-success" style="width: 75%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <small class="text-muted">Active Users</small>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-info" style="width: 60%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-0">
+                        <small class="text-muted">System Health</small>
+                        <div class="progress" style="height: 6px;">
+                            <div class="progress-bar bg-primary" style="width: 95%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-external-link-alt"></i> Quick Links
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush">
+                        <a href="{% url 'governance:province_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-map text-primary"></i> Manage Provinces
+                        </a>
+                        <a href="{% url 'governance:district_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-city text-success"></i> Manage Districts
+                        </a>
+                        <a href="{% url 'governance:municipality_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-building text-warning"></i> Manage Municipalities
+                        </a>
+                        <a href="{% url 'governance:council_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-users text-info"></i> Traditional Councils
+                        </a>
+                        <a href="{% url 'governance:village_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-home text-danger"></i> Village Management
+                        </a>
+                        <a href="{% url 'users:user_list' %}" class="list-group-item list-group-item-action">
+                            <i class="fas fa-user-cog text-secondary"></i> User Management
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Add animations to cards
+    $('.card').hide().fadeIn(800);
+    
+    // Add hover effects to quick action cards
+    $('.quick-action-card').hover(
+        function() {
+            $(this).addClass('shadow-lg');
+        },
+        function() {
+            $(this).removeClass('shadow-lg');
+        }
+    );
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+});
+</script>
+{% endblock %}

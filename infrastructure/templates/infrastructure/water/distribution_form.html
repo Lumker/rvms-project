@@ -1,0 +1,25 @@
+<!-- infrastructure/templates/infrastructure/water/distribution_form.html -->
+
+{% extends "infrastructure/asset_form.html" %}
+
+{% block title %}
+    {% if object %}Edit Distribution Point{% else %}Add New Distribution Point{% endif %} - Infrastructure
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+
+<script>
+$(document).ready(function() {
+    // Auto-set category to water
+    $('#id_category').val('water').prop('readonly', true);
+    
+    // Distribution point specific enhancements
+    initializeDistributionFormEnhancements();
+});
+
+function initializeDistributionFormEnhancements() {
+    console.log('Distribution point form enhancements loaded');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,365 @@
+{% extends "documents/base.html" %}
+{% load static %}
+
+{% block title %}Documents Dashboard{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Documents Dashboard</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'documents:dashboard' %}">Documents</a></li>
+                    <li class="breadcrumb-item active">Dashboard</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Document Overview -->
+    <div class="document-stats mb-4">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3">Document Management System</h2>
+                <p class="mb-3">Comprehensive document generation and management for rural communities</p>
+                <p class="mb-0">
+                    <i class="fas fa-calendar"></i> Last updated: {{ "now"|date:"F d, Y" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-file-alt" style="font-size: 4rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-primary border-primary">
+                            <i class="fas fa-file-alt"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ total_documents|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Total Documents</h6>
+                        <a href="{% url 'documents:proof_list' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-warning border-warning">
+                            <i class="fas fa-clock"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ pending_documents|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Pending</h6>
+                        <a href="{% url 'documents:proof_list' %}?status=pending" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-info border-info">
+                            <i class="fas fa-check"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ approved_documents|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Approved</h6>
+                        <a href="{% url 'documents:proof_list' %}?status=approved" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-success border-success">
+                            <i class="fas fa-file-pdf"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ generated_documents|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Generated</h6>
+                        <a href="{% url 'documents:proof_list' %}?status=generated" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-secondary border-secondary">
+                            <i class="fas fa-truck"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ delivered_documents|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Delivered</h6>
+                        <a href="{% url 'documents:proof_list' %}?status=delivered" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-xl-2 col-sm-6 col-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="dash-widget-header">
+                        <span class="dash-widget-icon text-dark border-dark">
+                            <i class="fas fa-file-contract"></i>
+                        </span>
+                        <div class="dash-count">
+                            <h3>{{ active_templates|default:0 }}</h3>
+                        </div>
+                    </div>
+                    <div class="dash-widget-info">
+                        <h6 class="text-muted">Templates</h6>
+                        <a href="{% url 'documents:template_list' %}" class="btn btn-sm btn-outline-dark">
+                            <i class="fas fa-eye"></i> View
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h4>
+                    <small class="text-muted">Frequently used document management actions</small>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        
+                        <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                            <div class="card quick-action-card h-100 text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-plus text-primary stats-icon"></i>
+                                    <h6>New Document</h6>
+                                    <a href="{% url 'documents:proof_create' %}" class="btn btn-primary btn-sm">
+                                        <i class="fas fa-plus"></i> Create
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                            <div class="card quick-action-card h-100 text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-file-contract text-success stats-icon"></i>
+                                    <h6>Templates</h6>
+                                    <a href="{% url 'documents:template_list' %}" class="btn btn-success btn-sm">
+                                        <i class="fas fa-eye"></i> Manage
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                            <div class="card quick-action-card h-100 text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-layer-group text-warning stats-icon"></i>
+                                    <h6>Batch Process</h6>
+                                    <a href="{% url 'documents:batch_create' %}" class="btn btn-warning btn-sm">
+                                        <i class="fas fa-plus"></i> Create
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- In templates/documents/dashboard.html, replace the problematic link with: -->
+                        <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                            <div class="card quick-action-card h-100 text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-chart-bar text-info stats-icon"></i>
+                                    <h6>Reports</h6>
+                                    <a href="{% url 'documents:generate_report' %}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-chart-line"></i> Generate
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                            <div class="card quick-action-card h-100 text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-search text-secondary stats-icon"></i>
+                                    <h6>Search</h6>
+                                    <a href="{% url 'documents:proof_list' %}" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-search"></i> Browse
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-xl-2 col-sm-6 col-12 mb-3">
+                            <div class="card quick-action-card h-100 text-center">
+                                <div class="card-body">
+                                    <i class="fas fa-cogs text-dark stats-icon"></i>
+                                    <h6>Settings</h6>
+                                    <a href="{% url 'documents:template_create' %}" class="btn btn-dark btn-sm">
+                                        <i class="fas fa-cog"></i> Configure
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Row -->
+    <div class="row">
+        <!-- Recent Documents -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Recent Documents</h4>
+                    <a href="{% url 'documents:proof_create' %}" class="btn btn-primary btn-sm float-right">
+                        <i class="fas fa-plus"></i> New Document
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Document Number</th>
+                                    <th>Resident</th>
+                                    <th>Village</th>
+                                    <th>Status</th>
+                                    <th>Requested</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for document in recent_documents %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ document.document_number }}</strong>
+                                        <br><small class="text-muted">{{ document.purpose|truncatechars:30 }}</small>
+                                    </td>
+                                    <td>{{ document.resident.full_name }}</td>
+                                    <td>{{ document.village.name }}</td>
+                                    <td>
+                                        {% if document.status == 'pending' %}
+                                            <span class="badge badge-warning">{{ document.get_status_display }}</span>
+                                        {% elif document.status == 'approved' %}
+                                            <span class="badge badge-info">{{ document.get_status_display }}</span>
+                                        {% elif document.status == 'generated' %}
+                                            <span class="badge badge-success">{{ document.get_status_display }}</span>
+                                        {% elif document.status == 'delivered' %}
+                                            <span class="badge badge-secondary">{{ document.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">{{ document.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ document.requested_at|date:"M d, Y" }}</td>
+                                    <td>
+                                        <a href="{% url 'documents:proof_detail' document.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+                                        <br>
+                                        <span class="text-muted">No documents found</span>
+                                        <br>
+                                        <a href="{% url 'documents:proof_create' %}" class="btn btn-sm btn-primary mt-2">
+                                            <i class="fas fa-plus"></i> Create First Document
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="col-lg-4">
+            <!-- Status Distribution -->
+            <div class="card mb-3">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie"></i> Status Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for status in status_stats %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="text-capitalize">{{ status.status }}</span>
+                        <span class="badge badge-primary">{{ status.count }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No data available</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Top Villages -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-map-marker-alt"></i> Top Villages
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for village in village_stats %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span>{{ village.village__name }}</span>
+                        <span class="badge badge-secondary">{{ village.count }}</span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted text-center">No data available</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

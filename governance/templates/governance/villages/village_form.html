@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Villages{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .form-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus {
+        border-color: #38f9d7;
+        box-shadow: 0 0 0 0.2rem rgba(67, 233, 123, 0.25);
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(67, 233, 123, 0.4);
+    }
+    .help-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #28a745;
+    }
+    .form-check-input:checked {
+        background-color: #38f9d7;
+        border-color: #38f9d7;
+    }
+    .form-text {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    .required {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:village_list' %}">Villages</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Header -->
+    <div class="form-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ title }}</h2>
+                <p class="mb-0">Enter the village information below</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-home" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card form-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-success"></i> Village Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}">Village Name <span class="required">*</span></label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="text-danger mt-1">{{ form.name.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Official name of the village</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.code.id_for_label }}">Village Code <span class="required">*</span></label>
+                                    {{ form.code }}
+                                    {% if form.code.errors %}
+                                    <div class="text-danger mt-1">{{ form.code.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Unique village identification code</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.traditional_council.id_for_label }}">Traditional Council <span class="required">*</span></label>
+                                    {{ form.traditional_council }}
+                                    {% if form.traditional_council.errors %}
+                                    <div class="text-danger mt-1">{{ form.traditional_council.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Select the governing traditional council</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.population.id_for_label }}">Population</label>
+                                    {{ form.population }}
+                                    {% if form.population.errors %}
+                                    <div class="text-danger mt-1">{{ form.population.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Current population count (optional)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.location.id_for_label }}">Location <span class="required">*</span></label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                            <div class="text-danger mt-1">{{ form.location.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Geographic location and landmarks</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">Description</label>
+                            {{ form.description }}
+                            {% if form.description.errors %}
+                            <div class="text-danger mt-1">{{ form.description.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Brief description of the village, its history, or notable features</small>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active Village
+                                </label>
+                                <small class="form-text d-block">Check if this village is currently active and inhabited</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-success btn-save">
+                                <i class="fas fa-save"></i> Save Village
+                            </button>
+                            <a href="{% url 'governance:village_list' %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Village Information -->
+            <div class="card help-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-home text-success"></i> About Villages
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Rural Communities:</strong>
+                        <p class="small text-muted mb-2">Villages are the smallest administrative units under traditional authority governance.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Traditional Governance:</strong>
+                        <p class="small text-muted mb-2">Villages operate under the jurisdiction of traditional councils and customary law.</p>
+                    </div>
+                    <div class="mb-0">
+                        <strong>Community Life:</strong>
+                        <p class="small text-muted mb-0">Centers of rural life with shared cultural practices and community structures.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Guidelines -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-map-marker-alt text-info"></i> Location Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Include nearby landmarks</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Specify distance from major towns</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Mention access roads or transport</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Include geographic features</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Form Guidelines -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-lightbulb text-warning"></i> Form Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Use official village names</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Village codes must be unique</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Population data helps with planning</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Detailed descriptions aid identification</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if village %}
+            <!-- Edit Information -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-edit text-primary"></i> Editing: {{ village.name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <td><strong>Created:</strong></td>
+                            <td>{{ village.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Updated:</strong></td>
+                            <td>{{ village.updated_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Council:</strong></td>
+                            <td>{{ village.traditional_council.name }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.form-header').hide().slideDown(600);
+    
+    // Form validation feedback
+    $('form').on('submit', function() {
+        $('.btn-save').html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+    });
+    
+    // Auto-populate traditional council if passed as parameter
+    var urlParams = new URLSearchParams(window.location.search);
+    var councilId = urlParams.get('council');
+    if (councilId) {
+        $('#{{ form.traditional_council.id_for_label }}').val(councilId);
+    }
+    
+    // Form field enhancements
+    $('#{{ form.name.id_for_label }}').on('input', function() {
+        // Capitalize first letter of each word
+        var value = $(this).val();
+        var words = value.split(' ');
+        for (var i = 0; i < words.length; i++) {
+            if (words[i].length > 0) {
+                words[i] = words[i][0].toUpperCase() + words[i].substring(1).toLowerCase();
+            }
+        }
+        $(this).val(words.join(' '));
+    });
+    
+    // Auto-format village code
+    $('#{{ form.code.id_for_label }}').on('input', function() {
+        var value = $(this).val().toUpperCase();
+        // Remove any characters that don't match alphanumeric pattern
+        value = value.replace(/[^A-Z0-9]/g, '');
+        $(this).val(value);
+    });
+});
+</script>
+{% endblock %}

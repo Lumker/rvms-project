@@ -1,0 +1,249 @@
+<!-- infrastructure/templates/infrastructure/asset_list.html -->
+
+{% extends "base.html" %}
+{% load static %}
+{% load infrastructure_tags %}
+
+{% block title %}Infrastructure Assets - RVMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Infrastructure Assets</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item active">Assets</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'infrastructure:asset_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Asset
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_assets }}</div>
+                <div class="stats-label">Total Assets</div>
+            </div>
+        </div>
+        <!-- Add more stats as needed -->
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Asset name or ID..." value="{{ current_filters.search }}">
+            </div>
+            <div class="col-md-2">
+                <label for="category" class="form-label">Category</label>
+                <select name="category" id="category" class="form-control">
+                    <option value="">All Categories</option>
+                    {% for value, label in categories %}
+                    <option value="{{ value }}" {% if current_filters.category == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="condition" class="form-label">Condition</label>
+                <select name="condition" id="condition" class="form-control">
+                    <option value="">All Conditions</option>
+                    {% for value, label in conditions %}
+                    <option value="{{ value }}" {% if current_filters.condition == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="village" class="form-label">Village</label>
+                <select name="village" id="village" class="form-control">
+                    <option value="">All Villages</option>
+                    {% for village in villages %}
+                    <option value="{{ village.id }}" {% if current_filters.village == village.id|stringformat:"s" %}selected{% endif %}>
+                        {{ village.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'infrastructure:asset_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Assets Table -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">
+                <i class="fas fa-cogs"></i> Infrastructure Assets
+            </h4>
+        </div>
+        <div class="card-body">
+            {% if assets %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Asset ID</th>
+                                <th>Name</th>
+                                <th>Category</th>
+                                <th>Village</th>
+                                <th>Condition</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for asset in assets %}
+                            <tr>
+                                <td>
+                                    <span class="badge badge-info">{{ asset.asset_id }}</span>
+                                </td>
+                                <td>
+                                    <strong>{{ asset.name }}</strong>
+                                    {% if asset.description %}
+                                    <br><small class="text-muted">{{ asset.description|truncatechars:50 }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-secondary">{{ asset.get_category_display }}</span>
+                                </td>
+                                <td>{{ asset.village.name }}</td>
+                                <td>
+                                    {% condition_badge asset.condition %}
+                                </td>
+                                <td>
+                                    {% if asset.operational_status %}
+                                        <span class="badge badge-success">Operational</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Non-Operational</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'infrastructure:asset_detail' asset.pk %}" 
+                                           class="btn btn-sm btn-outline-info" title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'infrastructure:asset_update' asset.pk %}" 
+                                           class="btn btn-sm btn-outline-primary" title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-warning" 
+                                                title="Schedule Maintenance"
+                                                onclick="scheduleMaintenanceModal({{ asset.pk }})">
+                                            <i class="fas fa-wrench"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Asset pagination">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Next
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-cogs fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Assets Found</h5>
+                    <p class="text-muted">Start by adding the first infrastructure asset.</p>
+                    <a href="{% url 'infrastructure:asset_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add First Asset
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function scheduleMaintenanceModal(assetId) {
+    // Implementation for quick maintenance scheduling
+    alert('Quick maintenance scheduling will be implemented here');
+}
+</script>
+{% endblock %}

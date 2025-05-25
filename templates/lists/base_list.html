@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{% block list_title %}List View{% endblock %} | {{ site_name|default:"Management System" }}{% endblock %}
+
+{% block extra_css %}
+<!-- Base list CSS -->
+<style>
+    /* Any shared list-specific styles can go here */
+    .search-form-container {
+        margin-bottom: 20px;
+    }
+    .actions .btn {
+        padding: 5px 10px;
+    }
+</style>
+{% block list_extra_css %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row">
+            <div class="col-sm-12">
+                <div class="page-sub-header">
+                    <h3 class="page-title">{% block page_title %}Items{% endblock %}</h3>
+                    <ul class="breadcrumb">
+                        <li class="breadcrumb-item"><a href="{% url 'dashboard' %}">Dashboard</a></li>
+                        {% block breadcrumb %}
+                        <li class="breadcrumb-item active">List</li>
+                        {% endblock %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /Page Header -->
+
+    <!-- Search Form -->
+    <div class="student-group-form search-form-container">
+        <form method="GET" action="{% block search_form_action %}{% endblock %}">
+            <div class="row">
+                {% block search_form %}
+                <div class="col-lg-10 col-md-9">
+                    <div class="form-group">
+                        <input type="text" class="form-control" name="search" placeholder="Search..." value="{{ search|default:'' }}"/>
+                    </div>
+                </div>
+                <div class="col-lg-2 col-md-3">
+                    <div class="search-student-btn">
+                        <button type="submit" class="btn btn-primary">Search</button>
+                    </div>
+                </div>
+                {% endblock %}
+            </div>
+        </form>
+    </div>
+    <!-- /Search Form -->
+
+    <!-- Display flash messages -->
+    {% if messages %}
+    <div class="row">
+        <div class="col-12">
+            {% for message in messages %}
+            <div class="alert alert-{% if message.tags == 'error' %}danger{% else %}{{ message.tags }}{% endif %} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Main Content -->
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="card card-table comman-shadow">
+                <div class="card-body">
+                    
+                    <!-- Table Header with Actions -->
+                    <div class="page-header">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h3 class="page-title">{% block table_title %}Items List{% endblock %}</h3>
+                            </div>
+                            <div class="col-auto text-end float-end ms-auto download-grp">
+                                {% block list_actions %}
+                                <!-- View options -->
+                                <a href="{% block list_view_url %}#{% endblock %}" class="btn btn-outline-gray me-2 {% if view_type == 'list' %}active{% endif %}"><i class="feather-list"></i></a>
+                                <a href="{% block grid_view_url %}#{% endblock %}" class="btn btn-outline-gray me-2 {% if view_type == 'grid' %}active{% endif %}"><i class="feather-grid"></i></a>
+                                
+                                <!-- Download option -->
+                                <a href="{% block download_url %}#{% endblock %}" class="btn btn-outline-primary me-2"><i class="fas fa-download"></i> Download</a>
+                                
+                                <!-- Add new item button -->
+                                {% if user.is_staff %}
+                                <a href="{% block add_url %}#{% endblock %}" class="btn btn-primary"><i class="fas fa-plus"></i></a>
+                                {% endif %}
+                                {% endblock %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Table Content -->
+                    <div class="table-responsive">
+                        <table class="table border-0 star-student table-hover table-center mb-0 datatable table-striped">
+                            <thead class="student-thread">
+                                <tr>
+                                    <th>
+                                        <div class="form-check check-tables">
+                                            <input class="form-check-input" type="checkbox" value="all" id="select-all"/>
+                                        </div>
+                                    </th>
+                                    {% block table_headers %}
+                                    <th>ID</th>
+                                    <th>Name</th>
+                                    {% endblock %}
+                                    <th class="text-end">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% block table_body %}
+                                <tr>
+                                    <td colspan="99" class="text-center">Override this block to provide table data</td>
+                                </tr>
+                                {% endblock %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <!-- /Table Content -->
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- /Main Content -->
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize datatable with common settings
+        var dataTable = $('.datatable').DataTable({
+            "order": [],
+            "language": {
+                search: '<i class="fas fa-search"></i>',
+                searchPlaceholder: "{% block datatable_search_placeholder %}Search{% endblock %}"
+            },
+            // Configure to work with our custom search form
+            "dom": '<"top"fl>rt<"bottom"ip><"clear">',
+            "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]]
+        });
+        
+        // Master checkbox behavior
+        $('#select-all').on('change', function() {
+            $('.form-check-input[type="checkbox"]').prop('checked', $(this).prop('checked'));
+        });
+        
+        // Custom event handling
+        {% block custom_scripts %}{% endblock %}
+    });
+</script>
+{% endblock %}

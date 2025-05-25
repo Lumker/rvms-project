@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Municipalities{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .form-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus {
+        border-color: #f5576c;
+        box-shadow: 0 0 0 0.2rem rgba(245, 87, 108, 0.25);
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(245, 87, 108, 0.4);
+    }
+    .help-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #17a2b8;
+    }
+    .form-check-input:checked {
+        background-color: #f5576c;
+        border-color: #f5576c;
+    }
+    .form-text {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:municipality_list' %}">Municipalities</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Header -->
+    <div class="form-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ title }}</h2>
+                <p class="mb-0">Enter the municipality information below</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-building" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card form-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-warning"></i> Municipality Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}" class="required">Municipality Name</label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="text-danger mt-1">{{ form.name.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Official name of the municipality</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.code.id_for_label }}" class="required">Municipality Code</label>
+                                    {{ form.code }}
+                                    {% if form.code.errors %}
+                                    <div class="text-danger mt-1">{{ form.code.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Format: ABC123 (2-3 letters + 3 digits)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.municipality_type.id_for_label }}" class="required">Municipality Type</label>
+                                    {{ form.municipality_type }}
+                                    {% if form.municipality_type.errors %}
+                                    <div class="text-danger mt-1">{{ form.municipality_type.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Category A, B, or C municipality</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.district.id_for_label }}" class="required">District</label>
+                                    {{ form.district }}
+                                    {% if form.district.errors %}
+                                    <div class="text-danger mt-1">{{ form.district.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Select the parent district</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.contact_info.id_for_label }}" class="required">Contact Information</label>
+                            {{ form.contact_info }}
+                            {% if form.contact_info.errors %}
+                            <div class="text-danger mt-1">{{ form.contact_info.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Include phone numbers, addresses, and email contacts</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.website.id_for_label }}">Official Website</label>
+                            {{ form.website }}
+                            {% if form.website.errors %}
+                            <div class="text-danger mt-1">{{ form.website.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Municipality's official website URL</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.mayor_name.id_for_label }}">Mayor Name</label>
+                                    {{ form.mayor_name }}
+                                    {% if form.mayor_name.errors %}
+                                    <div class="text-danger mt-1">{{ form.mayor_name.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Current mayor's full name</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.municipal_manager.id_for_label }}">Municipal Manager</label>
+                                    {{ form.municipal_manager }}
+                                    {% if form.municipal_manager.errors %}
+                                    <div class="text-danger mt-1">{{ form.municipal_manager.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Municipal manager's full name</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.population.id_for_label }}">Population</label>
+                                    {{ form.population }}
+                                    {% if form.population.errors %}
+                                    <div class="text-danger mt-1">{{ form.population.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Total population count</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.area_km2.id_for_label }}">Area (km²)</label>
+                                    {{ form.area_km2 }}
+                                    {% if form.area_km2.errors %}
+                                    <div class="text-danger mt-1">{{ form.area_km2.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Total area in square kilometers</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active Municipality
+                                </label>
+                                <small class="form-text d-block">Check if this municipality is currently active</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-warning btn-save">
+                                <i class="fas fa-save"></i> Save Municipality
+                            </button>
+                            <a href="{% url 'governance:municipality_list' %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Municipality Types Help -->
+            <div class="card help-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-question-circle text-info"></i> Municipality Types
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Category A (Metropolitan):</strong>
+                        <p class="small text-muted mb-2">Large urban centers with exclusive municipal executive and legislative authority in their areas.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Category B (Local):</strong>
+                        <p class="small text-muted mb-2">Municipalities that share municipal executive and legislative authority with district municipalities.</p>
+                    </div>
+                    <div class="mb-0">
+                        <strong>Category C (District):</strong>
+                        <p class="small text-muted mb-0">Municipalities with executive and legislative authority in areas including more than one municipality.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Guidelines -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-lightbulb text-warning"></i> Form Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Use official municipality names</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Municipality codes must be unique</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Include complete contact information</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Population data helps with planning</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if municipality %}
+            <!-- Edit Information -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-info text-primary"></i> Editing: {{ municipality.name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <td><strong>Created:</strong></td>
+                            <td>{{ municipality.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Updated:</strong></td>
+                            <td>{{ municipality.updated_at|date:"M d, Y" }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.form-header').hide().slideDown(600);
+    
+    // Form validation feedback
+    $('form').on('submit', function() {
+        $('.btn-save').html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+    });
+    
+    // Auto-format municipality code
+    $('#{{ form.code.id_for_label }}').on('input', function() {
+        var value = $(this).val().toUpperCase();
+        // Remove any characters that don't match the pattern
+        value = value.replace(/[^A-Z0-9]/g, '');
+        $(this).val(value);
+    });
+});
+</script>
+{% endblock %}

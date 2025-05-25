@@ -1,0 +1,474 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ resident.full_name }} - Resident Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    .info-row {
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    .info-value {
+        color: #333;
+    }
+    .profile-header {
+        text-align: center;
+        padding: 30px 20px;
+    }
+    .profile-avatar {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 3rem;
+        color: white;
+        font-weight: bold;
+    }
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ resident.full_name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'households:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'households:resident_list' %}">Residents</a></li>
+                    <li class="breadcrumb-item active">{{ resident.full_name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'households:resident_update' resident.pk %}" class="btn btn-primary">
+                        <i class="fe fe-edit"></i> Edit Resident
+                    </a>
+                    <a href="{% url 'households:household_detail' resident.household.pk %}" class="btn btn-outline-info">
+                        <i class="fe fe-home"></i> View Household
+                    </a>
+                    {% if can_create_user %}
+                    <a href="{% url 'households:create_user_account' resident.pk %}" class="btn btn-success">
+                        <i class="fe fe-user-plus"></i> Create User Account
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Card -->
+        <div class="col-md-4">
+            <div class="detail-card">
+                <div class="profile-header">
+                    {% if resident.photo %}
+                        <img src="{{ resident.photo.url }}" alt="{{ resident.full_name }}" class="profile-avatar" style="object-fit: cover;">
+                    {% else %}
+                        <div class="profile-avatar">
+                            {{ resident.first_name.0 }}{{ resident.last_name.0 }}
+                        </div>
+                    {% endif %}
+                    <h4>{{ resident.full_name }}</h4>
+                    <p class="text-muted mb-3">{{ resident.age }} years old • {{ resident.get_gender_display }}</p>
+                    {% if resident.is_head_of_household %}
+                        <span class="status-badge badge-danger">
+                            <i class="fe fe-star"></i> Head of Household
+                        </span>
+                    {% else %}
+                        <span class="status-badge badge-secondary">Household Member</span>
+                    {% endif %}
+                </div>
+                
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-label">ID Number</div>
+                        <div class="info-value">{{ resident.id_number }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Date of Birth</div>
+                        <div class="info-value">{{ resident.date_of_birth|date:"F d, Y" }}</div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Phone Number</div>
+                        <div class="info-value">
+                            {% if resident.phone_number %}
+                                <a href="tel:{{ resident.phone_number }}">{{ resident.phone_number }}</a>
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Email</div>
+                        <div class="info-value">
+                            {% if resident.email %}
+                                <a href="mailto:{{ resident.email }}">{{ resident.email }}</a>
+                            {% else %}
+                                <span class="text-muted">Not provided</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">System User Account</div>
+                        <div class="info-value">
+                            {% if resident.user_account %}
+                                <span class="badge badge-success">
+                                    <i class="fe fe-check"></i> Active
+                                </span>
+                                <br><small class="text-muted">{{ resident.user_account.username }}</small>
+                            {% else %}
+                                <span class="badge badge-warning">
+                                    <i class="fe fe-x"></i> No Account
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Detailed Information -->
+        <div class="col-md-8">
+            <!-- Household Information -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h4><i class="fe fe-home"></i> Household Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-label">Household</div>
+                                <div class="info-value">
+                                    <a href="{% url 'households:household_detail' resident.household.pk %}">
+                                        {{ resident.household.household_id }}
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Village</div>
+                                <div class="info-value">{{ resident.household.village.name }}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Ward Committee</div>
+                                <div class="info-value">
+                                    {% if resident.household.ward_committee %}
+                                        Ward {{ resident.household.ward_committee.ward_number }}
+                                    {% else %}
+                                        <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-label">Relationship to Head</div>
+                                <div class="info-value">
+                                    {% if resident.is_head_of_household %}
+                                        <span class="text-warning">Head of Household</span>
+                                    {% elif resident.relationship_to_head %}
+                                        {{ resident.relationship_to_head }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Date Moved In</div>
+                                <div class="info-value">
+                                    {% if resident.date_moved_in %}
+                                        {{ resident.date_moved_in|date:"F d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Status</div>
+                                <div class="info-value">
+                                    {% if resident.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Demographics -->
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h4><i class="fe fe-user"></i> Demographics & Employment</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-label">Marital Status</div>
+                                <div class="info-value">
+                                    {% if resident.marital_status %}
+                                        {{ resident.get_marital_status_display }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Education Level</div>
+                                <div class="info-value">
+                                    {% if resident.education_level %}
+                                        {{ resident.get_education_level_display }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Employment Status</div>
+                                <div class="info-value">
+                                    {% if resident.employment_status %}
+                                        <span class="badge badge-{% if 'employed' in resident.employment_status %}success{% elif resident.employment_status == 'unemployed' %}warning{% else %}info{% endif %}">
+                                            {{ resident.get_employment_status_display }}
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-label">Occupation</div>
+                                <div class="info-value">
+                                    {% if resident.occupation %}
+                                        {{ resident.occupation }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Employer</div>
+                                <div class="info-value">
+                                    {% if resident.employer %}
+                                        {{ resident.employer }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Monthly Income</div>
+                                <div class="info-value">
+                                    {% if resident.monthly_income %}
+                                        R{{ resident.monthly_income|floatformat:2 }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Government Support & Health -->
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="detail-card">
+                        <div class="detail-header">
+                            <h5><i class="fe fe-heart"></i> Government Support</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="info-row">
+                                <div class="info-label">Receives Grants</div>
+                               <div class="info-value">
+                                   {% if resident.receives_grants %}
+                                       <span class="badge badge-success">
+                                           <i class="fe fe-check"></i> Yes
+                                       </span>
+                                   {% else %}
+                                       <span class="badge badge-secondary">
+                                           <i class="fe fe-x"></i> No
+                                       </span>
+                                   {% endif %}
+                               </div>
+                           </div>
+                           
+                           {% if resident.receives_grants %}
+                           <div class="info-row">
+                               <div class="info-label">Grant Types</div>
+                               <div class="info-value">
+                                   {% if resident.grant_types %}
+                                       {{ resident.grant_types }}
+                                   {% else %}
+                                       <span class="text-muted">Not specified</span>
+                                   {% endif %}
+                               </div>
+                           </div>
+                           
+                           <div class="info-row">
+                               <div class="info-label">Grant Amount</div>
+                               <div class="info-value">
+                                   {% if resident.grant_amount %}
+                                       R{{ resident.grant_amount|floatformat:2 }}/month
+                                   {% else %}
+                                       <span class="text-muted">Not specified</span>
+                                   {% endif %}
+                               </div>
+                           </div>
+                           {% endif %}
+                           
+                           <div class="info-row">
+                               <div class="info-label">Total Monthly Income</div>
+                               <div class="info-value">
+                                   <strong>R{{ resident.total_monthly_income|floatformat:2 }}</strong>
+                                   <small class="text-muted">(including grants)</small>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+               
+               <div class="col-md-6">
+                   <div class="detail-card">
+                       <div class="detail-header">
+                           <h5><i class="fe fe-activity"></i> Health & Special Needs</h5>
+                       </div>
+                       <div class="card-body">
+                           <div class="info-row">
+                               <div class="info-label">Has Disability</div>
+                               <div class="info-value">
+                                   {% if resident.has_disability %}
+                                       <span class="badge badge-warning">
+                                           <i class="fe fe-alert-triangle"></i> Yes
+                                       </span>
+                                   {% else %}
+                                       <span class="badge badge-success">
+                                           <i class="fe fe-check"></i> No
+                                       </span>
+                                   {% endif %}
+                               </div>
+                           </div>
+                           
+                           {% if resident.has_disability and resident.disability_type %}
+                           <div class="info-row">
+                               <div class="info-label">Disability Type</div>
+                               <div class="info-value">{{ resident.disability_type }}</div>
+                           </div>
+                           {% endif %}
+                           
+                           {% if resident.chronic_illnesses %}
+                           <div class="info-row">
+                               <div class="info-label">Chronic Illnesses</div>
+                               <div class="info-value">{{ resident.chronic_illnesses|linebreaks }}</div>
+                           </div>
+                           {% endif %}
+                           
+                           {% if resident.special_needs %}
+                           <div class="info-row">
+                               <div class="info-label">Special Needs</div>
+                               <div class="info-value">{{ resident.special_needs|linebreaks }}</div>
+                           </div>
+                           {% endif %}
+                       </div>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+
+   <!-- Additional Information -->
+   {% if resident.alternative_contact or resident.notes %}
+   <div class="row">
+       <div class="col-md-12">
+           <div class="detail-card">
+               <div class="detail-header">
+                   <h4><i class="fe fe-file-text"></i> Additional Information</h4>
+               </div>
+               <div class="card-body">
+                   {% if resident.alternative_contact %}
+                   <div class="info-row">
+                       <div class="info-label">Alternative Contact</div>
+                       <div class="info-value">{{ resident.alternative_contact }}</div>
+                   </div>
+                   {% endif %}
+                   
+                   {% if resident.notes %}
+                   <div class="info-row">
+                       <div class="info-label">Notes</div>
+                       <div class="info-value">{{ resident.notes|linebreaks }}</div>
+                   </div>
+                   {% endif %}
+                   
+                   <div class="info-row">
+                       <div class="info-label">Record Information</div>
+                       <div class="info-value">
+                           <small class="text-muted">
+                               Created: {{ resident.created_at|date:"F d, Y H:i" }}<br>
+                               Last Updated: {{ resident.updated_at|date:"F d, Y H:i" }}
+                           </small>
+                       </div>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+   {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+   // Add animations
+   $('.detail-card').each(function(i) {
+       $(this).delay(i * 100).fadeIn(600);
+   });
+});
+</script>
+{% endblock %}

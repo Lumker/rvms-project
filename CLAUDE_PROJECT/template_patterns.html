@@ -1,0 +1,1989 @@
+<!--governance/municipality_list.html-->
+
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Municipalities - Governance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .badge-lg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .modal-header.bg-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Municipalities</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item active">Municipalities</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'governance:municipality_create' %}" class="btn btn-warning">
+                    <i class="fas fa-plus"></i> Add Municipality
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+          <div class="col-md-2">
+        <div class="stats-card warning">
+            <div class="stats-number">{{ page_obj.paginator.count }}</div>
+            <div class="stats-label">Total Municipalities</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card info">
+            <div class="stats-number">
+                {% with total_wards=0 %}
+                    {% for municipality in page_obj %}
+                        {% with total_wards=total_wards|add:municipality.total_ward_committees %}
+                        {% endwith %}
+                    {% endfor %}
+                    {{ total_wards }}
+                {% endwith %}
+            </div>
+            <div class="stats-label">Ward Committees</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card success">
+            <div class="stats-number">
+                {% with total_councils=0 %}
+                    {% for municipality in page_obj %}
+                        {% with total_councils=total_councils|add:municipality.total_traditional_councils %}
+                        {% endwith %}
+                    {% endfor %}
+                    {{ total_councils }}
+                {% endwith %}
+            </div>
+            <div class="stats-label">Traditional Councils</div>
+        </div>
+    </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">
+                    {{ page_obj|length|add:page_obj.paginator.count }}
+                </div>
+                <div class="stats-label">Active Municipalities</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ districts|length }}</div>
+                <div class="stats-label">Districts Covered</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Municipality name or code..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-2">
+                <label for="district" class="form-label">District</label>
+                <select name="district" id="district" class="form-control">
+                    <option value="">All Districts</option>
+                    {% for district in districts %}
+                    <option value="{{ district.id }}" {% if current_filters.district == district.id|stringformat:"s" %}selected{% endif %}>
+                        {{ district.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="type" class="form-label">Type</label>
+                <select name="type" id="type" class="form-control">
+                    <option value="">All Types</option>
+                    {% for type_code, type_name in municipality_types %}
+                    <option value="{{ type_code }}" {% if current_filters.type == type_code %}selected{% endif %}>
+                        {{ type_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Status</option>
+                    <option value="active" {% if current_filters.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if current_filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'governance:municipality_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Municipalities Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-building"></i> South African Municipalities
+                    </h4>
+                    <div class="card-options">
+                        <a href="{% url 'governance:municipality_create' %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="20%">Municipality</th>
+                                        <th width="10%">Code</th>
+                                        <th width="15%">Type</th>
+                                        <th width="15%">District</th>
+                                        <th width="10%">Councils</th>
+                                        <th width="10%">Population</th>
+                                        <th width="8%">Status</th>
+                                        <th width="12%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for municipality in page_obj %}
+                                    <tr>
+                                        <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
+                                        <td>
+                                            <strong>{{ municipality.name }}</strong>
+                                            {% if municipality.mayor_name %}
+                                            <br><small class="text-muted">Mayor: {{ municipality.mayor_name }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-warning badge-lg">{{ municipality.code }}</span>
+                                        </td>
+                                        <td>
+                                            <small>{{ municipality.get_municipality_type_display }}</small>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:district_detail' municipality.district.pk %}" class="text-decoration-none">
+                                                {{ municipality.district.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ municipality.council_count }}</span>
+                                        </td>
+                                        <td>
+                                            {% if municipality.population %}
+                                            <small>{{ municipality.population|floatformat:0 }}</small>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if municipality.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                            {% else %}
+                                            <span class="badge badge-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{% url 'governance:municipality_detail' municipality.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'governance:municipality_update' municipality.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Edit Municipality">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'governance:council_create' %}?municipality={{ municipality.pk }}" 
+                                                   class="btn btn-sm btn-outline-success" 
+                                                   title="Add Council">
+                                                    <i class="fas fa-plus"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-secondary view-details-btn" 
+                                                        title="Quick View"
+                                                        data-municipality-id="{{ municipality.pk }}"
+                                                        data-municipality-name="{{ municipality.name }}"
+                                                        data-municipality-code="{{ municipality.code }}"
+                                                        data-municipality-type="{{ municipality.get_municipality_type_display }}"
+                                                        data-district-name="{{ municipality.district.name }}"
+                                                        data-council-count="{{ municipality.council_count }}"
+                                                        data-population="{{ municipality.population|default:'Not specified' }}"
+                                                        data-mayor="{{ municipality.mayor_name|default:'Not specified' }}"
+                                                        data-website="{{ municipality.website|default:'None' }}"
+                                                        data-created="{{ municipality.created_at|date:'F d, Y H:i' }}"
+                                                        data-updated="{{ municipality.updated_at|date:'F d, Y H:i' }}">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Municipality pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.district %}&district={{ current_filters.district }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        Previous
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.district %}&district={{ current_filters.district }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.district %}&district={{ current_filters.district }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        Next
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Municipalities Found</h5>
+                            <p class="text-muted">Start by adding the first municipality to the system.</p>
+                            <a href="{% url 'governance:municipality_create' %}" class="btn btn-warning">
+                                <i class="fas fa-plus"></i> Add First Municipality
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Municipality Detail Modal -->
+<div class="modal fade" id="municipalityDetailModal" tabindex="-1" role="dialog" aria-labelledby="municipalityDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="municipalityDetailModalLabel">
+                    <i class="fas fa-building"></i> <span id="modalMunicipalityName">Municipality Details</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Municipality Name:</label>
+                            <p id="modalMunicipalityNameDetail" class="text-warning font-weight-bold"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Municipality Code:</label>
+                            <p><span id="modalMunicipalityCode" class="badge badge-warning badge-lg"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Type:</label>
+                            <p id="modalMunicipalityType" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>District:</label>
+                            <p id="modalDistrictName" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Traditional Councils:</label>
+                            <p><span id="modalCouncilCount" class="badge badge-info badge-lg"></span></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Population:</label>
+                            <p id="modalPopulation" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Mayor:</label>
+                            <p id="modalMayor" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Website:</label>
+                            <p id="modalWebsite" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Created:</label>
+                            <p id="modalCreatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Last Updated:</label>
+                            <p id="modalUpdatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modalEditLink" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Municipality
+                </a>
+                <a href="#" id="modalAddCouncilLink" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add Council
+                </a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    console.log('Municipality list page loaded');
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Handle view details button click
+    $(document).on('click', '.view-details-btn', function(e) {
+        e.preventDefault();
+        
+        // Get data from button attributes
+        var municipalityId = $(this).data('municipality-id');
+        var municipalityName = $(this).data('municipality-name');
+        var municipalityCode = $(this).data('municipality-code');
+        var municipalityType = $(this).data('municipality-type');
+        var districtName = $(this).data('district-name');
+        var councilCount = $(this).data('council-count');
+        var population = $(this).data('population');
+        var mayor = $(this).data('mayor');
+        var website = $(this).data('website');
+        var createdDate = $(this).data('created');
+        var updatedDate = $(this).data('updated');
+        
+        // Populate modal with data
+        $('#modalMunicipalityName').text(municipalityName);
+        $('#modalMunicipalityNameDetail').text(municipalityName);
+        $('#modalMunicipalityCode').text(municipalityCode);
+        $('#modalMunicipalityType').text(municipalityType);
+        $('#modalDistrictName').text(districtName);
+        $('#modalCouncilCount').text(councilCount + ' council' + (councilCount != 1 ? 's' : ''));
+        $('#modalPopulation').text(population);
+        $('#modalMayor').text(mayor);
+        $('#modalWebsite').text(website);
+        $('#modalCreatedDate').text(createdDate);
+        $('#modalUpdatedDate').text(updatedDate);
+        
+        // Update links
+        var editUrl = "{% url 'governance:municipality_update' 0 %}".replace('0', municipalityId);
+        $('#modalEditLink').attr('href', editUrl);
+        
+        var addCouncilUrl = "{% url 'governance:council_create' %}?municipality=" + municipalityId;
+        $('#modalAddCouncilLink').attr('href', addCouncilUrl);
+        
+        // Show modal
+        $('#municipalityDetailModal').modal('show');
+    });
+});
+</script>
+{% endblock %}
+
+
+<!-- templates/sidebar.html -->
+{% load static %}
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-inner slimscroll">
+        <div id="sidebar-menu" class="sidebar-menu">
+            <ul>
+                <li class="menu-title">
+                    <span>Main Menu</span>
+                </li>
+                
+                <!-- Dashboard Section -->
+                <li class="submenu {% if 'dashboard' in request.path and not 'governance' in request.path and not 'households' in request.path and not 'documents' in request.path %}active{% endif %}">
+                    <a href="#"><i class="feather-grid"></i> <span>Dashboard</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="/" class="{% if request.path == '/' %}active{% endif %}">Main Dashboard</a></li>
+                        <li><a href="{% url 'governance:dashboard' %}" class="{% if 'governance' in request.path and 'dashboard' in request.path %}active{% endif %}">Governance Overview</a></li>
+                        <li><a href="{% url 'households:dashboard' %}" class="{% if 'households' in request.path and 'dashboard' in request.path %}active{% endif %}">Demographics Overview</a></li>
+                        <li><a href="{% url 'documents:dashboard' %}" class="{% if 'documents' in request.path and 'dashboard' in request.path %}active{% endif %}">Documents Overview</a></li>
+                    </ul>
+                </li>
+
+                <!-- Governance Section -->
+                <li class="submenu {% if 'governance' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-landmark"></i> <span>Governance</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'governance:dashboard' %}" class="{% if 'governance' in request.path and 'dashboard' in request.path %}active{% endif %}">Dashboard</a></li>
+                        <li><a href="{% url 'governance:province_list' %}" class="{% if 'province' in request.path %}active{% endif %}">Provinces</a></li>
+                        <li><a href="{% url 'governance:district_list' %}" class="{% if 'district' in request.path %}active{% endif %}">Districts</a></li>
+                        <li><a href="{% url 'governance:municipality_list' %}" class="{% if 'municipality' in request.path %}active{% endif %}">Municipalities</a></li>
+                        <li><a href="{% url 'governance:ward_committee_list' %}" class="{% if 'ward-committee' in request.path %}active{% endif %}">Ward Committees</a></li>
+                        <li><a href="{% url 'governance:council_list' %}" class="{% if 'council' in request.path and 'ward' not in request.path %}active{% endif %}">Traditional Councils</a></li>
+                        <li><a href="{% url 'governance:village_list' %}" class="{% if 'village' in request.path %}active{% endif %}">Villages</a></li>
+                        <li><a href="{% url 'governance:meeting_list' %}" class="{% if 'meeting' in request.path %}active{% endif %}">Meetings</a></li>
+                        <li><a href="{% url 'governance:council_member_list' %}" class="{% if 'council-member' in request.path %}active{% endif %}">Council Members</a></li>
+                    </ul>
+                </li>
+
+                <!-- Households & Residents Section -->
+                <li class="submenu {% if 'households' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-home"></i> <span>Households</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'households:dashboard' %}" class="{% if 'households' in request.path and 'dashboard' in request.path %}active{% endif %}">Dashboard</a></li>
+                        <li><a href="{% url 'households:household_list' %}" class="{% if 'households' in request.path and 'household' in request.path and 'resident' not in request.path %}active{% endif %}">Households</a></li>
+                        <li><a href="{% url 'households:resident_list' %}" class="{% if 'households' in request.path and 'resident' in request.path %}active{% endif %}">Residents</a></li>
+                        <li><a href="{% url 'households:service_list' %}" class="{% if 'households' in request.path and 'service' in request.path %}active{% endif %}">Services</a></li>
+                        <li><a href="{% url 'households:reports' %}" class="{% if 'households' in request.path and 'reports' in request.path %}active{% endif %}">Reports</a></li>
+                    </ul>
+                </li>
+
+                <!-- Documents Section -->
+                <li class="submenu {% if 'documents' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-file-alt"></i> <span>Documents</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'documents:dashboard' %}" class="{% if 'documents' in request.path and 'dashboard' in request.path %}active{% endif %}">Dashboard</a></li>
+                        <li><a href="{% url 'documents:proof_list' %}" class="{% if 'documents' in request.path and 'proof' in request.path %}active{% endif %}">Proof of Residence</a></li>
+                        <li><a href="{% url 'documents:template_list' %}" class="{% if 'documents' in request.path and 'template' in request.path %}active{% endif %}">Document Templates</a></li>
+                        <li><a href="{% url 'documents:batch_list' %}" class="{% if 'documents' in request.path and 'batch' in request.path %}active{% endif %}">Batch Processing</a></li>
+                        <li><a href="{% url 'documents:generate_report' %}" class="{% if 'documents' in request.path and 'generate' in request.path %}active{% endif %}">Generate Reports</a></li>
+                        <li><a href="#" onclick="showComingSoon('Birth Certificates')">Birth Certificates</a></li>
+                        <li><a href="#" onclick="showComingSoon('Death Certificates')">Death Certificates</a></li>
+                        <li><a href="#" onclick="showComingSoon('Marriage Certificates')">Marriage Certificates</a></li>
+                        <li><a href="#" onclick="showComingSoon('Business Permits')">Business Permits</a></li>
+                        <li><a href="#" onclick="showComingSoon('Land Documents')">Land Documents</a></li>
+                    </ul>
+                </li>
+
+                <!-- Infrastructure Section (Future) -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-tools"></i> <span>Infrastructure</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Infrastructure Dashboard')">Infrastructure Dashboard</a></li>
+                        <li><a href="#" onclick="showComingSoon('Water Systems')">Water Systems</a></li>
+                        <li><a href="#" onclick="showComingSoon('Electricity Grid')">Electricity Grid</a></li>
+                        <li><a href="#" onclick="showComingSoon('Roads & Transport')">Roads & Transport</a></li>
+                        <li><a href="#" onclick="showComingSoon('Communication')">Communication</a></li>
+                        <li><a href="#" onclick="showComingSoon('Health Facilities')">Health Facilities</a></li>
+                        <li><a href="#" onclick="showComingSoon('Education Facilities')">Education Facilities</a></li>
+                    </ul>
+                </li>
+
+                <!-- Service Delivery Section (Future) -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-clipboard-list"></i> <span>Service Delivery</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Service Dashboard')">Service Dashboard</a></li>
+                        <li><a href="#" onclick="showComingSoon('Community Issues')">Community Issues</a></li>
+                        <li><a href="#" onclick="showComingSoon('Service Requests')">Service Requests</a></li>
+                        <li><a href="#" onclick="showComingSoon('Maintenance')">Maintenance</a></li>
+                        <li><a href="#" onclick="showComingSoon('Project Management')">Project Management</a></li>
+                        <li><a href="#" onclick="showComingSoon('Service Quality')">Service Quality</a></li>
+                    </ul>
+                </li>
+
+                <!-- Economic Development Section (Future) -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-chart-line"></i> <span>Development</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Development Dashboard')">Development Dashboard</a></li>
+                        <li><a href="#" onclick="showComingSoon('Economic Projects')">Economic Projects</a></li>
+                        <li><a href="#" onclick="showComingSoon('Agriculture')">Agriculture</a></li>
+                        <li><a href="#" onclick="showComingSoon('Small Business')">Small Business</a></li>
+                        <li><a href="#" onclick="showComingSoon('Employment')">Employment</a></li>
+                        <li><a href="#" onclick="showComingSoon('Skills Development')">Skills Development</a></li>
+                    </ul>
+                </li>
+
+                <!-- Budget & Finance Section (Future) -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-calculator"></i> <span>Finance</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Finance Dashboard')">Finance Dashboard</a></li>
+                        <li><a href="#" onclick="showComingSoon('Budget Planning')">Budget Planning</a></li>
+                        <li><a href="#" onclick="showComingSoon('Revenue Collection')">Revenue Collection</a></li>
+                        <li><a href="#" onclick="showComingSoon('Expenditure')">Expenditure</a></li>
+                        <li><a href="#" onclick="showComingSoon('Project Funding')">Project Funding</a></li>
+                        <li><a href="#" onclick="showComingSoon('Financial Reports')">Financial Reports</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-title">
+                    <span>User Management</span>
+                </li>
+
+                <!-- User Management Section -->
+                <li class="submenu {% if 'users' in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-users"></i> <span>Users</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'users:user_list' %}" class="{% if 'users' in request.path and 'list' in request.path %}active{% endif %}">All Users</a></li>
+                        <li><a href="#" onclick="showComingSoon('Pending Registrations')">Pending Registrations</a></li>
+                        <li><a href="#" onclick="showComingSoon('Register User')">Register User</a></li>
+                        <li><a href="#" onclick="showComingSoon('User Roles')">User Roles</a></li>
+                        <li><a href="#" onclick="showComingSoon('Permissions')">Permissions</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-title">
+                    <span>Reports & Analytics</span>
+                </li>
+
+                <!-- Reports Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-chart-bar"></i> <span>Reports</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'households:demographics_report' %}">Demographics Report</a></li>
+                        <li><a href="{% url 'households:services_report' %}">Services Report</a></li>
+                        <li><a href="{% url 'documents:generate_report' %}">Document Reports</a></li>
+                        <li><a href="#" onclick="showComingSoon('Governance Report')">Governance Report</a></li>
+                        <li><a href="#" onclick="showComingSoon('Infrastructure Report')">Infrastructure Report</a></li>
+                        <li><a href="#" onclick="showComingSoon('Financial Report')">Financial Report</a></li>
+                        <li><a href="#" onclick="showComingSoon('Development Report')">Development Report</a></li>
+                    </ul>
+                </li>
+
+                <!-- Analytics Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-analytics"></i> <span>Analytics</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Population Trends')">Population Trends</a></li>
+                        <li><a href="#" onclick="showComingSoon('Service Usage')">Service Usage</a></li>
+                        <li><a href="#" onclick="showComingSoon('Document Analytics')">Document Analytics</a></li>
+                        <li><a href="#" onclick="showComingSoon('Economic Indicators')">Economic Indicators</a></li>
+                        <li><a href="#" onclick="showComingSoon('Development Metrics')">Development Metrics</a></li>
+                        <li><a href="#" onclick="showComingSoon('Resource Allocation')">Resource Allocation</a></li>
+                        <li><a href="#" onclick="showComingSoon('Performance Metrics')">Performance Metrics</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-title">
+                    <span>System</span>
+                </li>
+
+                <!-- Data Management Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-database"></i> <span>Data Management</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Data Import')">Data Import</a></li>
+                        <li><a href="#" onclick="showComingSoon('Data Export')">Data Export</a></li>
+                        <li><a href="#" onclick="showComingSoon('Data Validation')">Data Validation</a></li>
+                        <li><a href="#" onclick="showComingSoon('Backup & Restore')">Backup & Restore</a></li>
+                        <li><a href="#" onclick="showComingSoon('Data Cleanup')">Data Cleanup</a></li>
+                        <li><a href="#" onclick="showComingSoon('Document Archive')">Document Archive</a></li>
+                    </ul>
+                </li>
+
+                <!-- Settings Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-cog"></i> <span>Settings</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('System Settings')">System Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('User Preferences')">User Preferences</a></li>
+                        <li><a href="#" onclick="showComingSoon('Document Settings')">Document Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('Notification Settings')">Notification Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('Integration Settings')">Integration Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('Audit Logs')">Audit Logs</a></li>
+                    </ul>
+                </li>
+
+                <!-- Help & Support Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-question-circle"></i> <span>Help & Support</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('User Guide')">User Guide</a></li>
+                        <li><a href="#" onclick="showComingSoon('Documentation')">Documentation</a></li>
+                        <li><a href="#" onclick="showComingSoon('Training Materials')">Training Materials</a></li>
+                        <li><a href="#" onclick="showComingSoon('Support Tickets')">Support Tickets</a></li>
+                        <li><a href="#" onclick="showComingSoon('System Status')">System Status</a></li>
+                        <li><a href="#" onclick="showComingSoon('Contact Support')">Contact Support</a></li>
+                    </ul>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Coming Soon Modal -->
+<div class="modal fade" id="comingSoonModal" tabindex="-1" role="dialog" aria-labelledby="comingSoonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="comingSoonModalLabel">
+                    <i class="fas fa-clock"></i> Coming Soon
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-tools fa-3x text-warning"></i>
+                </div>
+                <h5 id="featureName">Feature Name</h5>
+                <p class="text-muted">This feature is currently under development and will be available in a future update.</p>
+                <div class="alert alert-info">
+                    <strong>Development Status:</strong> In Progress<br>
+                    <strong>Expected Release:</strong> Next Phase
+                </div>
+                <div class="alert alert-success">
+                    <strong>Available Now:</strong> Proof of Residence documents are fully functional!
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-warning" onclick="showRequestFeature()">Request Feature</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showComingSoon(featureName) {
+    document.getElementById('featureName').textContent = featureName;
+    $('#comingSoonModal').modal('show');
+    return false; // Prevent link navigation
+}
+
+function showRequestFeature() {
+    alert('Feature request functionality will be implemented soon. Please contact your system administrator for feature requests.');
+    $('#comingSoonModal').modal('hide');
+}
+</script>
+
+
+<!-- templates/header.html -->
+
+{% load static %}
+<div class="header">
+    <div class="header-left">
+        <a href="/" class="logo">
+            <img src="{% static 'assets/img/logo-7a.png' %}" alt="RVMS Logo">
+        </a>
+        <a href="/" class="logo logo-small">
+            <img src="{% static 'assets/img/icon.png' %}" alt="RVMS" width="30" height="30">
+        </a>
+    </div>
+    <div class="menu-toggle">
+        <a href="javascript:void(0);" id="toggle_btn">
+            <i class="fas fa-bars"></i>
+        </a>
+    </div>
+
+    <!-- Enhanced Search with Autocomplete -->
+    <div class="top-nav-search">
+        <form method="get" action="{% url 'search:results' %}" id="search-form">
+            <input type="text" name="q" class="form-control" 
+                   placeholder="Search residents, documents, villages..." 
+                   value="{{ request.GET.q }}" 
+                   id="global-search-input"
+                   autocomplete="off">
+            <button class="btn" type="submit"><i class="fas fa-search"></i></button>
+        </form>
+        <div id="search-suggestions" class="search-suggestions"></div>
+    </div>
+    <a class="mobile_btn" id="mobile_btn">
+        <i class="fas fa-bars"></i>
+    </a>
+
+    <ul class="nav user-menu">
+        <!-- Quick Actions Dropdown -->
+        <li class="nav-item dropdown me-2">
+            <a href="#" class="dropdown-toggle nav-link header-nav-list" data-bs-toggle="dropdown" title="Quick Actions">
+                <i class="fas fa-plus-circle" style="font-size: 20px; color: #007bff;"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right quick-actions-menu">
+                <div class="dropdown-header">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </div>
+                <a class="dropdown-item" href="{% url 'documents:proof_create' %}">
+                    <i class="fas fa-file-alt text-primary"></i> 
+                    <span>New Document</span>
+                    <small class="text-muted">Create proof of residence</small>
+                </a>
+                <a class="dropdown-item" href="{% url 'households:resident_create' %}">
+                    <i class="fas fa-user-plus text-success"></i> 
+                    <span>Add Resident</span>
+                    <small class="text-muted">Register new resident</small>
+                </a>
+                <a class="dropdown-item" href="{% url 'households:household_create' %}">
+                    <i class="fas fa-home text-info"></i> 
+                    <span>Add Household</span>
+                    <small class="text-muted">Create new household</small>
+                </a>
+                <a class="dropdown-item" href="{% url 'governance:village_create' %}">
+                    <i class="fas fa-map-marker-alt text-warning"></i> 
+                    <span>Add Village</span>
+                    <small class="text-muted">Register new village</small>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{% url 'documents:generate_report' %}">
+                    <i class="fas fa-chart-bar text-secondary"></i> 
+                    <span>Generate Report</span>
+                    <small class="text-muted">Create system reports</small>
+                </a>
+                <a class="dropdown-item" href="{% url 'documents:batch_create' %}">
+                    <i class="fas fa-layer-group text-purple"></i> 
+                    <span>Batch Process</span>
+                    <small class="text-muted">Process multiple documents</small>
+                </a>
+            </div>
+        </li>
+
+        <!-- Enhanced Notifications Dropdown -->
+        <li class="nav-item dropdown noti-dropdown me-2">
+            <a href="#" class="dropdown-toggle nav-link header-nav-list" data-bs-toggle="dropdown" id="notification-bell">
+                <i class="fas fa-bell" style="font-size: 18px; color: #ffc107;"></i>
+                <span class="badge rounded-pill bg-danger notification-count" id="notification-count" style="display: none;">0</span>
+            </a>
+            <div class="dropdown-menu notifications">
+                <div class="topnav-dropdown-header">
+                    <span class="notification-title">
+                        <i class="fas fa-bell"></i> Notifications
+                    </span>
+                    <a href="javascript:void(0)" class="clear-noti" onclick="clearAllNotifications()"> 
+                        <i class="fas fa-trash-alt"></i> Clear All 
+                    </a>
+                </div>
+                <div class="noti-content">
+                    <ul class="notification-list" id="notification-list">
+                        <li class="text-center p-3">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <small class="d-block mt-2">Loading notifications...</small>
+                        </li>
+                    </ul>
+                </div>
+                <div class="topnav-dropdown-footer">
+                    <a href="{% url 'users:notifications' %}" class="btn btn-sm btn-primary w-100">
+                        <i class="fas fa-list"></i> View All Notifications
+                    </a>
+                </div>
+            </div>
+        </li>
+
+        <!-- Messages/Inbox Dropdown -->
+        <li class="nav-item dropdown me-2">
+            <a href="#" class="dropdown-toggle nav-link header-nav-list" data-bs-toggle="dropdown" title="Messages">
+                <i class="fas fa-envelope" style="font-size: 18px; color: #28a745;"></i>
+                <span class="badge rounded-pill bg-success message-count" id="message-count" style="display: none;">0</span>
+            </a>
+            <div class="dropdown-menu messages">
+                <div class="topnav-dropdown-header">
+                    <span class="notification-title">
+                        <i class="fas fa-envelope"></i> Messages
+                    </span>
+                    <a href="{% url 'users:compose_message' %}" class="text-primary"> 
+                        <i class="fas fa-plus"></i> New 
+                    </a>
+                </div>
+                <div class="noti-content">
+                    <ul class="notification-list" id="message-list">
+                        <li class="text-center p-3">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <small class="d-block mt-2">Loading messages...</small>
+                        </li>
+                    </ul>
+                </div>
+                <div class="topnav-dropdown-footer">
+                    <a href="{% url 'users:inbox' %}" class="btn btn-sm btn-success w-100">
+                        <i class="fas fa-inbox"></i> View Inbox
+                    </a>
+                </div>
+            </div>
+        </li>
+
+        <!-- User Profile Dropdown -->
+        <li class="nav-item dropdown has-arrow new-user-menus">
+            <a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown">
+                <span class="user-img">
+                    {% if request.user.profile.profile_picture %}
+                        <img class="rounded-circle" src="{{ request.user.profile.profile_picture.url }}" width="31" alt="{{ request.user.get_full_name }}">
+                    {% else %}
+                        <img class="rounded-circle" src="{% static 'assets/img/profiles/avatar-01.jpg' %}" width="31" alt="{{ request.user.get_full_name }}">
+                    {% endif %}
+                    <div class="user-text">
+                        <h6>{{ request.user.get_full_name|default:request.user.username }}</h6>
+                        <p class="text-muted mb-0">
+                            {% if request.user.profile.role %}
+                                {{ request.user.profile.get_role_display }}
+                            {% else %}
+                                Administrator
+                            {% endif %}
+                        </p>
+                    </div>
+                </span>
+            </a>
+            <div class="dropdown-menu user-menu-dropdown">
+                <div class="user-header">
+                    <div class="avatar avatar-sm position-relative">
+                        {% if request.user.profile.profile_picture %}
+                            <img src="{{ request.user.profile.profile_picture.url }}" alt="User Image" class="avatar-img rounded-circle">
+                        {% else %}
+                            <img src="{% static 'assets/img/profiles/avatar-01.jpg' %}" alt="User Image" class="avatar-img rounded-circle">
+                        {% endif %}
+                        <button class="btn btn-sm btn-light position-absolute" 
+                                style="bottom: 0; right: 0; border-radius: 50%; width: 20px; height: 20px; padding: 0;"
+                                onclick="openProfilePictureModal()" title="Change Picture">
+                            <i class="fas fa-camera" style="font-size: 8px;"></i>
+                        </button>
+                    </div>
+                    <div class="user-text">
+                        <h6>{{ request.user.get_full_name|default:request.user.username }}</h6>
+                        <p class="text-muted mb-0">
+                            {% if request.user.profile.role %}
+                                {{ request.user.profile.get_role_display }}
+                            {% else %}
+                                Administrator
+                            {% endif %}
+                        </p>
+                        <small class="text-success">
+                            <i class="fas fa-circle"></i> Online
+                        </small>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{% url 'users:profile' %}">
+                    <i class="fas fa-user text-primary"></i> 
+                    <span>My Profile</span>
+                </a>
+                <a class="dropdown-item" href="{% url 'users:profile_edit' %}">
+                    <i class="fas fa-edit text-secondary"></i> 
+                    <span>Edit Profile</span>
+                </a>
+                <a class="dropdown-item" href="{% url 'users:inbox' %}">
+                    <i class="fas fa-envelope text-success"></i> 
+                    <span>Inbox</span>
+                    <span class="badge bg-success" id="header-message-count" style="display: none;"></span>
+                </a>
+                <a class="dropdown-item" href="{% url 'users:notifications' %}">
+                    <i class="fas fa-bell text-warning"></i> 
+                    <span>Notifications</span>
+                    <span class="badge bg-warning" id="header-notification-count" style="display: none;"></span>
+                </a>
+                <a class="dropdown-item" href="#" onclick="openSettingsModal()">
+                    <i class="fas fa-cog text-info"></i> 
+                    <span>Settings</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#" onclick="showHelp()">
+                    <i class="fas fa-question-circle text-info"></i> 
+                    <span>Help & Support</span>
+                </a>
+                <a class="dropdown-item" href="{% url 'users:logout' %}" onclick="return confirm('Are you sure you want to logout?')">
+                    <i class="fas fa-sign-out-alt text-danger"></i> 
+                    <span>Logout</span>
+                </a>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<!-- Profile Picture Upload Modal -->
+<div class="modal fade" id="profilePictureModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-camera"></i> Update Profile Picture
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="profilePictureForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div class="avatar avatar-xl">
+                            {% if request.user.profile.profile_picture %}
+                                <img src="{{ request.user.profile.profile_picture.url }}" alt="Current Picture" class="avatar-img rounded-circle" id="current-picture">
+                            {% else %}
+                                <img src="{% static 'assets/img/profiles/avatar-01.jpg' %}" alt="Default Picture" class="avatar-img rounded-circle" id="current-picture">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile_picture">Choose New Picture</label>
+                        <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*" required>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Accepted formats: JPG, PNG, GIF. Max size: 2MB. Recommended: 400x400px
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <img id="image-preview" src="#" alt="Preview" 
+                             style="display: none; max-width: 100%; height: 200px; object-fit: cover;" 
+                             class="rounded border">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="upload-btn">
+                        <i class="fas fa-upload"></i> Upload Picture
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog"></i> Account Settings
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="settingsForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Theme Preference</label>
+                                <select class="form-control" name="theme_preference">
+                                    <option value="light" {% if request.user.profile.theme_preference == 'light' %}selected{% endif %}>Light</option>
+                                    <option value="dark" {% if request.user.profile.theme_preference == 'dark' %}selected{% endif %}>Dark</option>
+                                    <option value="auto" {% if request.user.profile.theme_preference == 'auto' %}selected{% endif %}>Auto</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Language</label>
+                                <select class="form-control" name="language_preference">
+                                    <option value="en" {% if request.user.profile.language_preference == 'en' %}selected{% endif %}>English</option>
+                                    <option value="af" {% if request.user.profile.language_preference == 'af' %}selected{% endif %}>Afrikaans</option>
+                                    <option value="zu" {% if request.user.profile.language_preference == 'zu' %}selected{% endif %}>Zulu</option>
+                                    <option value="xh" {% if request.user.profile.language_preference == 'xh' %}selected{% endif %}>Xhosa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notification Preferences</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="email_notifications" checked>
+                                    <label class="form-check-label">Email Notifications</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="document_updates" checked>
+                                    <label class="form-check-label">Document Updates</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="meeting_reminders" checked>
+                                    <label class="form-check-label">Meeting Reminders</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="system_updates">
+                                    <label class="form-check-label">System Updates</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="weekly_digest" checked>
+                                    <label class="form-check-label">Weekly Digest</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-info" onclick="saveSettings()">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug panel (remove in production) -->
+<div id="debug-panel" style="position: fixed; bottom: 10px; right: 10px; background: #000; color: #fff; padding: 10px; border-radius: 5px; z-index: 9999; display: none;">
+    <h6 style="color: #fff;">Debug Panel</h6>
+    <button onclick="testNotifications()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin: 2px;">
+        Test Notifications
+    </button>
+    <button onclick="testMessages()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin: 2px;">
+        Test Messages
+    </button>
+    <button onclick="console.clear()" style="background: #ffc107; color: black; border: none; padding: 5px 10px; border-radius: 3px; margin: 2px;">
+        Clear Console
+    </button>
+    <button onclick="$('#debug-panel').hide()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin: 2px;">
+        Hide
+    </button>
+</div>
+
+<style>
+/* Search Suggestions */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: none;
+}
+
+.search-suggestion-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
+}
+
+.search-suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.search-suggestion-type {
+    font-size: 11px;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Notification Badges */
+.notification-count, .message-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+    line-height: 18px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Dropdown Enhancements */
+.quick-actions-menu {
+    min-width: 280px;
+}
+
+.quick-actions-menu .dropdown-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.quick-actions-menu .dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.quick-actions-menu .dropdown-item span {
+    display: block;
+    font-weight: 500;
+}
+
+.quick-actions-menu .dropdown-item small {
+    display: block;
+    margin-top: 2px;
+}
+
+/* FIX: Notification and Message Dropdowns - Remove double scrollbars */
+.notifications, .messages {
+    min-width: 320px;
+    max-height: 400px;
+    overflow: visible; /* Remove overflow from main container */
+}
+
+.noti-content {
+    max-height: 300px;
+    overflow: visible; /* Remove overflow from content wrapper */
+}
+
+.notification-list {
+    max-height: 300px;
+    overflow-y: auto; /* Only the list should scroll */
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.notification-message {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f1f1;
+    transition: background-color 0.2s;
+    margin: 0; /* Remove any margin */
+}
+
+.notification-message:hover {
+    background-color: #f8f9fa;
+}
+
+.notification-message:last-child {
+    border-bottom: none;
+}
+
+.user-menu-dropdown {
+    min-width: 250px;
+}
+
+.user-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    margin: -5px -5px 0 -5px;
+}
+
+.avatar-xl {
+    width: 80px;
+    height: 80px;
+}
+
+.avatar-xl .avatar-img {
+    width: 80px;
+    height: 80px;
+}
+
+/* Loading States */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Additional CSS for floating alerts */
+.floating-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: none;
+}
+
+.floating-alert .close {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+.floating-alert .close:hover {
+    opacity: 1;
+}
+
+.notification-message.unread {
+    background-color: #f8f9fa;
+    border-left: 3px solid #007bff;
+}
+
+.notification-message.read {
+    opacity: 0.7;
+}
+
+#debug-panel {
+    max-width: 200px;
+    font-size: 12px;
+}
+
+#debug-panel h6 {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#debug-panel button {
+    display: block;
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 11px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .top-nav-search {
+        display: none;
+    }
+    
+    .quick-actions-menu,
+    .notifications,
+    .messages,
+    .user-menu-dropdown {
+        min-width: 250px;
+    }
+    
+    .floating-alert {
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+    }
+    
+    #debug-panel {
+        bottom: 5px;
+        right: 5px;
+        padding: 5px;
+        max-width: 150px;
+    }
+}
+</style>
+
+<script>
+// Wait for jQuery to be loaded
+(function() {
+    'use strict';
+    
+    function waitForJQuery(callback) {
+        if (typeof jQuery !== 'undefined') {
+            callback(jQuery);
+        } else {
+            setTimeout(function() {
+                waitForJQuery(callback);
+            }, 100);
+        }
+    }
+    
+    waitForJQuery(function($) {
+        console.log('✅ jQuery loaded, initializing header...');
+        
+        $(document).ready(function() {
+            initializeHeader();
+        });
+        
+        function initializeHeader() {
+            console.log('=== HEADER INITIALIZED ===');
+            console.log('Current user:', '{{ request.user.username }}');
+            
+            // Clean up any existing event handlers
+            $(document).off('.header');
+            
+            // Initialize all components
+            initializeSearch();
+            initializeProfilePicture();
+            initializeSettings();
+            initializeTooltips();
+            
+            // Load notifications and messages immediately
+            loadNotifications();
+            loadMessages();
+            
+            // Set up auto-refresh intervals
+            setupAutoRefresh();
+            
+            // Show debug panel temporarily
+            showDebugPanel();
+            
+            // Update online status
+            updateOnlineStatus();
+            
+            console.log('=== HEADER SETUP COMPLETE ===');
+        }
+
+        // ===========================================
+        // NOTIFICATION FUNCTIONS
+        // ===========================================
+
+        function loadNotifications() {
+            console.log('🔔 Loading notifications...');
+            
+            $.ajax({
+                url: '{% url "users:api_notifications" %}',
+                type: 'GET',
+                timeout: 10000,
+                success: function(data) {
+                    console.log('✅ Notifications loaded successfully:', data);
+                    updateNotificationDisplay(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error loading notifications:', status, error);
+                    showStaticNotifications();
+                }
+            });
+        }
+
+        function updateNotificationDisplay(notifications) {
+            console.log('🔄 Updating notification display with', notifications.length, 'notifications');
+            
+            const $list = $('#notification-list');
+            const $count = $('#notification-count');
+            const $headerCount = $('#header-notification-count');
+            
+            $list.empty();
+            
+            if (notifications && notifications.length > 0) {
+                const unreadCount = notifications.filter(n => !n.is_read).length;
+                console.log('📊 Unread notifications:', unreadCount);
+                
+                if (unreadCount > 0) {
+                    $count.text(unreadCount).show();
+                    $headerCount.text(unreadCount).show();
+                } else {
+                    $count.hide();
+                    $headerCount.hide();
+                }
+                
+                notifications.forEach(function(notification, index) {
+                    const $item = $(`
+                        <li class="notification-message ${notification.is_read ? 'read' : 'unread'}">
+                            <a href="#" onclick="markNotificationRead(${notification.id}); return false;">
+                                <div class="media d-flex">
+                                    <span class="avatar avatar-sm flex-shrink-0">
+                                        <i class="fas ${notification.icon} text-primary"></i>
+                                    </span>
+                                    <div class="media-body flex-grow-1">
+                                        <p class="noti-details">
+                                            <strong>${notification.title}</strong><br>
+                                            <small>${notification.message}</small>
+                                        </p>
+                                        <p class="noti-time">
+                                            <span class="notification-time">${notification.time_ago}</span>
+                                        </p>
+                                    </div>
+                                    ${!notification.is_read ? '<span class="badge badge-primary">New</span>' : ''}
+                                </div>
+                            </a>
+                        </li>
+                    `);
+                    $list.append($item);
+                });
+                
+                console.log('✅ Notification display updated successfully');
+            } else {
+                console.log('📭 No notifications to display');
+                $count.hide();
+                $headerCount.hide();
+                showStaticNotifications();
+            }
+        }
+
+        function showStaticNotifications() {
+            const $list = $('#notification-list');
+            $list.html(`
+                <li class="notification-message">
+                    <div class="text-center p-3">
+                        <i class="fas fa-bell fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No new notifications</p>
+                        <small class="text-muted">You're all caught up!</small>
+                    </div>
+                </li>
+            `);
+        }
+
+        window.markNotificationRead = function(id) {
+            console.log('✅ Marking notification as read:', id);
+            
+            $.ajax({
+                url: '{% url "users:mark_notification_read" 0 %}'.replace('0', id),
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                },
+                success: function() {
+                    console.log('✅ Notification marked as read successfully');
+                    loadNotifications();
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error marking notification as read:', error);
+                    showAlert('Error marking notification as read', 'error');
+                }
+            });
+        };
+
+        window.clearAllNotifications = function() {
+            if (confirm('Are you sure you want to clear all notifications?')) {
+                $.ajax({
+                    url: '{% url "users:clear_all_notifications" %}',
+                    type: 'POST',
+                    data: {
+                        'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                    },
+                    success: function() {
+                        loadNotifications();
+                        showAlert('All notifications cleared', 'success');
+                    },
+                    error: function() {
+                        showAlert('Error clearing notifications', 'error');
+                    }
+                });
+            }
+        };
+
+        // ===========================================
+        // MESSAGE FUNCTIONS
+        // ===========================================
+
+        function loadMessages() {
+            console.log('💬 Loading messages...');
+            
+            $.ajax({
+                url: '{% url "users:api_messages" %}',
+                type: 'GET',
+                timeout: 10000,
+                success: function(data) {
+                    console.log('✅ Messages loaded successfully:', data);
+                    updateMessageDisplay(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error loading messages:', status, error);
+                    showStaticMessages();
+                }
+            });
+        }
+
+        function updateMessageDisplay(messages) {
+            const $list = $('#message-list');
+            const $count = $('#message-count');
+            const $headerCount = $('#header-message-count');
+            
+            $list.empty();
+            
+            if (messages && messages.length > 0) {
+                const unreadCount = messages.filter(m => !m.is_read).length;
+                
+                if (unreadCount > 0) {
+                    $count.text(unreadCount).show();
+                    $headerCount.text(unreadCount).show();
+                } else {
+                    $count.hide();
+                    $headerCount.hide();
+                }
+                
+                messages.forEach(function(message) {
+                    const $item = $(`
+                        <li class="notification-message ${message.is_read ? 'read' : 'unread'}">
+                            <a href="{% url 'users:message_detail' 0 %}".replace('0', message.id)">
+                                <div class="media d-flex">
+                                    <span class="avatar avatar-sm flex-shrink-0">
+                                        <img class="avatar-img rounded-circle" src="${message.sender_avatar}" alt="${message.sender_name}" onerror="this.src='{% static 'assets/img/profiles/avatar-01.jpg' %}'">
+                                    </span>
+                                    <div class="media-body flex-grow-1">
+                                        <p class="noti-details">
+                                            <span class="noti-title">${message.sender_name}</span><br>
+                                            <small>${message.subject}</small>
+                                        </p>
+                                        <p class="noti-time">
+                                            <span class="notification-time">${message.time_ago}</span>
+                                        </p>
+                                    </div>
+                                    ${!message.is_read ? '<span class="badge badge-success">New</span>' : ''}
+                                </div>
+                            </a>
+                        </li>
+                    `);
+                    $list.append($item);
+                });
+            } else {
+                $count.hide();
+                $headerCount.hide();
+                showStaticMessages();
+            }
+        }
+
+        function showStaticMessages() {
+            const $list = $('#message-list');
+            $list.html(`
+                <li class="notification-message">
+                    <div class="text-center p-3">
+                        <i class="fas fa-envelope fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No new messages</p>
+                        <small class="text-muted">Your inbox is empty</small>
+                    </div>
+                </li>
+            `);
+        }
+
+        // ===========================================
+        // OTHER FUNCTIONS
+        // ===========================================
+
+        function initializeSearch() {
+            let searchTimeout;
+            
+            $('#global-search-input').off('input.header').on('input.header', function() {
+                const query = $(this).val().trim();
+                clearTimeout(searchTimeout);
+                
+                if (query.length >= 2) {
+                    searchTimeout = setTimeout(function() {
+                        loadSearchSuggestions(query);
+                    }, 300);
+                } else {
+                    $('#search-suggestions').hide();
+                }
+            });
+            
+            $(document).off('click.header').on('click.header', function(e) {
+                if (!$(e.target).closest('.top-nav-search').length) {
+                    $('#search-suggestions').hide();
+                }
+            });
+        }
+
+        function loadSearchSuggestions(query) {
+            $.ajax({
+                url: '{% url "search:autocomplete" %}',
+                data: { q: query },
+                success: function(suggestions) {
+                    const $container = $('#search-suggestions');
+                    $container.empty();
+                    
+                    if (suggestions.length > 0) {
+                        suggestions.forEach(function(suggestion) {
+                            const $item = $(`
+                                <div class="search-suggestion-item" data-url="${suggestion.url}">
+                                    <div class="search-suggestion-type">${suggestion.type}</div>
+                                    <div>${suggestion.text}</div>
+                                </div>
+                            `);
+                            $container.append($item);
+                        });
+                        $container.show();
+                    } else {
+                        $container.append('<div class="search-suggestion-item">No suggestions found</div>');
+                        $container.show();
+                    }
+                },
+                error: function() {
+                    $('#search-suggestions').hide();
+                }
+            });
+        }
+
+        function initializeProfilePicture() {
+            $('#profile_picture').off('change.header').on('change.header', function() {
+                const file = this.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                        showAlert('File size must be less than 2MB', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                    if (!allowedTypes.includes(file.type)) {
+                        showAlert('Please select a valid image file', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#image-preview').attr('src', e.target.result).show();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            $('#profilePictureForm').off('submit.header').on('submit.header', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const $uploadBtn = $('#upload-btn');
+                
+                $uploadBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+                
+                $.ajax({
+                    url: '{% url "users:update_profile_picture" %}',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            const newImageUrl = response.image_url + '?t=' + new Date().getTime();
+                            $('.user-img img, .avatar img, #current-picture').attr('src', newImageUrl);
+                            
+                            $('#profilePictureModal').modal('hide');
+                            showAlert('Profile picture updated successfully!', 'success');
+                            
+                            $('#profilePictureForm')[0].reset();
+                            $('#image-preview').hide();
+                        } else {
+                            showAlert(response.error || 'Error updating profile picture', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMsg = 'Error updating profile picture';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        showAlert(errorMsg, 'error');
+                    },
+                    complete: function() {
+                        $uploadBtn.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload Picture');
+                    }
+                });
+            });
+        }
+
+        function initializeSettings() {
+            // Settings initialization
+        }
+
+        function initializeTooltips() {
+            console.log('🔧 Initializing tooltips...');
+            
+            // Dispose of existing tooltips first
+            $('[data-toggle="tooltip"], [title]').each(function() {
+                const tooltip = $(this).data('bs.tooltip');
+                if (tooltip) {
+                    tooltip.dispose();
+                }
+            });
+            
+            // Initialize new tooltips
+            $('[data-toggle="tooltip"], [title]').tooltip({
+                trigger: 'hover',
+                placement: 'auto',
+                container: 'body'
+            });
+            
+            console.log('✅ Tooltips initialized');
+        }
+
+        function setupAutoRefresh() {
+            setInterval(loadNotifications, 30000);
+            setInterval(loadMessages, 45000);
+        }
+
+        function updateOnlineStatus() {
+            $.ajax({
+                url: '{% url "users:update_online_status" %}',
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                }
+            });
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertClass = {
+                'success': 'alert-success',
+                'error': 'alert-danger',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            }[type] || 'alert-info';
+            
+            const icon = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            }[type] || 'fa-info-circle';
+            
+            const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show floating-alert" role="alert">
+                    <i class="fas ${icon}"></i> ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            
+            $('.floating-alert').remove();
+            $('body').append(alertHtml);
+            
+            setTimeout(function() {
+                $('.floating-alert').fadeOut(function() {
+                    $(this).remove();
+                });
+            }, 5000);
+        }
+
+        function showDebugPanel() {
+            $('#debug-panel').show();
+            setTimeout(function() {
+                $('#debug-panel').fadeOut();
+            }, 15000);
+        }
+
+        // Global functions
+        window.openProfilePictureModal = function() {
+            $('#profilePictureModal').modal('show');
+        };
+
+        window.openSettingsModal = function() {
+            $('#settingsModal').modal('show');
+        };
+
+        window.saveSettings = function() {
+            const formData = new FormData($('#settingsForm')[0]);
+            
+            $.ajax({
+                url: '{% url "users:update_settings" %}',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        $('#settingsModal').modal('hide');
+                        showAlert('Settings updated successfully!', 'success');
+                    } else {
+                        showAlert(response.error || 'Error updating settings', 'error');
+                    }
+                },
+                error: function() {
+                    showAlert('Error updating settings', 'error');
+                }
+            });
+        };
+
+        window.testNotifications = function() {
+            loadNotifications();
+        };
+
+        window.testMessages = function() {
+            loadMessages();
+        };
+
+        window.showHelp = function() {
+            alert('Help functionality coming soon!');
+        };
+
+        // Event handlers
+        $(document).off('click.header', '.search-suggestion-item').on('click.header', '.search-suggestion-item', function() {
+            const url = $(this).data('url');
+            if (url) {
+                window.location.href = url;
+            }
+        });
+
+        $(document).keydown(function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.keyCode === 75) {
+                e.preventDefault();
+                $('#global-search-input').focus();
+            }
+            
+            if (e.keyCode === 27) {
+                $('.dropdown-menu').hide();
+                $('#search-suggestions').hide();
+            }
+        });
+
+        console.log('🎉 Header JavaScript fully loaded and ready!');
+    });
+})();
+</script>
+
+<!-- Additional CSS -->
+<style>
+.floating-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: none;
+}
+
+.floating-alert .close {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+.floating-alert .close:hover {
+    opacity: 1;
+}
+
+.notification-message.unread {
+    background-color: #f8f9fa;
+    border-left: 3px solid #007bff;
+}
+
+.notification-message.read {
+    opacity: 0.7;
+}
+
+#debug-panel {
+    max-width: 200px;
+    font-size: 12px;
+}
+
+#debug-panel h6 {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#debug-panel button {
+    display: block;
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 11px;
+}
+
+@media (max-width: 768px) {
+    .floating-alert {
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+    }
+    
+    #debug-panel {
+        bottom: 5px;
+        right: 5px;
+        padding: 5px;
+        max-width: 150px;
+    }
+}
+</style>
+
+
+

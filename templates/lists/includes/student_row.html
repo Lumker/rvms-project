@@ -1,0 +1,42 @@
+<tr>
+    <td>
+        <div class="form-check check-tables">
+            <input class="form-check-input" type="checkbox" value="{{ student.id }}"/>
+        </div>
+    </td>
+    <td>{{ student.id_number }}</td>
+    <td>
+        <h2 class="table-avatar">
+            <a href="{% url 'student_details' student.id %}" class="avatar avatar-sm me-2">
+                {% if student.profile_pic %}
+                <img class="avatar-img rounded-circle" src="{{ student.profile_pic.url }}" alt="User Image"/>
+                {% else %}
+                <img class="avatar-img rounded-circle" src="{% static 'img/profiles/avatar-01.jpg' %}" alt="User Image"/>
+                {% endif %}
+            </a>
+            <a href="{% url 'student_details' student.id %}">{{ student.user.first_name }} {{ student.user.last_name }}</a>
+        </h2>
+    </td>
+    <td>{{ student.department.name }}</td>
+    <td>{{ student.date_of_birth|date:"d M Y" }}</td>
+    <td>{{ student.parent_name }}</td>
+    <td>{{ student.phone }}</td>
+    <td>{{ student.address }}</td>
+    <td class="text-end">
+        <div class="actions">
+            <a href="{% url 'student_details' student.id %}" class="btn btn-sm bg-success-light me-2">
+                <i class="feather-eye"></i>
+            </a>
+            
+            {% if user.is_staff %}
+            <a href="{% url 'edit_student' student.id %}" class="btn btn-sm bg-danger-light me-2">
+                <i class="feather-edit"></i>
+            </a>
+            
+            <a href="{% url 'delete_student' student.id %}" class="btn btn-sm bg-danger-light">
+                <i class="feather-trash"></i>
+            </a>
+            {% endif %}
+        </div>
+    </td>
+</tr>

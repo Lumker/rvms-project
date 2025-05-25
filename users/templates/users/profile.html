@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">My Profile</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Profile</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'users:profile_edit' %}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Profile
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Overview -->
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <div class="avatar avatar-xl mb-3">
+                        <img src="{{ profile.get_avatar_url }}" alt="Profile Picture" class="avatar-img rounded-circle">
+                    </div>
+                    <h5 class="card-title">{{ user.get_full_name|default:user.username }}</h5>
+                    <p class="text-muted">{{ profile.get_role_display }}</p>
+                    {% if profile.department %}
+                    <p class="text-muted"><i class="fas fa-building"></i> {{ profile.department }}</p>
+                    {% endif %}
+                    
+                    <div class="row text-center mt-3">
+                        <div class="col-4">
+                            <h6 class="text-primary">{{ profile.login_count|default:0 }}</h6>
+                            <small class="text-muted">Logins</small>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="text-success">{{ user.notifications.count }}</h6>
+                            <small class="text-muted">Notifications</small>
+                        </div>
+                        <div class="col-4">
+                            <h6 class="text-info">{{ user.received_messages.count }}</h6>
+                            <small class="text-muted">Messages</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title"><i class="fas fa-shield-alt"></i> Account Status</h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Account Status:</span>
+                        {% if user.is_active %}
+                            <span class="badge badge-success">Active</span>
+                        {% else %}
+                            <span class="badge badge-danger">Inactive</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Profile Status:</span>
+                        {% if profile.is_verified %}
+                            <span class="badge badge-success">Verified</span>
+                        {% else %}
+                            <span class="badge badge-warning">Pending</span>
+                        {% endif %}
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span>Registration:</span>
+                        <span class="badge badge-info">{{ profile.get_registration_status_display }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Details -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title"><i class="fas fa-user"></i> Personal Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Full Name:</strong></td>
+                                    <td>{{ user.get_full_name|default:user.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ user.email }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phone:</strong></td>
+                                    <td>{{ user.phone_number|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date of Birth:</strong></td>
+                                    <td>{{ user.date_of_birth|date:"F d, Y"|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Role:</strong></td>
+                                    <td>{{ profile.get_role_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Department:</strong></td>
+                                    <td>{{ profile.department|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date Joined:</strong></td>
+                                    <td>{{ user.date_joined|date:"F d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Login:</strong></td>
+                                    <td>{{ user.last_login|date:"F d, Y H:i"|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if profile.bio %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><strong>About Me:</strong></h6>
+                            <p>{{ profile.bio }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if profile.address %}
+                    <hr>
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><strong>Address:</strong></h6>
+                            <p>{{ profile.address }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Activity Log -->
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title"><i class="fas fa-history"></i> Recent Activity</h6>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">Profile Updated</h6>
+                                <p class="timeline-description">{{ profile.updated_at|date:"F d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">Last Login</h6>
+                                <p class="timeline-description">{{ user.last_login|date:"F d, Y H:i"|default:"Never" }}</p>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <h6 class="timeline-title">Account Created</h6>
+                                <p class="timeline-description">{{ user.date_joined|date:"F d, Y H:i" }}</p>
+                            </div>
+                            </div>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Preferences -->
+           <div class="card">
+               <div class="card-header">
+                   <h6 class="card-title"><i class="fas fa-cog"></i> Preferences</h6>
+               </div>
+               <div class="card-body">
+                   <div class="row">
+                       <div class="col-md-6">
+                           <p><strong>Theme:</strong> {{ profile.get_theme_preference_display }}</p>
+                           <p><strong>Language:</strong> {{ profile.get_language_preference_display }}</p>
+                       </div>
+                       <div class="col-md-6">
+                           <p><strong>Email Notifications:</strong> 
+                               {% if profile.notification_settings.email_notifications %}
+                                   <span class="text-success">Enabled</span>
+                               {% else %}
+                                   <span class="text-muted">Disabled</span>
+                               {% endif %}
+                           </p>
+                           <p><strong>Document Updates:</strong> 
+                               {% if profile.notification_settings.document_updates %}
+                                   <span class="text-success">Enabled</span>
+                               {% else %}
+                                   <span class="text-muted">Disabled</span>
+                               {% endif %}
+                           </p>
+                       </div>
+                   </div>
+                   <div class="text-center">
+                       <a href="{% url 'users:profile_edit' %}" class="btn btn-outline-primary btn-sm">
+                           <i class="fas fa-edit"></i> Edit Preferences
+                       </a>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+
+<style>
+.avatar-xl {
+   width: 120px;
+   height: 120px;
+}
+
+.avatar-xl .avatar-img {
+   width: 120px;
+   height: 120px;
+}
+
+.timeline {
+   position: relative;
+   padding-left: 30px;
+}
+
+.timeline-item {
+   position: relative;
+   padding-bottom: 20px;
+}
+
+.timeline-item:not(:last-child):before {
+   content: '';
+   position: absolute;
+   left: -21px;
+   top: 30px;
+   height: calc(100% - 10px);
+   width: 2px;
+   background-color: #e9ecef;
+}
+
+.timeline-marker {
+   position: absolute;
+   left: -25px;
+   top: 5px;
+   width: 12px;
+   height: 12px;
+   border-radius: 50%;
+   border: 2px solid #fff;
+   box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-title {
+   margin-bottom: 5px;
+   font-weight: 600;
+   font-size: 14px;
+}
+
+.timeline-description {
+   margin-bottom: 0;
+   font-size: 12px;
+   color: #6c757d;
+}
+</style>
+{% endblock %}

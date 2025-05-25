@@ -1,0 +1,145 @@
+{% extends "documents/base.html" %}
+{% load static %}
+
+{% block title %}{{ template.name }} - Template Details{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Template Details</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'documents:dashboard' %}">Documents</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'documents:template_list' %}">Templates</a></li>
+                    <li class="breadcrumb-item active">{{ template.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'documents:template_update' template.pk %}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Template
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-file-contract"></i> {{ template.name }}
+                    </h4>
+                    <div class="float-right">
+                        {% if template.is_active %}
+                            <span class="badge badge-success badge-lg">Active</span>
+                        {% else %}
+                            <span class="badge badge-secondary badge-lg">Inactive</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td width="30%"><strong>Template Name:</strong></td>
+                                    <td>{{ template.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Description:</strong></td>
+                                    <td>{{ template.description|default:"No description provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Template File:</strong></td>
+                                    <td><code>{{ template.template_file }}</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if template.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ template.created_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Modified:</strong></td>
+                                    <td>{{ template.updated_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Documents Using Template:</strong></td>
+                                    <td>
+                                        <span class="badge badge-info">{{ template.proof_documents.count }}</span>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'documents:template_update' template.pk %}" class="btn btn-outline-primary btn-block">
+                            <i class="fas fa-edit"></i> Edit Template
+                        </a>
+                        <a href="{% url 'documents:proof_create' %}" class="btn btn-outline-success btn-block">
+                            <i class="fas fa-plus"></i> Create Document
+                        </a>
+                        <a href="{% url 'documents:template_list' %}" class="btn btn-outline-secondary btn-block">
+                            <i class="fas fa-list"></i> All Templates
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            {% if template.proof_documents.exists %}
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-file-alt"></i> Recent Documents
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% for document in template.proof_documents.all|slice:":5" %}
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <div>
+                            <a href="{% url 'documents:proof_detail' document.pk %}" class="text-decoration-none">
+                                {{ document.document_number }}
+                            </a>
+                            <br>
+                            <small class="text-muted">{{ document.resident.full_name }}</small>
+                        </div>
+                        <span class="badge badge-{% if document.status == 'pending' %}warning{% elif document.status == 'approved' %}info{% elif document.status == 'generated' %}success{% else %}secondary{% endif %}">
+                            {{ document.get_status_display }}
+                        </span>
+                    </div>
+                    {% endfor %}
+                    
+                    {% if template.proof_documents.count > 5 %}
+                    <a href="{% url 'documents:proof_list' %}?template={{ template.pk }}" class="btn btn-sm btn-outline-primary w-100 mt-2">
+                        View All Documents
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

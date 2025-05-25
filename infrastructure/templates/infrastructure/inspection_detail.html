@@ -1,0 +1,344 @@
+<!-- infrastructure/templates/infrastructure/inspection_detail.html -->
+
+{% extends "base.html" %}
+{% load static %}
+{% load infrastructure_tags %}
+
+{% block title %}Inspection Details - {{ inspection.asset.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .section-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .info-item {
+        margin-bottom: 15px;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+    .info-value {
+        color: #6c757d;
+    }
+    .action-required {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .photo-gallery img {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        margin: 5px;
+        cursor: pointer;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-clipboard-check text-success"></i> Inspection Details
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:inspection_list' %}">Inspections</a></li>
+                    <li class="breadcrumb-item active">{{ inspection.asset.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'infrastructure:inspection_update' inspection.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Inspection
+                    </a>
+                    <a href="{% url 'infrastructure:asset_detail' inspection.asset.pk %}" class="btn btn-info">
+                        <i class="fas fa-cogs"></i> View Asset
+                    </a>
+                    {% if inspection.immediate_actions_required %}
+                    <a href="{% url 'infrastructure:maintenance_create' %}?asset={{ inspection.asset.pk }}" class="btn btn-warning">
+                        <i class="fas fa-wrench"></i> Schedule Maintenance
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Immediate Actions Alert -->
+    {% if inspection.immediate_actions_required %}
+    <div class="action-required">
+        <h5 class="text-warning">
+            <i class="fas fa-exclamation-triangle"></i> Immediate Actions Required
+        </h5>
+        <p>{{ inspection.immediate_actions_required }}</p>
+        <div class="mt-3">
+            <a href="{% url 'infrastructure:maintenance_create' %}?asset={{ inspection.asset.pk }}" class="btn btn-warning">
+                <i class="fas fa-wrench"></i> Schedule Emergency Maintenance
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Inspection Overview -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="detail-card">
+                <div class="section-header">
+                    <h5><i class="fas fa-info-circle text-primary"></i> Inspection Overview</h5>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="info-label">Asset</div>
+                            <div class="info-value">
+                                <strong>{{ inspection.asset.name }}</strong>
+                                <br><small>{{ inspection.asset.asset_id }}</small>
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Inspection Date</div>
+                            <div class="info-value">{{ inspection.inspection_date|date:"F d, Y" }}</div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Inspection Type</div>
+                            <div class="info-value">
+                                <span class="badge badge-info">{{ inspection.get_inspection_type_display }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="info-item">
+                            <div class="info-label">Inspector</div>
+                            <div class="info-value">
+                                {% if inspection.inspector %}
+                                    {{ inspection.inspector.get_full_name }}
+                                    <br><small>{{ inspection.inspector.profile.get_role_display }}</small>
+                                {% else %}
+                                    <span class="text-muted">Not specified</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Overall Condition</div>
+                            <div class="info-value">
+                                {% condition_badge inspection.overall_condition %}
+                            </div>
+                        </div>
+                        
+                        <div class="info-item">
+                            <div class="info-label">Priority Level</div>
+                            <div class="info-value">
+                                <span class="badge badge-{{ inspection.priority_level|condition_color }}">
+                                    {{ inspection.get_priority_level_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="detail-card">
+                <div class="section-header">
+                    <h5><i class="fas fa-map-marker-alt text-success"></i> Asset Location</h5>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Village</div>
+                    <div class="info-value">{{ inspection.asset.village.name }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Category</div>
+                    <div class="info-value">{{ inspection.asset.get_category_display }}</div>
+                </div>
+                
+                <div class="info-item">
+                    <div class="info-label">Operational Status</div>
+                    <div class="info-value">
+                        {% if inspection.operational_status %}
+                            <span class="badge badge-success">Operational</span>
+                        {% else %}
+                            <span class="badge badge-danger">Non-Operational</span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Findings -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="detail-card">
+                <div class="section-header">
+                    <h5><i class="fas fa-search text-info"></i> Detailed Findings</h5>
+                </div>
+                
+                <div class="row">
+                    {% if inspection.structural_condition %}
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-label">Structural Condition</div>
+                            <div class="info-value">
+                                {% condition_badge inspection.structural_condition %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if inspection.electrical_condition %}
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-label">Electrical Condition</div>
+                            <div class="info-value">
+                                {% condition_badge inspection.electrical_condition %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if inspection.mechanical_condition %}
+                    <div class="col-md-4">
+                        <div class="info-item">
+                            <div class="info-label">Mechanical Condition</div>
+                            <div class="info-value">
+                                {% condition_badge inspection.mechanical_condition %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if inspection.safety_concerns %}
+                <div class="info-item">
+                    <div class="info-label">Safety Concerns</div>
+                    <div class="info-value">
+                        <div class="alert alert-warning">
+                            {{ inspection.safety_concerns }}
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="detail-card">
+                <div class="section-header">
+                    <h5><i class="fas fa-lightbulb text-warning"></i> Recommendations</h5>
+                </div>
+                
+                {% if inspection.maintenance_recommendations %}
+                <div class="info-item">
+                    <div class="info-label">Maintenance Recommendations</div>
+                    <div class="info-value">{{ inspection.maintenance_recommendations }}</div>
+                </div>
+                {% endif %}
+                
+                {% if inspection.upgrade_recommendations %}
+                <div class="info-item">
+                    <div class="info-label">Upgrade Recommendations</div>
+                    <div class="info-value">{{ inspection.upgrade_recommendations }}</div>
+                </div>
+                {% endif %}
+                
+                {% if inspection.next_inspection_date %}
+                <div class="info-item">
+                    <div class="info-label">Next Inspection Due</div>
+                    <div class="info-value">
+                        <span class="badge badge-info">{{ inspection.next_inspection_date|date:"F d, Y" }}</span>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Photos and Documentation -->
+    {% if inspection.inspection_photos or inspection.inspection_report %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="detail-card">
+                <div class="section-header">
+                    <h5><i class="fas fa-camera text-purple"></i> Documentation</h5>
+                </div>
+                
+                {% if inspection.inspection_photos %}
+                <div class="info-item">
+                    <div class="info-label">Inspection Photos</div>
+                    <div class="photo-gallery">
+                        <img src="{{ inspection.inspection_photos.url }}" alt="Inspection Photo" 
+                             onclick="showPhotoModal('{{ inspection.inspection_photos.url }}')">
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if inspection.inspection_report %}
+                <div class="info-item">
+                    <div class="info-label">Inspection Report</div>
+                    <div class="info-value">
+                        <a href="{{ inspection.inspection_report.url }}" target="_blank" class="btn btn-outline-info">
+                            <i class="fas fa-file-pdf"></i> View Report
+                        </a>
+                    </div>
+               </div>
+               {% endif %}
+           </div>
+       </div>
+   </div>
+   {% endif %}
+</div>
+
+<!-- Photo Modal -->
+<div class="modal fade" id="photoModal" tabindex="-1" role="dialog">
+   <div class="modal-dialog modal-lg" role="document">
+       <div class="modal-content">
+           <div class="modal-header">
+               <h5 class="modal-title">Inspection Photo</h5>
+               <button type="button" class="close" data-dismiss="modal">
+                   <span>&times;</span>
+               </button>
+           </div>
+           <div class="modal-body text-center">
+               <img id="modalPhoto" src="" alt="Inspection Photo" class="img-fluid">
+           </div>
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+function showPhotoModal(photoUrl) {
+   $('#modalPhoto').attr('src', photoUrl);
+   $('#photoModal').modal('show');
+}
+</script>
+{% endblock %}

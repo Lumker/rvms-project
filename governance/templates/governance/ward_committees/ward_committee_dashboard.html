@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ ward_committee.name }} - Performance Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .bridge-indicator {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 15px;
+        text-align: center;
+    }
+    .bridge-indicator.excellent { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+    .bridge-indicator.good { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+    .bridge-indicator.warning { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+    .bridge-indicator.critical { background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%); }
+    
+    .bridge-score {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .performance-gauge {
+        position: relative;
+        width: 150px;
+        height: 150px;
+        margin: 0 auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-chart-line"></i> Bridge Effectiveness Dashboard
+                </h3>
+                <h4 class="text-muted">Ward {{ ward_committee.ward_number }} - {{ ward_committee.name }}</h4>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'governance:community_issue_management' ward_committee.pk %}" class="btn btn-primary">
+                        <i class="fas fa-exclamation-triangle"></i> Manage Issues
+                    </a>
+                    <a href="{% url 'governance:community_engagement_create' %}?ward_committee={{ ward_committee.pk }}" class="btn btn-success">
+                        <i class="fas fa-users"></i> Plan Engagement
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bridge Effectiveness Score -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="bridge-indicator {% if bridge_indicators.performance_score >= 4 %}excellent{% elif bridge_indicators.performance_score >= 3 %}good{% elif bridge_indicators.performance_score >= 2 %}warning{% else %}critical{% endif %}">
+                <div class="bridge-score">{{ bridge_indicators.performance_score|floatformat:1 }}/5.0</div>
+                <div>Bridge Effectiveness Score</div>
+                <small>How well this committee connects community & municipality</small>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="row">
+                <div class="col-md-3">
+                    <div class="bridge-indicator">
+                        <div class="bridge-score">{{ bridge_indicators.community_engagement }}</div>
+                        <div>Community Engagements</div>
+                        <small>Last 30 days</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bridge-indicator">
+                        <div class="bridge-score">{{ bridge_indicators.active_issues }}</div>
+                        <div>Active Issues</div>
+                        <small>Awaiting resolution</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bridge-indicator">
+                        <div class="bridge-score">{{ bridge_indicators.resolution_rate|floatformat:0 }}%</div>
+                        <div>Resolution Rate</div>
+                        <small>Issues resolved</small>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bridge-indicator">
+                        <div class="bridge-score">{{ bridge_indicators.municipal_interactions }}</div>
+                        <div>Municipal Interactions</div>
+                        <small>Last 90 days</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-exclamation-triangle"></i> Recent Community Issues</h5>
+                </div>
+                <div class="card-body">
+                    {% for issue in recent_issues %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 border-bottom">
+                        <div>
+                            <strong>{{ issue.title }}</strong>
+                            <br><small class="text-muted">{{ issue.get_category_display }} • {{ issue.days_open }} days open</small>
+                        </div>
+                        <span class="badge badge-{% if issue.status == 'resolved' %}success{% elif issue.priority == 'critical' %}danger{% else %}warning{% endif %}">
+                            {{ issue.get_status_display }}
+                        </span>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No recent issues reported</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-users"></i> Recent Community Engagements</h5>
+                </div>
+                <div class="card-body">
+                    {% for engagement in recent_engagements %}
+                    <div class="d-flex justify-content-between align-items-center mb-2 p-2 border-bottom">
+                        <div>
+                            <strong>{{ engagement.title }}</strong>
+                            <br><small class="text-muted">{{ engagement.get_engagement_type_display }} • {{ engagement.date_scheduled|date:"M d" }}</small>
+                        </div>
+                        <div class="text-right">
+                            <span class="badge badge-info">{{ engagement.actual_attendance }}/{{ engagement.expected_attendance }}</span>
+                            <br><small class="text-muted">{{ engagement.attendance_rate|floatformat:0 }}%</small>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <p class="text-muted">No recent engagements</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Issue Categories Chart -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-pie"></i> Community Issues by Category</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="issueCategoriesChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Issue Categories Chart
+const ctx = document.getElementById('issueCategoriesChart').getContext('2d');
+new Chart(ctx, {
+    type: 'doughnut',
+    data: {
+        labels: [
+            {% for category in issue_categories %}
+            '{{ category.category|capfirst }}'{% if not forloop.last %},{% endif %}
+            {% endfor %}
+        ],
+        datasets: [{
+            data: [
+                {% for category in issue_categories %}
+                {{ category.count }}{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ],
+            backgroundColor: [
+                '#667eea', '#764ba2', '#f093fb', '#f5576c',
+                '#4facfe', '#00f2fe', '#43e97b', '#38f9d7'
+            ]
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

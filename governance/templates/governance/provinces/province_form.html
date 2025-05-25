@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ action }} Province - Governance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+        margin-bottom: 0;
+    }
+    .form-container {
+        background: white;
+        border-radius: 0 0 10px 10px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+    }
+    .btn-cancel {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    .btn-cancel:hover {
+        background-color: #545b62;
+        border-color: #4e555b;
+    }
+    .required-field::after {
+        content: " *";
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ action }} Province</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:province_list' %}">Provinces</a></li>
+                    <li class="breadcrumb-item active">{{ action }} Province</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8 col-md-10">
+            <div class="card form-container">
+                <div class="form-header">
+                    <h4 class="mb-0">
+                        <i class="fas fa-map-marked-alt"></i> {{ action }} Province
+                    </h4>
+                    <p class="mb-0 mt-2 opacity-75">
+                        {% if action == 'Create' %}
+                            Add a new province to the governance system
+                        {% else %}
+                            Update province information
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <div class="card-body">
+                    {% if form.errors %}
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <strong>Please correct the following errors:</strong>
+                            <ul class="mb-0 mt-2">
+                                {% for field, errors in form.errors.items %}
+                                    {% for error in errors %}
+                                        <li>
+                                            {% if field != '__all__' %}
+                                                <strong>{{ field|title }}:</strong> 
+                                            {% endif %}
+                                            {{ error }}
+                                        </li>
+                                    {% endfor %}
+                                {% endfor %}
+                            </ul>
+                            <button type="button" class="close" data-dismiss="alert">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                    {% endif %}
+
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}" class="required-field">
+                                        Province Name
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.help_text %}
+                                        <small class="form-text text-muted">{{ form.name.help_text }}</small>
+                                    {% endif %}
+                                    {% if form.name.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.name.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.code.id_for_label }}" class="required-field">
+                                        Province Code
+                                    </label>
+                                    {{ form.code }}
+                                    {% if form.code.help_text %}
+                                        <small class="form-text text-muted">{{ form.code.help_text }}</small>
+                                    {% else %}
+                                        <small class="form-text text-muted">2-3 letter code (e.g., GP, KZN)</small>
+                                    {% endif %}
+                                    {% if form.code.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {% for error in form.code.errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Info Box -->
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Note:</strong> Province codes should be unique and follow the standard South African province abbreviations (e.g., GP for Gauteng, WC for Western Cape).
+                        </div>
+
+                        <!-- Action Buttons -->
+                        <div class="form-group mt-4">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'governance:province_list' %}" class="btn btn-cancel text-white">
+                                    <i class="fas fa-arrow-left"></i> Back to List
+                                </a>
+                                
+                                <div>
+                                    {% if action == 'Update' %}
+                                        <button type="button" class="btn btn-outline-danger me-2" data-toggle="modal" data-target="#deleteConfirmModal">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    {% endif %}
+                                    
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> {{ action }} Province
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if action == 'Update' %}
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteConfirmModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the province <strong>"{{ form.instance.name }}"</strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All associated districts and municipalities will also be affected.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <form method="post" action="#" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete Province
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    // Form validation styling
+    $('form').on('submit', function() {
+        var isValid = true;
+        
+        // Remove previous validation classes
+        $('.form-control').removeClass('is-invalid is-valid');
+        
+        // Check required fields
+        $('.form-control[required]').each(function() {
+            if ($(this).val().trim() === '') {
+                $(this).addClass('is-invalid');
+                isValid = false;
+            } else {
+                $(this).addClass('is-valid');
+            }
+        });
+        
+        // Show loading state if valid
+        if (isValid) {
+            $('button[type="submit"]').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+        }
+        
+        return isValid;
+    });
+    
+    // Real-time validation
+    $('.form-control').on('blur', function() {
+        if ($(this).attr('required') && $(this).val().trim() !== '') {
+            $(this).removeClass('is-invalid').addClass('is-valid');
+        }
+    });
+    
+    // Auto-uppercase province code
+    $('#{{ form.code.id_for_label }}').on('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Animation
+    $('.card').hide().fadeIn(800);
+});
+</script>
+{% endblock %}

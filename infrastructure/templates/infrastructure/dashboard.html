@@ -1,0 +1,581 @@
+<!-- infrastructure/templates/infrastructure/dashboard.html (corrected section) -->
+
+{% extends "base.html" %}
+{% load static %}
+{% load infrastructure_tags %}
+
+{% block title %}Infrastructure Dashboard - RVMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.water {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.critical {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.maintenance {
+        background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+        color: #333;
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    .alert-urgent {
+        border-left: 4px solid #dc3545;
+        background-color: #f8f9fa;
+    }
+    .quick-actions {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .activity-item {
+        border-left: 3px solid #007bff;
+        padding-left: 15px;
+        margin-bottom: 15px;
+    }
+    .activity-item.maintenance {
+        border-left-color: #ffc107;
+    }
+    .activity-item.interruption {
+        border-left-color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-tools text-primary"></i> Infrastructure Dashboard
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Infrastructure</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'infrastructure:asset_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add Asset
+                    </a>
+                    <a href="{% url 'infrastructure:maintenance_create' %}" class="btn btn-warning">
+                        <i class="fas fa-wrench"></i> Schedule Maintenance
+                    </a>
+                    <a href="{% url 'infrastructure:analytics' %}" class="btn btn-info">
+                        <i class="fas fa-chart-bar"></i> Analytics
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_assets }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-cogs"></i> Total Assets
+                </div>
+                <small class="d-block mt-2">
+                    {{ operational_percentage }}% Operational
+                </small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card water">
+                <div class="stats-number">{{ water_sources }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-tint"></i> Water Sources
+                </div>
+                <small class="d-block mt-2">
+                    {{ operational_water_sources }} Operational
+                </small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card critical">
+                <div class="stats-number">{{ critical_condition }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-exclamation-triangle"></i> Critical Condition
+                </div>
+                <small class="d-block mt-2">
+                    Require Immediate Attention
+                </small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card maintenance">
+                <div class="stats-number">{{ overdue_inspections }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-calendar-times"></i> Overdue Inspections
+                </div>
+                <small class="d-block mt-2">
+                    Need Scheduling
+                </small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <h5 class="mb-3">
+            <i class="fas fa-bolt text-warning"></i> Quick Actions
+        </h5>
+        <div class="row">
+            <div class="col-md-3">
+                <a href="{% url 'infrastructure:water_source_create' %}" class="btn btn-outline-primary btn-block">
+                    <i class="fas fa-tint"></i><br>
+                    <small>Add Water Source</small>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'infrastructure:water_distribution_create' %}" class="btn btn-outline-info btn-block">
+                    <i class="fas fa-faucet"></i><br>
+                    <small>Add Distribution Point</small>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'infrastructure:interruption_create' %}" class="btn btn-outline-danger btn-block">
+                    <i class="fas fa-exclamation-circle"></i><br>
+                    <small>Report Interruption</small>
+                </a>
+            </div>
+            <div class="col-md-3">
+                <a href="{% url 'infrastructure:inspection_create' %}" class="btn btn-outline-success btn-block">
+                    <i class="fas fa-search"></i><br>
+                    <small>Schedule Inspection</small>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alerts and Notifications -->
+    {% if ongoing_interruptions > 0 or overdue_inspections > 0 or critical_condition > 0 %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Urgent Attention Required
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if ongoing_interruptions > 0 %}
+                    <div class="alert alert-urgent mb-0">
+                        <strong>{{ ongoing_interruptions }} Ongoing Service Interruption{{ ongoing_interruptions|pluralize }}</strong>
+                        <p class="mb-0">
+                            <a href="{% url 'infrastructure:interruption_list' %}?status=ongoing" class="alert-link">
+                                View and resolve interruptions →
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if critical_condition > 0 %}
+                    <div class="alert alert-urgent mb-0">
+                        <strong>{{ critical_condition }} Asset{{ critical_condition|pluralize }} in Critical Condition</strong>
+                        <p class="mb-0">
+                            <a href="{% url 'infrastructure:asset_list' %}?condition=critical" class="alert-link">
+                                Review critical assets →
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if overdue_inspections > 0 %}
+                    <div class="alert alert-urgent mb-0">
+                        <strong>{{ overdue_inspections }} Overdue Inspection{{ overdue_inspections|pluralize }}</strong>
+                        <p class="mb-0">
+                            <a href="{% url 'infrastructure:asset_list' %}?overdue=true" class="alert-link">
+                                Schedule inspections →
+                            </a>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Charts and Analytics -->
+    <div class="row">
+        <!-- Asset Category Distribution -->
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h6 class="card-title">
+                    <i class="fas fa-chart-pie text-primary"></i> Assets by Category
+                </h6>
+                <canvas id="categoryChart" height="300"></canvas>
+            </div>
+        </div>
+        
+        <!-- Condition Distribution -->
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h6 class="card-title">
+                    <i class="fas fa-chart-doughnut text-success"></i> Asset Condition Status
+                </h6>
+                <canvas id="conditionChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Water Infrastructure Overview -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-tint"></i> Water Infrastructure Coverage
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 class="text-info">{{ water_sources }}</h3>
+                                <p class="text-muted">Water Sources</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 class="text-info">{{ water_distribution_points }}</h3>
+                                <p class="text-muted">Distribution Points</p>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h3 class="text-info">{{ villages_with_water.count }}</h3>
+                                <p class="text-muted">Villages with Water Access</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if villages_with_water %}
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Village</th>
+                                    <th>Water Sources</th>
+                                    <th>Households</th>
+                                    <th>Coverage</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for village in villages_with_water %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'governance:village_detail' village.pk %}">
+                                            {{ village.name }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-info">{{ village.water_sources_count }}</span>
+                                    </td>
+                                    <td>{{ village.households_count }}</td>
+                                    <td>
+                                        {% if village.households_count > 0 %}
+                                            {% with village.water_sources_count|percentage:village.households_count as coverage %}
+                                                <div class="progress" style="height: 20px;">
+                                                    <div class="progress-bar bg-info" style="width: {{ coverage }}%">
+                                                        {{ coverage }}%
+                                                    </div>
+                                                </div>
+                                            {% endwith %}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <!-- Recent Maintenance -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-wrench text-warning"></i> Recent Maintenance
+                    </h5>
+                    <div class="card-options">
+                        <a href="{% url 'infrastructure:maintenance_list' %}" class="btn btn-sm btn-outline-warning">
+                            View All
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_maintenance %}
+                        {% for maintenance in recent_maintenance %}
+                        <div class="activity-item maintenance">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-warning text-white rounded-circle me-3">
+                                    <i class="fas fa-wrench"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <a href="{% url 'infrastructure:asset_detail' maintenance.asset.pk %}">
+                                            {{ maintenance.asset.name }}
+                                        </a>
+                                    </h6>
+                                    <p class="text-muted mb-0 small">
+                                        {{ maintenance.get_maintenance_type_display }} - {{ maintenance.scheduled_date }}
+                                    </p>
+                                </div>
+                                <div class="ms-auto">
+                                    <span class="badge badge-{{ maintenance.status|condition_color }}">
+                                        {{ maintenance.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-wrench fa-2x text-muted mb-2"></i>
+                            <p class="text-muted">No recent maintenance activities</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Interruptions -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-exclamation-circle text-danger"></i> Recent Service Interruptions
+                    </h5>
+                    <div class="card-options">
+                        <a href="{% url 'infrastructure:interruption_list' %}" class="btn btn-sm btn-outline-danger">
+                            View All
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if recent_interruptions %}
+                        {% for interruption in recent_interruptions %}
+                        <div class="activity-item interruption">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar avatar-sm bg-danger text-white rounded-circle me-3">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1">
+                                        <a href="{% url 'infrastructure:asset_detail' interruption.asset.pk %}">
+                                            {{ interruption.asset.name }}
+                                        </a>
+                                    </h6>
+                                    <p class="text-muted mb-0 small">
+                                        {{ interruption.get_interruption_type_display }} - {{ interruption.start_time|date:"M d, H:i" }}
+                                    </p>
+                                </div>
+                                <div class="ms-auto">
+                                    {% if interruption.is_resolved %}
+                                        <span class="badge badge-success">Resolved</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Ongoing</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-3">
+                            <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                            <p class="text-muted">No recent service interruptions</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'assets/js/chart.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    console.log('Infrastructure dashboard loaded');
+    
+    // Initialize charts
+    initializeCategoryChart();
+    initializeConditionChart();
+    
+    // Auto-refresh alerts every 30 seconds
+    setInterval(function() {
+        refreshAlerts();
+    }, 30000);
+});
+
+function initializeCategoryChart() {
+    const ctx = document.getElementById('categoryChart');
+    if (!ctx) return;
+    
+    const categoryData = [
+        {% for category in category_stats %}
+        {
+            label: '{{ category.category|title }}',
+            value: {{ category.count }},
+            operational: {{ category.operational|default:0 }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    if (categoryData.length === 0) {
+        ctx.getContext('2d').fillText('No data available', 10, 50);
+        return;
+    }
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryData.map(item => item.label),
+            datasets: [{
+                data: categoryData.map(item => item.value),
+                backgroundColor: [
+                    '#4facfe', '#43e97b', '#f093fb', '#ffecd2',
+                    '#667eea', '#764ba2', '#fcb69f', '#ff9a9e'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function initializeConditionChart() {
+    const ctx = document.getElementById('conditionChart');
+    if (!ctx) return;
+    
+    const conditionData = [
+        {% for condition in condition_stats %}
+        {
+            label: '{{ condition.condition|title }}',
+            value: {{ condition.count }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    if (conditionData.length === 0) {
+        ctx.getContext('2d').fillText('No data available', 10, 50);
+        return;
+    }
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: conditionData.map(item => item.label),
+            datasets: [{
+                label: 'Number of Assets',
+                data: conditionData.map(item => item.value),
+                backgroundColor: [
+                    '#28a745', '#17a2b8', '#ffc107', '#fd7e14', '#dc3545', '#6c757d'
+                ]
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function refreshAlerts() {
+    // AJAX call to refresh alert counts
+    $.ajax({
+        url: '{% url "infrastructure:dashboard_alerts" %}',
+        type: 'GET',
+        success: function(data) {
+            updateAlertCounts(data);
+        },
+        error: function(xhr, status, error) {
+            console.error('Error refreshing alerts:', error);
+        }
+    });
+}
+
+function updateAlertCounts(data) {
+    // Update the dashboard with new alert counts
+    if (data.ongoing_interruptions !== undefined) {
+        $('.stats-card.critical .stats-number').text(data.ongoing_interruptions);
+    }
+    if (data.overdue_inspections !== undefined) {
+        $('.stats-card.maintenance .stats-number').text(data.overdue_inspections);
+    }
+}
+</script>
+{% endblock %}

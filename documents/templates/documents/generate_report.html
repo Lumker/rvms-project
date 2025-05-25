@@ -1,0 +1,185 @@
+{% extends "documents/base.html" %}
+{% load static %}
+
+{% block title %}Generate Reports{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Generate Reports</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'documents:dashboard' %}">Documents</a></li>
+                    <li class="breadcrumb-item active">Generate Reports</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Monthly Report -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-calendar-alt"></i> Monthly Report
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Generate a comprehensive monthly report of all document activities.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="report_type" value="monthly">
+                        
+                        <div class="form-group">
+                            <label for="month">Month</label>
+                            <select name="month" id="month" class="form-control">
+                                {% for month_num, month_name in months %}
+                                <option value="{{ month_num }}" {% if month_num == current_month %}selected{% endif %}>
+                                    {{ month_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="year">Year</label>
+                            <select name="year" id="year" class="form-control">
+                                {% for year in years %}
+                                <option value="{{ year }}" {% if year == current_year %}selected{% endif %}>
+                                    {{ year }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary btn-block">
+                            <i class="fas fa-download"></i> Generate Monthly Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Status Report -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie"></i> Status Report
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Generate a report showing document status distribution and statistics.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="report_type" value="status">
+                        
+                        <div class="form-group">
+                            <label for="status_period">Period</label>
+                            <select name="status_period" id="status_period" class="form-control">
+                                <option value="current_month">Current Month</option>
+                                <option value="last_month">Last Month</option>
+                                <option value="last_3_months">Last 3 Months</option>
+                                <option value="current_year">Current Year</option>
+                                <option value="all_time">All Time</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-success btn-block">
+                            <i class="fas fa-download"></i> Generate Status Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Village Report -->
+        <div class="col-lg-4 col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-map-marker-alt"></i> Village Report
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="text-muted">Generate a report showing document activities by village.</p>
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="report_type" value="village">
+                        
+                        <div class="form-group">
+                            <label for="village_period">Period</label>
+                            <select name="village_period" id="village_period" class="form-control">
+                                <option value="current_month">Current Month</option>
+                                <option value="last_month">Last Month</option>
+                                <option value="current_year">Current Year</option>
+                                <option value="all_time">All Time</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-info btn-block">
+                            <i class="fas fa-download"></i> Generate Village Report
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-bar"></i> Quick Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3">
+                            <div class="stats-box">
+                                <h4 class="text-primary">{{ total_documents|default:0 }}</h4>
+                                <p class="text-muted">Total Documents</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-box">
+                                <h4 class="text-warning">{{ pending_documents|default:0 }}</h4>
+                                <p class="text-muted">Pending</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-box">
+                                <h4 class="text-success">{{ generated_documents|default:0 }}</h4>
+                                <p class="text-muted">Generated</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stats-box">
+                                <h4 class="text-info">{{ delivered_documents|default:0 }}</h4>
+                                <p class="text-muted">Delivered</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.stats-box {
+    padding: 20px;
+    border-radius: 8px;
+    background: #f8f9fa;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}

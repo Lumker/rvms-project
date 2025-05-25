@@ -1,0 +1,126 @@
+{% extends "documents/base.html" %}
+{% load static %}
+
+{% block title %}{% if object.pk %}Edit{% else %}Create{% endif %} Template{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{% if object.pk %}Edit{% else %}Create{% endif %} Document Template</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'documents:dashboard' %}">Documents</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'documents:template_list' %}">Templates</a></li>
+                    <li class="breadcrumb-item active">{% if object.pk %}Edit{% else %}Create{% endif %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-file-contract"></i> Template Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Display errors -->
+                        {% if form.non_field_errors %}
+                        <div class="alert alert-danger">
+                            {{ form.non_field_errors }}
+                        </div>
+                        {% endif %}
+
+                        <div class="row">
+                            <!-- Template Name -->
+                            <div class="col-md-8">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">Template Name <span class="text-danger">*</span></label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.name.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <!-- Active Status -->
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <div class="form-check">
+                                        {{ form.is_active }}
+                                        <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                            Active Template
+                                        </label>
+                                    </div>
+                                    {% if form.is_active.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.is_active.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.description.id_for_label }}" class="form-label">Description</label>
+                                    {{ form.description }}
+                                    {% if form.description.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.description.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Template File Path -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.template_file.id_for_label }}" class="form-label">Template File Path <span class="text-danger">*</span></label>
+                                    {{ form.template_file }}
+                                    {% if form.template_file.errors %}
+                                    <div class="invalid-feedback d-block">
+                                        {{ form.template_file.errors.0 }}
+                                    </div>
+                                    {% endif %}
+                                    <small class="form-text text-muted">
+                                        Path to the HTML template file (e.g., documents/templates/proof_of_residence.html)
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> {% if object.pk %}Update{% else %}Create{% endif %} Template
+                                    </button>
+                                    <a href="{% url 'documents:template_list' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block extra_css %}
+<style>
+    .document-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid #007bff;
+    }
+    .document-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.3rem 0.8rem;
+    }
+    .document-stats {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    .filter-section {
+        background-color: #f8f9fa;
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}

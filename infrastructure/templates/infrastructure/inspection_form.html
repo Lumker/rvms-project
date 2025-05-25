@@ -1,0 +1,559 @@
+<!-- infrastructure/templates/infrastructure/inspection_form.html (updated) -->
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Edit Inspection{% else %}Schedule Inspection{% endif %} - Infrastructure
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .section-header {
+        border-bottom: 2px solid #f8f9fa;
+        padding-bottom: 15px;
+        margin-bottom: 20px;
+    }
+    .section-header h5 {
+        color: #495057;
+        margin-bottom: 5px;
+    }
+    .section-header small {
+        color: #6c757d;
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 5px;
+    }
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    .btn-gradient {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        border: none;
+        color: white;
+    }
+    .btn-gradient:hover {
+        background: linear-gradient(135deg, #218838 0%, #1abc9c 100%);
+        color: white;
+        transform: translateY(-1px);
+    }
+    .required-field {
+        color: #dc3545;
+    }
+    .help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .condition-indicator {
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .condition-excellent { background-color: #d4edda; }
+    .condition-good { background-color: #d1ecf1; }
+    .condition-fair { background-color: #fff3cd; }
+    .condition-poor { background-color: #f8d7da; }
+    .condition-critical { background-color: #f5c6cb; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-{% if object %}edit{% else %}clipboard-check{% endif %} text-success"></i>
+                    {% if object %}Edit Inspection{% else %}Schedule Asset Inspection{% endif %}
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:inspection_list' %}">Inspections</a></li>
+                    <li class="breadcrumb-item active">
+                        {% if object %}Edit{% else %}Schedule{% endif %}
+                    </li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'infrastructure:inspection_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Inspections
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <form method="post" enctype="multipart/form-data" id="inspectionForm">
+        {% csrf_token %}
+        
+        <!-- Basic Information Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h5><i class="fas fa-info-circle text-primary"></i> Basic Information</h5>
+                <small>Enter the basic inspection details</small>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.asset.id_for_label }}">
+                            Asset <span class="required-field">*</span>
+                        </label>
+                        {{ form.asset }}
+                        {% if form.asset.errors %}
+                            <div class="text-danger small mt-1">{{ form.asset.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Select the asset to inspect</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.inspection_type.id_for_label }}">
+                            Inspection Type <span class="required-field">*</span>
+                        </label>
+                        {{ form.inspection_type }}
+                        {% if form.inspection_type.errors %}
+                            <div class="text-danger small mt-1">{{ form.inspection_type.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Type of inspection being performed</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.inspection_date.id_for_label }}">
+                            Inspection Date <span class="required-field">*</span>
+                        </label>
+                        {{ form.inspection_date }}
+                        {% if form.inspection_date.errors %}
+                            <div class="text-danger small mt-1">{{ form.inspection_date.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Date when inspection was/will be performed</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.inspector.id_for_label }}">
+                            Inspector <span class="required-field">*</span>
+                        </label>
+                        {{ form.inspector }}
+                        {% if form.inspector.errors %}
+                            <div class="text-danger small mt-1">{{ form.inspector.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Person performing the inspection</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Condition Assessment Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h5><i class="fas fa-heartbeat text-warning"></i> Condition Assessment</h5>
+                <small>Assess the current condition of the asset</small>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.overall_condition.id_for_label }}">
+                            Overall Condition <span class="required-field">*</span>
+                        </label>
+                        {{ form.overall_condition }}
+                        {% if form.overall_condition.errors %}
+                            <div class="text-danger small mt-1">{{ form.overall_condition.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">General condition of the asset</div>
+                        
+                        <div id="conditionIndicator" class="condition-indicator" style="display: none;">
+                            <strong>Condition: <span id="conditionText"></span></strong>
+                            <p id="conditionDescription"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.operational_status.id_for_label }}">Operational Status</label>
+                        <div class="form-check mt-2">
+                            {{ form.operational_status }}
+                            <label class="form-check-label" for="{{ form.operational_status.id_for_label }}">
+                                Asset is currently operational
+                            </label>
+                        </div>
+                        {% if form.operational_status.errors %}
+                            <div class="text-danger small mt-1">{{ form.operational_status.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Check if asset is functioning properly</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Detailed Condition Assessment -->
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.structural_condition.id_for_label }}">Structural Condition</label>
+                        {{ form.structural_condition }}
+                        {% if form.structural_condition.errors %}
+                            <div class="text-danger small mt-1">{{ form.structural_condition.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Physical/structural integrity</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.electrical_condition.id_for_label }}">Electrical Condition</label>
+                        {{ form.electrical_condition }}
+                        {% if form.electrical_condition.errors %}
+                            <div class="text-danger small mt-1">{{ form.electrical_condition.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Electrical systems (if applicable)</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label for="{{ form.mechanical_condition.id_for_label }}">Mechanical Condition</label>
+                        {{ form.mechanical_condition }}
+                        {% if form.mechanical_condition.errors %}
+                            <div class="text-danger small mt-1">{{ form.mechanical_condition.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Mechanical components (if applicable)</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="{{ form.safety_concerns.id_for_label }}">Safety Concerns</label>
+                        {{ form.safety_concerns }}
+                        {% if form.safety_concerns.errors %}
+                            <div class="text-danger small mt-1">{{ form.safety_concerns.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Describe any safety issues or concerns identified</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Findings and Recommendations Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h5><i class="fas fa-lightbulb text-info"></i> Findings & Recommendations</h5>
+                <small>Document findings and provide recommendations</small>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="form-group">
+                        <label for="{{ form.immediate_actions_required.id_for_label }}">Immediate Actions Required</label>
+                        {{ form.immediate_actions_required }}
+                        {% if form.immediate_actions_required.errors %}
+                            <div class="text-danger small mt-1">{{ form.immediate_actions_required.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Actions that need to be taken immediately</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.maintenance_recommendations.id_for_label }}">Maintenance Recommendations</label>
+                        {{ form.maintenance_recommendations }}
+                        {% if form.maintenance_recommendations.errors %}
+                            <div class="text-danger small mt-1">{{ form.maintenance_recommendations.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Recommended maintenance activities</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.upgrade_recommendations.id_for_label }}">Upgrade Recommendations</label>
+                        {{ form.upgrade_recommendations }}
+                        {% if form.upgrade_recommendations.errors %}
+                            <div class="text-danger small mt-1">{{ form.upgrade_recommendations.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Recommended upgrades or improvements</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.next_inspection_date.id_for_label }}">Next Inspection Date</label>
+                        {{ form.next_inspection_date }}
+                        {% if form.next_inspection_date.errors %}
+                            <div class="text-danger small mt-1">{{ form.next_inspection_date.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">When should the next inspection be scheduled</div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.priority_level.id_for_label }}">Priority Level</label>
+                        {{ form.priority_level }}
+                        {% if form.priority_level.errors %}
+                            <div class="text-danger small mt-1">{{ form.priority_level.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Priority level for follow-up actions</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Documentation Section -->
+        <div class="form-section">
+            <div class="section-header">
+                <h5><i class="fas fa-camera text-purple"></i> Documentation</h5>
+                <small>Upload photos and inspection reports</small>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.inspection_photos.id_for_label }}">Inspection Photos</label>
+                        {{ form.inspection_photos }}
+                        {% if form.inspection_photos.errors %}
+                            <div class="text-danger small mt-1">{{ form.inspection_photos.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Upload photos taken during inspection</div>
+                        
+                        {% if object and object.inspection_photos %}
+                        <div class="mt-2">
+                            <img src="{{ object.inspection_photos.url }}" alt="Current Photo" 
+                                 style="max-width: 200px; max-height: 200px; border-radius: 8px;">
+                            <p class="small text-muted mt-2">Current photo</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label for="{{ form.inspection_report.id_for_label }}">Inspection Report</label>
+                        {{ form.inspection_report }}
+                        {% if form.inspection_report.errors %}
+                            <div class="text-danger small mt-1">{{ form.inspection_report.errors }}</div>
+                        {% endif %}
+                        <div class="help-text">Upload detailed inspection report (PDF)</div>
+                        
+                        {% if object and object.inspection_report %}
+                        <div class="mt-2">
+                            <a href="{{ object.inspection_report.url }}" target="_blank" class="btn btn-sm btn-outline-info">
+                                <i class="fas fa-file-pdf"></i> View Current Report
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-section">
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="text-right">
+                        <a href="{% url 'infrastructure:inspection_list' %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-gradient">
+                            <i class="fas fa-save"></i> 
+                            {% if object %}Update Inspection{% else %}Save Inspection{% endif %}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    console.log('Inspection form loaded');
+    
+    // Initialize form enhancements
+    initializeFormEnhancements();
+    
+    // Condition change handler
+    $('#{{ form.overall_condition.id_for_label }}').change(function() {
+        updateConditionIndicator($(this).val());
+    });
+    
+    // Auto-suggest next inspection date based on condition
+    $('#{{ form.overall_condition.id_for_label }}').change(function() {
+        suggestNextInspectionDate($(this).val());
+    });
+    
+    // Form validation
+    $('#inspectionForm').submit(function(e) {
+        if (!validateForm()) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    // Initialize with current value
+    const currentCondition = $('#{{ form.overall_condition.id_for_label }}').val();
+    if (currentCondition) {
+        updateConditionIndicator(currentCondition);
+    }
+});
+
+function initializeFormEnhancements() {
+    // Add custom styling
+    $('.form-control, .form-select').addClass('shadow-sm');
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Auto-resize textareas
+    $('textarea').each(function() {
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+}
+
+function updateConditionIndicator(condition) {
+    const conditionInfo = {
+        'excellent': {
+            text: 'Excellent',
+            description: 'Asset is in excellent condition with no issues.',
+            class: 'condition-excellent'
+        },
+        'good': {
+            text: 'Good',
+            description: 'Asset is in good condition with minor maintenance needs.',
+            class: 'condition-good'
+        },
+        'fair': {
+            text: 'Fair',
+            description: 'Asset requires regular maintenance and monitoring.',
+            class: 'condition-fair'
+        },
+        'poor': {
+            text: 'Poor',
+            description: 'Asset needs significant attention and repair.',
+            class: 'condition-poor'
+        },
+        'critical': {
+            text: 'Critical',
+            description: 'Asset requires immediate attention and may be unsafe.',
+            class: 'condition-critical'
+        }
+    };
+    
+    if (condition && conditionInfo[condition]) {
+        const info = conditionInfo[condition];
+        $('#conditionText').text(info.text);
+        $('#conditionDescription').text(info.description);
+        $('#conditionIndicator')
+            .removeClass('condition-excellent condition-good condition-fair condition-poor condition-critical')
+            .addClass(info.class)
+            .show();
+    } else {
+        $('#conditionIndicator').hide();
+    }
+}
+
+function suggestNextInspectionDate(condition) {
+    const today = new Date();
+    let suggestedDate;
+    
+    switch(condition) {
+        case 'excellent':
+            suggestedDate = new Date(today.setFullYear(today.getFullYear() + 1));
+            break;
+        case 'good':
+            suggestedDate = new Date(today.setMonth(today.getMonth() + 6));
+            break;
+        case 'fair':
+            suggestedDate = new Date(today.setMonth(today.getMonth() + 3));
+            break;
+        case 'poor':
+            suggestedDate = new Date(today.setMonth(today.getMonth() + 1));
+            break;
+        case 'critical':
+            suggestedDate = new Date(today.setDate(today.getDate() + 7));
+            break;
+        default:
+            return;
+    }
+    
+    const dateString = suggestedDate.toISOString().split('T')[0];
+    $('#{{ form.next_inspection_date.id_for_label }}').val(dateString);
+}
+
+function validateForm() {
+    let isValid = true;
+    const requiredFields = ['asset', 'inspection_type', 'inspection_date', 'inspector', 'overall_condition'];
+    
+    requiredFields.forEach(function(fieldName) {
+        const field = $(`#id_${fieldName}`);
+        if (!field.val() || field.val().trim() === '') {
+            field.addClass('is-invalid');
+            isValid = false;
+        } else {
+            field.removeClass('is-invalid');
+        }
+    });
+    
+    // Date validation
+    const inspectionDate = new Date($('#id_inspection_date').val());
+    const today = new Date();
+    
+    if (inspectionDate > today) {
+        // Future date - confirm if intended
+        if (!confirm('The inspection date is in the future. Is this intended for scheduling?')) {
+            isValid = false;
+        }
+    }
+    
+    if (!isValid) {
+        showAlert('Please fill in all required fields correctly.', 'error');
+    }
+    
+    return isValid;
+}
+
+function showAlert(message, type) {
+    const alertClass = type === 'error' ? 'alert-danger' : 'alert-success';
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
+    `;
+    
+    $('.page-header').after(alertHtml);
+    
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 5000);
+}
+</script>
+{% endblock %}

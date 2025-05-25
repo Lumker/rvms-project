@@ -1,0 +1,453 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    .form-section {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .section-title {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    .form-help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .required-field {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'households:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'households:household_list' %}">Households</a></li>
+                    {% if household %}
+                    <li class="breadcrumb-item"><a href="{% url 'households:household_detail' household.pk %}">{{ household.household_id }}</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                    {% else %}
+                    <li class="breadcrumb-item active">Create</li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% if household %}{% url 'households:household_detail' household.pk %}{% else %}{% url 'households:household_list' %}{% endif %}" class="btn btn-outline-secondary">
+                    <i class="fe fe-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="form-card">
+                <div class="form-header">
+                    <h4><i class="fe fe-home"></i> {{ title }}</h4>
+                    <p class="mb-0">Enter the household information below</p>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">Basic Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.village.id_for_label }}" class="form-label">
+                                        Village <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.village }}
+                                    {% if form.village.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.village.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.ward_committee.id_for_label }}" class="form-label">
+                                        Ward Committee
+                                    </label>
+                                    {{ form.ward_committee }}
+                                    {% if form.ward_committee.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.ward_committee.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Will be auto-assigned based on village if not selected</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">Location</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.physical_address.id_for_label }}" class="form-label">
+                                        Physical Address <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.physical_address }}
+                                    {% if form.physical_address.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.physical_address.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Detailed physical address or description</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.postal_address.id_for_label }}" class="form-label">
+                                        Postal Address
+                                    </label>
+                                    {{ form.postal_address }}
+                                    {% if form.postal_address.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.postal_address.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Leave blank if same as physical address</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.gps_coordinates.id_for_label }}" class="form-label">
+                                        GPS Coordinates
+                                    </label>
+                                    {{ form.gps_coordinates }}
+                                    {% if form.gps_coordinates.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.gps_coordinates.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Format: latitude,longitude (e.g., -25.7479, 28.2293)</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Housing Details -->
+                    <div class="form-section">
+                        <h5 class="section-title">Housing Details</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.housing_type.id_for_label }}" class="form-label">
+                                        Housing Type <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.housing_type }}
+                                    {% if form.housing_type.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.housing_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.land_tenure.id_for_label }}" class="form-label">
+                                        Land Tenure <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.land_tenure }}
+                                    {% if form.land_tenure.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.land_tenure.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.rooms_count.id_for_label }}" class="form-label">
+                                        Number of Rooms <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.rooms_count }}
+                                    {% if form.rooms_count.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.rooms_count.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.plot_size.id_for_label }}" class="form-label">
+                                        Plot Size (m²)
+                                    </label>
+                                    {{ form.plot_size }}
+                                    {% if form.plot_size.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.plot_size.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Plot size in square meters</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.established_date.id_for_label }}" class="form-label">
+                                        Established Date
+                                    </label>
+                                    {{ form.established_date }}
+                                    {% if form.established_date.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.established_date.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">When the household was established</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Services & Infrastructure -->
+                    <div class="form-section">
+                        <h5 class="section-title">Services & Infrastructure</h5>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.water_source.id_for_label }}" class="form-label">
+                                        Water Source <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.water_source }}
+                                    {% if form.water_source.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.water_source.errors.0 }}</div>
+                                        {% endif %}
+                               </div>
+                           </div>
+                           <div class="col-md-4">
+                               <div class="form-group">
+                                   <label for="{{ form.electricity_source.id_for_label }}" class="form-label">
+                                       Electricity Source <span class="required-field">*</span>
+                                   </label>
+                                   {{ form.electricity_source }}
+                                   {% if form.electricity_source.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.electricity_source.errors.0 }}</div>
+                                   {% endif %}
+                               </div>
+                           </div>
+                           <div class="col-md-4">
+                               <div class="form-group">
+                                   <label class="form-label">Toilet Facilities</label>
+                                   <div class="form-check">
+                                       {{ form.has_toilet }}
+                                       <label for="{{ form.has_toilet.id_for_label }}" class="form-check-label">
+                                           Has toilet facilities
+                                       </label>
+                                   </div>
+                                   {% if form.has_toilet.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.has_toilet.errors.0 }}</div>
+                                   {% endif %}
+                               </div>
+                           </div>
+                       </div>
+                       
+                       <div class="row">
+                           <div class="col-md-6">
+                               <div class="form-group">
+                                   <label for="{{ form.toilet_type.id_for_label }}" class="form-label">
+                                       Toilet Type
+                                   </label>
+                                   {{ form.toilet_type }}
+                                   {% if form.toilet_type.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.toilet_type.errors.0 }}</div>
+                                   {% endif %}
+                                   <div class="form-help-text">Type of toilet facilities (if available)</div>
+                               </div>
+                           </div>
+                           <div class="col-md-6">
+                               <div class="form-group">
+                                   <label for="{{ form.waste_disposal.id_for_label }}" class="form-label">
+                                       Waste Disposal
+                                   </label>
+                                   {{ form.waste_disposal }}
+                                   {% if form.waste_disposal.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.waste_disposal.errors.0 }}</div>
+                                   {% endif %}
+                                   <div class="form-help-text">How waste is disposed of</div>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Economic Information -->
+                   <div class="form-section">
+                       <h5 class="section-title">Economic Information</h5>
+                       <div class="row">
+                           <div class="col-md-6">
+                               <div class="form-group">
+                                   <label for="{{ form.estimated_monthly_income.id_for_label }}" class="form-label">
+                                       Estimated Monthly Income (R)
+                                   </label>
+                                   {{ form.estimated_monthly_income }}
+                                   {% if form.estimated_monthly_income.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.estimated_monthly_income.errors.0 }}</div>
+                                   {% endif %}
+                                   <div class="form-help-text">Total household monthly income estimate</div>
+                               </div>
+                           </div>
+                           <div class="col-md-6">
+                               <div class="form-group">
+                                   <label for="{{ form.main_income_source.id_for_label }}" class="form-label">
+                                       Main Income Source
+                                   </label>
+                                   {{ form.main_income_source }}
+                                   {% if form.main_income_source.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.main_income_source.errors.0 }}</div>
+                                   {% endif %}
+                                   <div class="form-help-text">Primary source of household income</div>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Additional Information -->
+                   <div class="form-section">
+                       <h5 class="section-title">Additional Information</h5>
+                       <div class="row">
+                           <div class="col-md-6">
+                               <div class="form-group">
+                                   <label for="{{ form.special_circumstances.id_for_label }}" class="form-label">
+                                       Special Circumstances
+                                   </label>
+                                   {{ form.special_circumstances }}
+                                   {% if form.special_circumstances.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.special_circumstances.errors.0 }}</div>
+                                   {% endif %}
+                                   <div class="form-help-text">Any special circumstances (disability, elderly, child-headed, etc.)</div>
+                               </div>
+                           </div>
+                           <div class="col-md-6">
+                               <div class="form-group">
+                                   <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                       Notes
+                                   </label>
+                                   {{ form.notes }}
+                                   {% if form.notes.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.notes.errors.0 }}</div>
+                                   {% endif %}
+                                   <div class="form-help-text">Additional notes or comments</div>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Status -->
+                   <div class="form-section">
+                       <h5 class="section-title">Status</h5>
+                       <div class="row">
+                           <div class="col-md-12">
+                               <div class="form-check">
+                                   {{ form.is_active }}
+                                   <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                       Active Household
+                                   </label>
+                                   {% if form.is_active.errors %}
+                                       <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
+                                   {% endif %}
+                                   <div class="form-help-text">Uncheck to mark this household as inactive</div>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+
+                   <!-- Submit Buttons -->
+                   <div class="form-section">
+                       <div class="row">
+                           <div class="col-md-12 text-right">
+                               <a href="{% if household %}{% url 'households:household_detail' household.pk %}{% else %}{% url 'households:household_list' %}{% endif %}" class="btn btn-outline-secondary mr-2">
+                                   <i class="fe fe-x"></i> Cancel
+                               </a>
+                               <button type="submit" class="btn btn-primary">
+                                   <i class="fe fe-save"></i> 
+                                   {% if household %}Update{% else %}Create{% endif %} Household
+                               </button>
+                           </div>
+                       </div>
+                   </div>
+               </form>
+           </div>
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+   // Dynamic ward committee filtering based on village
+   $('#id_village').on('change', function() {
+       var villageId = $(this).val();
+       
+       if (villageId) {
+           $.ajax({
+               url: '{% url "households:get_ward_committees_by_village" %}',
+               data: {'village_id': villageId},
+               success: function(data) {
+                   var $wardCommittee = $('#id_ward_committee');
+                   $wardCommittee.empty();
+                   $wardCommittee.append('<option value="">---------</option>');
+                   
+                   $.each(data, function(index, item) {
+                       $wardCommittee.append(
+                           '<option value="' + item.id + '">Ward ' + item.ward_number + ' - ' + item.name + '</option>'
+                       );
+                   });
+               }
+           });
+       } else {
+           $('#id_ward_committee').empty().append('<option value="">---------</option>');
+       }
+   });
+   
+   // Form validation
+   $('form').on('submit', function() {
+       var isValid = true;
+       
+       // Check required fields
+       $('input[required], select[required], textarea[required]').each(function() {
+           if (!$(this).val()) {
+               $(this).addClass('is-invalid');
+               isValid = false;
+           } else {
+               $(this).removeClass('is-invalid');
+           }
+       });
+       
+       return isValid;
+   });
+   
+   // Real-time validation feedback
+   $('input, select, textarea').on('blur', function() {
+       if ($(this).prop('required') && !$(this).val()) {
+           $(this).addClass('is-invalid');
+       } else {
+           $(this).removeClass('is-invalid');
+       }
+   });
+});
+</script>
+{% endblock %}

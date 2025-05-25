@@ -1,0 +1,403 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Traditional Councils{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .form-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus {
+        border-color: #00f2fe;
+        box-shadow: 0 0 0 0.2rem rgba(79, 172, 254, 0.25);
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(79, 172, 254, 0.4);
+    }
+    .help-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #17a2b8;
+    }
+    .form-check-input:checked {
+        background-color: #00f2fe;
+        border-color: #00f2fe;
+    }
+    .form-text {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    .required {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:council_list' %}">Traditional Councils</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Header -->
+    <div class="form-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ title }}</h2>
+                <p class="mb-0">Enter the traditional council information below</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-users" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card form-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-info"></i> Traditional Council Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}">Council Name <span class="required">*</span></label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                    <div class="text-danger mt-1">{{ form.name.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Official name of the traditional council</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.municipality.id_for_label }}">Municipality <span class="required">*</span></label>
+                                    {{ form.municipality }}
+                                    {% if form.municipality.errors %}
+                                    <div class="text-danger mt-1">{{ form.municipality.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Select the parent municipality</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.leader_name.id_for_label }}">Leader Name <span class="required">*</span></label>
+                                    {{ form.leader_name }}
+                                    {% if form.leader_name.errors %}
+                                    <div class="text-danger mt-1">{{ form.leader_name.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Full name of the traditional leader</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.leader_title.id_for_label }}">Leader Title</label>
+                                    {{ form.leader_title }}
+                                    {% if form.leader_title.errors %}
+                                    <div class="text-danger mt-1">{{ form.leader_title.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Traditional title (e.g., Chief, King, Headman)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.contact_info.id_for_label }}">Contact Information <span class="required">*</span></label>
+                            {{ form.contact_info }}
+                            {% if form.contact_info.errors %}
+                            <div class="text-danger mt-1">{{ form.contact_info.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Include phone numbers, addresses, and email contacts</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.establishment_date.id_for_label }}">Establishment Date <span class="required">*</span></label>
+                                    {{ form.establishment_date }}
+                                    {% if form.establishment_date.errors %}
+                                    <div class="text-danger mt-1">{{ form.establishment_date.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Date when the council was established</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.term_end_date.id_for_label }}">Term End Date</label>
+                                    {{ form.term_end_date }}
+                                    {% if form.term_end_date.errors %}
+                                    <div class="text-danger mt-1">{{ form.term_end_date.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">End date of current leadership term (optional)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.geographic_jurisdiction.id_for_label }}">Geographic Jurisdiction <span class="required">*</span></label>
+                            {{ form.geographic_jurisdiction }}
+                            {% if form.geographic_jurisdiction.errors %}
+                            <div class="text-danger mt-1">{{ form.geographic_jurisdiction.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Description of the areas under this council's jurisdiction</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}">Status</label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                    <div class="text-danger mt-1">{{ form.status.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Current operational status</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.recognition_certificate.id_for_label }}">Recognition Certificate</label>
+                                    {{ form.recognition_certificate }}
+                                    {% if form.recognition_certificate.errors %}
+                                    <div class="text-danger mt-1">{{ form.recognition_certificate.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Official recognition certificate number</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                {{ form.is_active }}
+                                <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                    Active Traditional Council
+                                </label>
+                                <small class="form-text d-block">Check if this council is currently active</small>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-info btn-save">
+                                <i class="fas fa-save"></i> Save Traditional Council
+                            </button>
+                            <a href="{% url 'governance:council_list' %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Traditional Leadership Info -->
+            <div class="card help-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-crown text-warning"></i> Traditional Leadership
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Traditional Authority:</strong>
+                        <p class="small text-muted mb-2">Traditional councils are recognized institutions that exercise traditional authority in terms of customary law.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Leadership Roles:</strong>
+                        <ul class="small text-muted mb-2">
+                            <li>Chiefs and Headmen</li>
+                            <li>Kings and Queens</li>
+                            <li>Traditional Councillors</li>
+                        </ul>
+                    </div>
+                    <div class="mb-0">
+                        <strong>Jurisdiction:</strong>
+                        <p class="small text-muted mb-0">Geographic areas and communities under traditional governance structures.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Information -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle text-info"></i> Council Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="badge badge-success">Active:</span>
+                        <small class="text-muted">Fully operational council</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge badge-secondary">Inactive:</span>
+                        <small class="text-muted">Temporarily not operational</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge badge-warning">Suspended:</span>
+                        <small class="text-muted">Temporarily suspended operations</small>
+                    </div>
+                    <div class="mb-0">
+                        <span class="badge badge-danger">Dissolved:</span>
+                        <small class="text-muted">Permanently dissolved</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Guidelines -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-lightbulb text-warning"></i> Form Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Use official council names</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Include complete contact details</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Specify jurisdictional boundaries</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Verify establishment dates</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if council %}
+            <!-- Edit Information -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-edit text-primary"></i> Editing: {{ council.name }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <td><strong>Created:</strong></td>
+                            <td>{{ council.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Updated:</strong></td>
+                            <td>{{ council.updated_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Villages:</strong></td>
+                            <td>{{ council.total_villages }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.form-header').hide().slideDown(600);
+    
+    // Form validation feedback
+    $('form').on('submit', function() {
+        $('.btn-save').html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+    });
+    
+    // Auto-populate municipality if passed as parameter
+    var urlParams = new URLSearchParams(window.location.search);
+    var municipalityId = urlParams.get('municipality');
+    if (municipalityId) {
+        $('#{{ form.municipality.id_for_label }}').val(municipalityId);
+    }
+    
+    // Form field enhancements
+    $('#{{ form.leader_name.id_for_label }}').on('input', function() {
+        // Capitalize first letter of each word
+        var value = $(this).val();
+        var words = value.split(' ');
+        for (var i = 0; i < words.length; i++) {
+            if (words[i].length > 0) {
+                words[i] = words[i][0].toUpperCase() + words[i].substring(1).toLowerCase();
+            }
+        }
+        $(this).val(words.join(' '));
+    });
+    
+    // Date validation
+    $('#{{ form.term_end_date.id_for_label }}').on('change', function() {
+        var establishmentDate = $('#{{ form.establishment_date.id_for_label }}').val();
+        var termEndDate = $(this).val();
+        
+        if (establishmentDate && termEndDate) {
+            if (new Date(termEndDate) <= new Date(establishmentDate)) {
+                alert('Term end date must be after establishment date.');
+                $(this).val('');
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,1209 @@
+{% load static %}
+<div class="header">
+    <div class="header-left">
+        <a href="/" class="logo">
+            <img src="{% static 'assets/img/logo-7a.png' %}" alt="RVMS Logo">
+        </a>
+        <a href="/" class="logo logo-small">
+            <img src="{% static 'assets/img/icon.png' %}" alt="RVMS" width="30" height="30">
+        </a>
+    </div>
+    <div class="menu-toggle">
+        <a href="javascript:void(0);" id="toggle_btn">
+            <i class="fas fa-bars"></i>
+        </a>
+    </div>
+
+    <!-- Enhanced Search with Autocomplete -->
+    <div class="top-nav-search">
+        <form method="get" action="{% url 'search:results' %}" id="search-form">
+            <input type="text" name="q" class="form-control" 
+                   placeholder="Search residents, documents, villages..." 
+                   value="{{ request.GET.q }}" 
+                   id="global-search-input"
+                   autocomplete="off">
+            <button class="btn" type="submit"><i class="fas fa-search"></i></button>
+        </form>
+        <div id="search-suggestions" class="search-suggestions"></div>
+    </div>
+    <a class="mobile_btn" id="mobile_btn">
+        <i class="fas fa-bars"></i>
+    </a>
+
+    <ul class="nav user-menu">
+        <!-- Quick Actions Dropdown -->
+        <li class="nav-item dropdown me-2">
+            <a href="#" class="dropdown-toggle nav-link header-nav-list" data-bs-toggle="dropdown" title="Quick Actions">
+                <i class="fas fa-plus-circle" style="font-size: 20px; color: #007bff;"></i>
+            </a>
+            <div class="dropdown-menu dropdown-menu-right quick-actions-menu">
+                <div class="dropdown-header">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </div>
+                <a class="dropdown-item" href="{% url 'documents:proof_create' %}">
+                    <i class="fas fa-file-alt text-primary"></i> 
+                    <span>New Document</span>
+                    <small class="text-muted">Create proof of residence</small>
+                </a>
+                <a class="dropdown-item" href="{% url 'households:resident_create' %}">
+                    <i class="fas fa-user-plus text-success"></i> 
+                    <span>Add Resident</span>
+                    <small class="text-muted">Register new resident</small>
+                </a>
+                <a class="dropdown-item" href="{% url 'households:household_create' %}">
+                    <i class="fas fa-home text-info"></i> 
+                    <span>Add Household</span>
+                    <small class="text-muted">Create new household</small>
+                </a>
+                <a class="dropdown-item" href="{% url 'governance:village_create' %}">
+                    <i class="fas fa-map-marker-alt text-warning"></i> 
+                    <span>Add Village</span>
+                    <small class="text-muted">Register new village</small>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{% url 'documents:generate_report' %}">
+                    <i class="fas fa-chart-bar text-secondary"></i> 
+                    <span>Generate Report</span>
+                    <small class="text-muted">Create system reports</small>
+                </a>
+                <a class="dropdown-item" href="{% url 'documents:batch_create' %}">
+                    <i class="fas fa-layer-group text-purple"></i> 
+                    <span>Batch Process</span>
+                    <small class="text-muted">Process multiple documents</small>
+                </a>
+            </div>
+        </li>
+
+        <!-- Enhanced Notifications Dropdown -->
+        <li class="nav-item dropdown noti-dropdown me-2">
+            <a href="#" class="dropdown-toggle nav-link header-nav-list" data-bs-toggle="dropdown" id="notification-bell">
+                <i class="fas fa-bell" style="font-size: 18px; color: #ffc107;"></i>
+                <span class="badge rounded-pill bg-danger notification-count" id="notification-count" style="display: none;">0</span>
+            </a>
+            <div class="dropdown-menu notifications">
+                <div class="topnav-dropdown-header">
+                    <span class="notification-title">
+                        <i class="fas fa-bell"></i> Notifications
+                    </span>
+                    <a href="javascript:void(0)" class="clear-noti" onclick="clearAllNotifications()"> 
+                        <i class="fas fa-trash-alt"></i> Clear All 
+                    </a>
+                </div>
+                <div class="noti-content">
+                    <ul class="notification-list" id="notification-list">
+                        <li class="text-center p-3">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <small class="d-block mt-2">Loading notifications...</small>
+                        </li>
+                    </ul>
+                </div>
+                <div class="topnav-dropdown-footer">
+                    <a href="{% url 'users:notifications' %}" class="btn btn-sm btn-primary w-100">
+                        <i class="fas fa-list"></i> View All Notifications
+                    </a>
+                </div>
+            </div>
+        </li>
+
+        <!-- Messages/Inbox Dropdown -->
+        <li class="nav-item dropdown me-2">
+            <a href="#" class="dropdown-toggle nav-link header-nav-list" data-bs-toggle="dropdown" title="Messages">
+                <i class="fas fa-envelope" style="font-size: 18px; color: #28a745;"></i>
+                <span class="badge rounded-pill bg-success message-count" id="message-count" style="display: none;">0</span>
+            </a>
+            <div class="dropdown-menu messages">
+                <div class="topnav-dropdown-header">
+                    <span class="notification-title">
+                        <i class="fas fa-envelope"></i> Messages
+                    </span>
+                    <a href="{% url 'users:compose_message' %}" class="text-primary"> 
+                        <i class="fas fa-plus"></i> New 
+                    </a>
+                </div>
+                <div class="noti-content">
+                    <ul class="notification-list" id="message-list">
+                        <li class="text-center p-3">
+                            <div class="spinner-border spinner-border-sm" role="status">
+                                <span class="sr-only">Loading...</span>
+                            </div>
+                            <small class="d-block mt-2">Loading messages...</small>
+                        </li>
+                    </ul>
+                </div>
+                <div class="topnav-dropdown-footer">
+                    <a href="{% url 'users:inbox' %}" class="btn btn-sm btn-success w-100">
+                        <i class="fas fa-inbox"></i> View Inbox
+                    </a>
+                </div>
+            </div>
+        </li>
+
+        <!-- User Profile Dropdown -->
+        <li class="nav-item dropdown has-arrow new-user-menus">
+            <a href="#" class="dropdown-toggle nav-link" data-bs-toggle="dropdown">
+                <span class="user-img">
+                    {% if request.user.profile.profile_picture %}
+                        <img class="rounded-circle" src="{{ request.user.profile.profile_picture.url }}" width="31" alt="{{ request.user.get_full_name }}">
+                    {% else %}
+                        <img class="rounded-circle" src="{% static 'assets/img/profiles/avatar-01.jpg' %}" width="31" alt="{{ request.user.get_full_name }}">
+                    {% endif %}
+                    <div class="user-text">
+                        <h6>{{ request.user.get_full_name|default:request.user.username }}</h6>
+                        <p class="text-muted mb-0">
+                            {% if request.user.profile.role %}
+                                {{ request.user.profile.get_role_display }}
+                            {% else %}
+                                Administrator
+                            {% endif %}
+                        </p>
+                    </div>
+                </span>
+            </a>
+            <div class="dropdown-menu user-menu-dropdown">
+                <div class="user-header">
+                    <div class="avatar avatar-sm position-relative">
+                        {% if request.user.profile.profile_picture %}
+                            <img src="{{ request.user.profile.profile_picture.url }}" alt="User Image" class="avatar-img rounded-circle">
+                        {% else %}
+                            <img src="{% static 'assets/img/profiles/avatar-01.jpg' %}" alt="User Image" class="avatar-img rounded-circle">
+                        {% endif %}
+                        <button class="btn btn-sm btn-light position-absolute" 
+                                style="bottom: 0; right: 0; border-radius: 50%; width: 20px; height: 20px; padding: 0;"
+                                onclick="openProfilePictureModal()" title="Change Picture">
+                            <i class="fas fa-camera" style="font-size: 8px;"></i>
+                        </button>
+                    </div>
+                    <div class="user-text">
+                        <h6>{{ request.user.get_full_name|default:request.user.username }}</h6>
+                        <p class="text-muted mb-0">
+                            {% if request.user.profile.role %}
+                                {{ request.user.profile.get_role_display }}
+                            {% else %}
+                                Administrator
+                            {% endif %}
+                        </p>
+                        <small class="text-success">
+                            <i class="fas fa-circle"></i> Online
+                        </small>
+                    </div>
+                </div>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="{% url 'users:profile' %}">
+                    <i class="fas fa-user text-primary"></i> 
+                    <span>My Profile</span>
+                </a>
+                <a class="dropdown-item" href="{% url 'users:profile_edit' %}">
+                    <i class="fas fa-edit text-secondary"></i> 
+                    <span>Edit Profile</span>
+                </a>
+                <a class="dropdown-item" href="{% url 'users:inbox' %}">
+                    <i class="fas fa-envelope text-success"></i> 
+                    <span>Inbox</span>
+                    <span class="badge bg-success" id="header-message-count" style="display: none;"></span>
+                </a>
+                <a class="dropdown-item" href="{% url 'users:notifications' %}">
+                    <i class="fas fa-bell text-warning"></i> 
+                    <span>Notifications</span>
+                    <span class="badge bg-warning" id="header-notification-count" style="display: none;"></span>
+                </a>
+                <a class="dropdown-item" href="#" onclick="openSettingsModal()">
+                    <i class="fas fa-cog text-info"></i> 
+                    <span>Settings</span>
+                </a>
+                <div class="dropdown-divider"></div>
+                <a class="dropdown-item" href="#" onclick="showHelp()">
+                    <i class="fas fa-question-circle text-info"></i> 
+                    <span>Help & Support</span>
+                </a>
+                <a class="dropdown-item" href="{% url 'users:logout' %}" onclick="return confirm('Are you sure you want to logout?')">
+                    <i class="fas fa-sign-out-alt text-danger"></i> 
+                    <span>Logout</span>
+                </a>
+            </div>
+        </li>
+    </ul>
+</div>
+
+<!-- Profile Picture Upload Modal -->
+<div class="modal fade" id="profilePictureModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-camera"></i> Update Profile Picture
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="profilePictureForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div class="avatar avatar-xl">
+                            {% if request.user.profile.profile_picture %}
+                                <img src="{{ request.user.profile.profile_picture.url }}" alt="Current Picture" class="avatar-img rounded-circle" id="current-picture">
+                            {% else %}
+                                <img src="{% static 'assets/img/profiles/avatar-01.jpg' %}" alt="Default Picture" class="avatar-img rounded-circle" id="current-picture">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile_picture">Choose New Picture</label>
+                        <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*" required>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Accepted formats: JPG, PNG, GIF. Max size: 2MB. Recommended: 400x400px
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <img id="image-preview" src="#" alt="Preview" 
+                             style="display: none; max-width: 100%; height: 200px; object-fit: cover;" 
+                             class="rounded border">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="upload-btn">
+                        <i class="fas fa-upload"></i> Upload Picture
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal fade" id="settingsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog"></i> Account Settings
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="settingsForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Theme Preference</label>
+                                <select class="form-control" name="theme_preference">
+                                    <option value="light" {% if request.user.profile.theme_preference == 'light' %}selected{% endif %}>Light</option>
+                                    <option value="dark" {% if request.user.profile.theme_preference == 'dark' %}selected{% endif %}>Dark</option>
+                                    <option value="auto" {% if request.user.profile.theme_preference == 'auto' %}selected{% endif %}>Auto</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Language</label>
+                                <select class="form-control" name="language_preference">
+                                    <option value="en" {% if request.user.profile.language_preference == 'en' %}selected{% endif %}>English</option>
+                                    <option value="af" {% if request.user.profile.language_preference == 'af' %}selected{% endif %}>Afrikaans</option>
+                                    <option value="zu" {% if request.user.profile.language_preference == 'zu' %}selected{% endif %}>Zulu</option>
+                                    <option value="xh" {% if request.user.profile.language_preference == 'xh' %}selected{% endif %}>Xhosa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notification Preferences</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="email_notifications" checked>
+                                    <label class="form-check-label">Email Notifications</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="document_updates" checked>
+                                    <label class="form-check-label">Document Updates</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="meeting_reminders" checked>
+                                    <label class="form-check-label">Meeting Reminders</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="system_updates">
+                                    <label class="form-check-label">System Updates</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="weekly_digest" checked>
+                                    <label class="form-check-label">Weekly Digest</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-info" onclick="saveSettings()">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Debug panel (remove in production) -->
+<div id="debug-panel" style="position: fixed; bottom: 10px; right: 10px; background: #000; color: #fff; padding: 10px; border-radius: 5px; z-index: 9999; display: none;">
+    <h6 style="color: #fff;">Debug Panel</h6>
+    <button onclick="testNotifications()" style="background: #007bff; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin: 2px;">
+        Test Notifications
+    </button>
+    <button onclick="testMessages()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin: 2px;">
+        Test Messages
+    </button>
+    <button onclick="console.clear()" style="background: #ffc107; color: black; border: none; padding: 5px 10px; border-radius: 3px; margin: 2px;">
+        Clear Console
+    </button>
+    <button onclick="$('#debug-panel').hide()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; margin: 2px;">
+        Hide
+    </button>
+</div>
+
+<style>
+/* Search Suggestions */
+.search-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    max-height: 300px;
+    overflow-y: auto;
+    z-index: 1000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: none;
+}
+
+.search-suggestion-item {
+    padding: 12px 15px;
+    cursor: pointer;
+    border-bottom: 1px solid #eee;
+    transition: background-color 0.2s;
+}
+
+.search-suggestion-item:hover {
+    background-color: #f8f9fa;
+}
+
+.search-suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.search-suggestion-type {
+    font-size: 11px;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-weight: 600;
+}
+
+/* Notification Badges */
+.notification-count, .message-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    font-size: 10px;
+    line-height: 18px;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* Dropdown Enhancements */
+.quick-actions-menu {
+    min-width: 280px;
+}
+
+.quick-actions-menu .dropdown-item {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f1f1;
+}
+
+.quick-actions-menu .dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.quick-actions-menu .dropdown-item span {
+    display: block;
+    font-weight: 500;
+}
+
+.quick-actions-menu .dropdown-item small {
+    display: block;
+    margin-top: 2px;
+}
+
+/* FIX: Notification and Message Dropdowns - Remove double scrollbars */
+.notifications, .messages {
+    min-width: 320px;
+    max-height: 400px;
+    overflow: visible; /* Remove overflow from main container */
+}
+
+.noti-content {
+    max-height: 300px;
+    overflow: visible; /* Remove overflow from content wrapper */
+}
+
+.notification-list {
+    max-height: 300px;
+    overflow-y: auto; /* Only the list should scroll */
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.notification-message {
+    padding: 12px 20px;
+    border-bottom: 1px solid #f1f1f1;
+    transition: background-color 0.2s;
+    margin: 0; /* Remove any margin */
+}
+
+.notification-message:hover {
+    background-color: #f8f9fa;
+}
+
+.notification-message:last-child {
+    border-bottom: none;
+}
+
+.user-menu-dropdown {
+    min-width: 250px;
+}
+
+.user-header {
+    padding: 20px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px 8px 0 0;
+    margin: -5px -5px 0 -5px;
+}
+
+.avatar-xl {
+    width: 80px;
+    height: 80px;
+}
+
+.avatar-xl .avatar-img {
+    width: 80px;
+    height: 80px;
+}
+
+/* Loading States */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Additional CSS for floating alerts */
+.floating-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: none;
+}
+
+.floating-alert .close {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+.floating-alert .close:hover {
+    opacity: 1;
+}
+
+.notification-message.unread {
+    background-color: #f8f9fa;
+    border-left: 3px solid #007bff;
+}
+
+.notification-message.read {
+    opacity: 0.7;
+}
+
+#debug-panel {
+    max-width: 200px;
+    font-size: 12px;
+}
+
+#debug-panel h6 {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#debug-panel button {
+    display: block;
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 11px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .top-nav-search {
+        display: none;
+    }
+    
+    .quick-actions-menu,
+    .notifications,
+    .messages,
+    .user-menu-dropdown {
+        min-width: 250px;
+    }
+    
+    .floating-alert {
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+    }
+    
+    #debug-panel {
+        bottom: 5px;
+        right: 5px;
+        padding: 5px;
+        max-width: 150px;
+    }
+}
+</style>
+
+<script>
+// Wait for jQuery to be loaded
+(function() {
+    'use strict';
+    
+    function waitForJQuery(callback) {
+        if (typeof jQuery !== 'undefined') {
+            callback(jQuery);
+        } else {
+            setTimeout(function() {
+                waitForJQuery(callback);
+            }, 100);
+        }
+    }
+    
+    waitForJQuery(function($) {
+        console.log('✅ jQuery loaded, initializing header...');
+        
+        $(document).ready(function() {
+            initializeHeader();
+        });
+        
+        function initializeHeader() {
+            console.log('=== HEADER INITIALIZED ===');
+            console.log('Current user:', '{{ request.user.username }}');
+            
+            // Clean up any existing event handlers
+            $(document).off('.header');
+            
+            // Initialize all components
+            initializeSearch();
+            initializeProfilePicture();
+            initializeSettings();
+            initializeTooltips();
+            
+            // Load notifications and messages immediately
+            loadNotifications();
+            loadMessages();
+            
+            // Set up auto-refresh intervals
+            setupAutoRefresh();
+            
+            // Show debug panel temporarily
+            showDebugPanel();
+            
+            // Update online status
+            updateOnlineStatus();
+            
+            console.log('=== HEADER SETUP COMPLETE ===');
+        }
+
+        // ===========================================
+        // NOTIFICATION FUNCTIONS
+        // ===========================================
+
+        function loadNotifications() {
+            console.log('🔔 Loading notifications...');
+            
+            $.ajax({
+                url: '{% url "users:api_notifications" %}',
+                type: 'GET',
+                timeout: 10000,
+                success: function(data) {
+                    console.log('✅ Notifications loaded successfully:', data);
+                    updateNotificationDisplay(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error loading notifications:', status, error);
+                    showStaticNotifications();
+                }
+            });
+        }
+
+        function updateNotificationDisplay(notifications) {
+            console.log('🔄 Updating notification display with', notifications.length, 'notifications');
+            
+            const $list = $('#notification-list');
+            const $count = $('#notification-count');
+            const $headerCount = $('#header-notification-count');
+            
+            $list.empty();
+            
+            if (notifications && notifications.length > 0) {
+                const unreadCount = notifications.filter(n => !n.is_read).length;
+                console.log('📊 Unread notifications:', unreadCount);
+                
+                if (unreadCount > 0) {
+                    $count.text(unreadCount).show();
+                    $headerCount.text(unreadCount).show();
+                } else {
+                    $count.hide();
+                    $headerCount.hide();
+                }
+                
+                notifications.forEach(function(notification, index) {
+                    const $item = $(`
+                        <li class="notification-message ${notification.is_read ? 'read' : 'unread'}">
+                            <a href="#" onclick="markNotificationRead(${notification.id}); return false;">
+                                <div class="media d-flex">
+                                    <span class="avatar avatar-sm flex-shrink-0">
+                                        <i class="fas ${notification.icon} text-primary"></i>
+                                    </span>
+                                    <div class="media-body flex-grow-1">
+                                        <p class="noti-details">
+                                            <strong>${notification.title}</strong><br>
+                                            <small>${notification.message}</small>
+                                        </p>
+                                        <p class="noti-time">
+                                            <span class="notification-time">${notification.time_ago}</span>
+                                        </p>
+                                    </div>
+                                    ${!notification.is_read ? '<span class="badge badge-primary">New</span>' : ''}
+                                </div>
+                            </a>
+                        </li>
+                    `);
+                    $list.append($item);
+                });
+                
+                console.log('✅ Notification display updated successfully');
+            } else {
+                console.log('📭 No notifications to display');
+                $count.hide();
+                $headerCount.hide();
+                showStaticNotifications();
+            }
+        }
+
+        function showStaticNotifications() {
+            const $list = $('#notification-list');
+            $list.html(`
+                <li class="notification-message">
+                    <div class="text-center p-3">
+                        <i class="fas fa-bell fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No new notifications</p>
+                        <small class="text-muted">You're all caught up!</small>
+                    </div>
+                </li>
+            `);
+        }
+
+        window.markNotificationRead = function(id) {
+            console.log('✅ Marking notification as read:', id);
+            
+            $.ajax({
+                url: '{% url "users:mark_notification_read" 0 %}'.replace('0', id),
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                },
+                success: function() {
+                    console.log('✅ Notification marked as read successfully');
+                    loadNotifications();
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error marking notification as read:', error);
+                    showAlert('Error marking notification as read', 'error');
+                }
+            });
+        };
+
+        window.clearAllNotifications = function() {
+            if (confirm('Are you sure you want to clear all notifications?')) {
+                $.ajax({
+                    url: '{% url "users:clear_all_notifications" %}',
+                    type: 'POST',
+                    data: {
+                        'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                    },
+                    success: function() {
+                        loadNotifications();
+                        showAlert('All notifications cleared', 'success');
+                    },
+                    error: function() {
+                        showAlert('Error clearing notifications', 'error');
+                    }
+                });
+            }
+        };
+
+        // ===========================================
+        // MESSAGE FUNCTIONS
+        // ===========================================
+
+        function loadMessages() {
+            console.log('💬 Loading messages...');
+            
+            $.ajax({
+                url: '{% url "users:api_messages" %}',
+                type: 'GET',
+                timeout: 10000,
+                success: function(data) {
+                    console.log('✅ Messages loaded successfully:', data);
+                    updateMessageDisplay(data);
+                },
+                error: function(xhr, status, error) {
+                    console.error('❌ Error loading messages:', status, error);
+                    showStaticMessages();
+                }
+            });
+        }
+
+        function updateMessageDisplay(messages) {
+            const $list = $('#message-list');
+            const $count = $('#message-count');
+            const $headerCount = $('#header-message-count');
+            
+            $list.empty();
+            
+            if (messages && messages.length > 0) {
+                const unreadCount = messages.filter(m => !m.is_read).length;
+                
+                if (unreadCount > 0) {
+                    $count.text(unreadCount).show();
+                    $headerCount.text(unreadCount).show();
+                } else {
+                    $count.hide();
+                    $headerCount.hide();
+                }
+                
+                messages.forEach(function(message) {
+                    const $item = $(`
+                        <li class="notification-message ${message.is_read ? 'read' : 'unread'}">
+                            <a href="{% url 'users:message_detail' 0 %}".replace('0', message.id)">
+                                <div class="media d-flex">
+                                    <span class="avatar avatar-sm flex-shrink-0">
+                                        <img class="avatar-img rounded-circle" src="${message.sender_avatar}" alt="${message.sender_name}" onerror="this.src='{% static 'assets/img/profiles/avatar-01.jpg' %}'">
+                                    </span>
+                                    <div class="media-body flex-grow-1">
+                                        <p class="noti-details">
+                                            <span class="noti-title">${message.sender_name}</span><br>
+                                            <small>${message.subject}</small>
+                                        </p>
+                                        <p class="noti-time">
+                                            <span class="notification-time">${message.time_ago}</span>
+                                        </p>
+                                    </div>
+                                    ${!message.is_read ? '<span class="badge badge-success">New</span>' : ''}
+                                </div>
+                            </a>
+                        </li>
+                    `);
+                    $list.append($item);
+                });
+            } else {
+                $count.hide();
+                $headerCount.hide();
+                showStaticMessages();
+            }
+        }
+
+        function showStaticMessages() {
+            const $list = $('#message-list');
+            $list.html(`
+                <li class="notification-message">
+                    <div class="text-center p-3">
+                        <i class="fas fa-envelope fa-2x text-muted mb-2"></i>
+                        <p class="text-muted mb-0">No new messages</p>
+                        <small class="text-muted">Your inbox is empty</small>
+                    </div>
+                </li>
+            `);
+        }
+
+        // ===========================================
+        // OTHER FUNCTIONS
+        // ===========================================
+
+        function initializeSearch() {
+            let searchTimeout;
+            
+            $('#global-search-input').off('input.header').on('input.header', function() {
+                const query = $(this).val().trim();
+                clearTimeout(searchTimeout);
+                
+                if (query.length >= 2) {
+                    searchTimeout = setTimeout(function() {
+                        loadSearchSuggestions(query);
+                    }, 300);
+                } else {
+                    $('#search-suggestions').hide();
+                }
+            });
+            
+            $(document).off('click.header').on('click.header', function(e) {
+                if (!$(e.target).closest('.top-nav-search').length) {
+                    $('#search-suggestions').hide();
+                }
+            });
+        }
+
+        function loadSearchSuggestions(query) {
+            $.ajax({
+                url: '{% url "search:autocomplete" %}',
+                data: { q: query },
+                success: function(suggestions) {
+                    const $container = $('#search-suggestions');
+                    $container.empty();
+                    
+                    if (suggestions.length > 0) {
+                        suggestions.forEach(function(suggestion) {
+                            const $item = $(`
+                                <div class="search-suggestion-item" data-url="${suggestion.url}">
+                                    <div class="search-suggestion-type">${suggestion.type}</div>
+                                    <div>${suggestion.text}</div>
+                                </div>
+                            `);
+                            $container.append($item);
+                        });
+                        $container.show();
+                    } else {
+                        $container.append('<div class="search-suggestion-item">No suggestions found</div>');
+                        $container.show();
+                    }
+                },
+                error: function() {
+                    $('#search-suggestions').hide();
+                }
+            });
+        }
+
+        function initializeProfilePicture() {
+            $('#profile_picture').off('change.header').on('change.header', function() {
+                const file = this.files[0];
+                if (file) {
+                    if (file.size > 2 * 1024 * 1024) {
+                        showAlert('File size must be less than 2MB', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+                    if (!allowedTypes.includes(file.type)) {
+                        showAlert('Please select a valid image file', 'error');
+                        this.value = '';
+                        return;
+                    }
+                    
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        $('#image-preview').attr('src', e.target.result).show();
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            $('#profilePictureForm').off('submit.header').on('submit.header', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(this);
+                const $uploadBtn = $('#upload-btn');
+                
+                $uploadBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+                
+                $.ajax({
+                    url: '{% url "users:update_profile_picture" %}',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(response) {
+                        if (response.success) {
+                            const newImageUrl = response.image_url + '?t=' + new Date().getTime();
+                            $('.user-img img, .avatar img, #current-picture').attr('src', newImageUrl);
+                            
+                            $('#profilePictureModal').modal('hide');
+                            showAlert('Profile picture updated successfully!', 'success');
+                            
+                            $('#profilePictureForm')[0].reset();
+                            $('#image-preview').hide();
+                        } else {
+                            showAlert(response.error || 'Error updating profile picture', 'error');
+                        }
+                    },
+                    error: function(xhr) {
+                        let errorMsg = 'Error updating profile picture';
+                        if (xhr.responseJSON && xhr.responseJSON.error) {
+                            errorMsg = xhr.responseJSON.error;
+                        }
+                        showAlert(errorMsg, 'error');
+                    },
+                    complete: function() {
+                        $uploadBtn.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload Picture');
+                    }
+                });
+            });
+        }
+
+        function initializeSettings() {
+            // Settings initialization
+        }
+
+        function initializeTooltips() {
+            console.log('🔧 Initializing tooltips...');
+            
+            // Dispose of existing tooltips first
+            $('[data-toggle="tooltip"], [title]').each(function() {
+                const tooltip = $(this).data('bs.tooltip');
+                if (tooltip) {
+                    tooltip.dispose();
+                }
+            });
+            
+            // Initialize new tooltips
+            $('[data-toggle="tooltip"], [title]').tooltip({
+                trigger: 'hover',
+                placement: 'auto',
+                container: 'body'
+            });
+            
+            console.log('✅ Tooltips initialized');
+        }
+
+        function setupAutoRefresh() {
+            setInterval(loadNotifications, 30000);
+            setInterval(loadMessages, 45000);
+        }
+
+        function updateOnlineStatus() {
+            $.ajax({
+                url: '{% url "users:update_online_status" %}',
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+                }
+            });
+        }
+
+        function showAlert(message, type = 'info') {
+            const alertClass = {
+                'success': 'alert-success',
+                'error': 'alert-danger',
+                'warning': 'alert-warning',
+                'info': 'alert-info'
+            }[type] || 'alert-info';
+            
+            const icon = {
+                'success': 'fa-check-circle',
+                'error': 'fa-exclamation-circle',
+                'warning': 'fa-exclamation-triangle',
+                'info': 'fa-info-circle'
+            }[type] || 'fa-info-circle';
+            
+            const alertHtml = `
+                <div class="alert ${alertClass} alert-dismissible fade show floating-alert" role="alert">
+                    <i class="fas ${icon}"></i> ${message}
+                    <button type="button" class="close" data-dismiss="alert">
+                        <span>&times;</span>
+                    </button>
+                </div>
+            `;
+            
+            $('.floating-alert').remove();
+            $('body').append(alertHtml);
+            
+            setTimeout(function() {
+                $('.floating-alert').fadeOut(function() {
+                    $(this).remove();
+                });
+            }, 5000);
+        }
+
+        function showDebugPanel() {
+            $('#debug-panel').show();
+            setTimeout(function() {
+                $('#debug-panel').fadeOut();
+            }, 15000);
+        }
+
+        // Global functions
+        window.openProfilePictureModal = function() {
+            $('#profilePictureModal').modal('show');
+        };
+
+        window.openSettingsModal = function() {
+            $('#settingsModal').modal('show');
+        };
+
+        window.saveSettings = function() {
+            const formData = new FormData($('#settingsForm')[0]);
+            
+            $.ajax({
+                url: '{% url "users:update_settings" %}',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        $('#settingsModal').modal('hide');
+                        showAlert('Settings updated successfully!', 'success');
+                    } else {
+                        showAlert(response.error || 'Error updating settings', 'error');
+                    }
+                },
+                error: function() {
+                    showAlert('Error updating settings', 'error');
+                }
+            });
+        };
+
+        window.testNotifications = function() {
+            loadNotifications();
+        };
+
+        window.testMessages = function() {
+            loadMessages();
+        };
+
+        window.showHelp = function() {
+            alert('Help functionality coming soon!');
+        };
+
+        // Event handlers
+        $(document).off('click.header', '.search-suggestion-item').on('click.header', '.search-suggestion-item', function() {
+            const url = $(this).data('url');
+            if (url) {
+                window.location.href = url;
+            }
+        });
+
+        $(document).keydown(function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.keyCode === 75) {
+                e.preventDefault();
+                $('#global-search-input').focus();
+            }
+            
+            if (e.keyCode === 27) {
+                $('.dropdown-menu').hide();
+                $('#search-suggestions').hide();
+            }
+        });
+
+        console.log('🎉 Header JavaScript fully loaded and ready!');
+    });
+})();
+</script>
+
+<!-- Additional CSS -->
+<style>
+.floating-alert {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    min-width: 300px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    border: none;
+}
+
+.floating-alert .close {
+    position: absolute;
+    top: 50%;
+    right: 15px;
+    transform: translateY(-50%);
+    padding: 0;
+    background: none;
+    border: none;
+    font-size: 20px;
+    opacity: 0.7;
+}
+
+.floating-alert .close:hover {
+    opacity: 1;
+}
+
+.notification-message.unread {
+    background-color: #f8f9fa;
+    border-left: 3px solid #007bff;
+}
+
+.notification-message.read {
+    opacity: 0.7;
+}
+
+#debug-panel {
+    max-width: 200px;
+    font-size: 12px;
+}
+
+#debug-panel h6 {
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+#debug-panel button {
+    display: block;
+    width: 100%;
+    margin-bottom: 5px;
+    font-size: 11px;
+}
+
+@media (max-width: 768px) {
+    .floating-alert {
+        left: 10px;
+        right: 10px;
+        min-width: auto;
+    }
+    
+    #debug-panel {
+        bottom: 5px;
+        right: 5px;
+        padding: 5px;
+        max-width: 150px;
+    }
+}
+</style>

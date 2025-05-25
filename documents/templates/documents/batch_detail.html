@@ -1,0 +1,340 @@
+{% extends "documents/base.html" %}
+{% load static %}
+
+{% block title %}{{ batch.name }} - Batch Details{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Batch Process Details</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'documents:dashboard' %}">Documents</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'documents:batch_list' %}">Batch Processes</a></li>
+                    <li class="breadcrumb-item active">{{ batch.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                {% if batch.status == 'pending' %}
+                <a href="{% url 'documents:batch_process' batch.pk %}" class="btn btn-success">
+                    <i class="fas fa-play"></i> Start Processing
+                </a>
+                {% endif %}
+                {% if batch.status == 'completed' %}
+                <a href="{% url 'documents:batch_report' batch.pk %}" class="btn btn-info">
+                    <i class="fas fa-download"></i> Download Report
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Batch Information -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-layer-group"></i> {{ batch.name }}
+                    </h4>
+                    <div class="float-right">
+                        {% if batch.status == 'pending' %}
+                            <span class="badge badge-warning badge-lg">{{ batch.get_status_display }}</span>
+                        {% elif batch.status == 'in_progress' %}
+                            <span class="badge badge-info badge-lg">{{ batch.get_status_display }}</span>
+                        {% elif batch.status == 'completed' %}
+                            <span class="badge badge-success badge-lg">{{ batch.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge badge-danger badge-lg">{{ batch.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Batch Name:</strong></td>
+                                    <td>{{ batch.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Description:</strong></td>
+                                    <td>{{ batch.description|default:"No description" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created By:</strong></td>
+                                    <td>{{ batch.created_by.get_full_name|default:"Unknown" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created Date:</strong></td>
+                                    <td>{{ batch.created_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>{{ batch.get_status_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Total Documents:</strong></td>
+                                    <td>{{ batch.total_documents }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Processed:</strong></td>
+                                    <td>{{ batch.processed_documents }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Failed:</strong></td>
+                                    <td>{{ batch.failed_documents }}</td>
+                                </tr>
+                                {% if batch.completed_at %}
+                                <tr>
+                                    <td><strong>Completed:</strong></td>
+                                    <td>{{ batch.completed_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar -->
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><strong>Progress:</strong></h6>
+                            <div class="progress mb-3" style="height: 25px;">
+                                <div class="progress-bar 
+                                    {% if batch.progress_percentage == 100 %}bg-success{% elif batch.progress_percentage > 0 %}bg-info{% else %}bg-secondary{% endif %}" 
+                                    style="width: {{ batch.progress_percentage }}%">
+                                    {{ batch.progress_percentage }}%
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Batch Items -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-list"></i> Batch Items
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if items %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Document Number</th>
+                                    <th>Resident</th>
+                                    <th>Village</th>
+                                    <th>Status</th>
+                                    <th>Processed</th>
+                                    <th>Error</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'documents:proof_detail' item.document.pk %}">
+                                            {{ item.document.document_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ item.document.resident.full_name }}</td>
+                                    <td>{{ item.document.village.name }}</td>
+                                    <td>
+                                        {% if item.status == 'pending' %}
+                                            <span class="badge badge-warning">{{ item.get_status_display }}</span>
+                                        {% elif item.status == 'processed' %}
+                                            <span class="badge badge-success">{{ item.get_status_display }}</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">{{ item.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{ item.processed_at|date:"M d, H:i"|default:"-" }}</td>
+                                    <td>
+                                        {% if item.error_message %}
+                                        <small class="text-danger">{{ item.error_message|truncatechars:30 }}</small>
+                                        {% else %}
+                                        -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                       </table>
+                   </div>
+                   {% else %}
+                   <div class="text-center py-4">
+                       <i class="fas fa-file-alt fa-2x text-muted mb-2"></i>
+                       <p class="text-muted">No items in this batch yet.</p>
+                   </div>
+                   {% endif %}
+               </div>
+           </div>
+       </div>
+
+       <!-- Sidebar -->
+       <div class="col-lg-4">
+           <!-- Batch Statistics -->
+           <div class="card">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-chart-bar"></i> Statistics
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="row text-center">
+                       <div class="col-4">
+                           <div class="stats-box">
+                               <h4 class="text-primary">{{ batch.total_documents }}</h4>
+                               <small class="text-muted">Total</small>
+                           </div>
+                       </div>
+                       <div class="col-4">
+                           <div class="stats-box">
+                               <h4 class="text-success">{{ batch.processed_documents }}</h4>
+                               <small class="text-muted">Processed</small>
+                           </div>
+                       </div>
+                       <div class="col-4">
+                           <div class="stats-box">
+                               <h4 class="text-danger">{{ batch.failed_documents }}</h4>
+                               <small class="text-muted">Failed</small>
+                           </div>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Quick Actions -->
+           <div class="card">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-bolt"></i> Quick Actions
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="d-grid gap-2">
+                       {% if batch.status == 'pending' %}
+                       <a href="{% url 'documents:batch_process' batch.pk %}" class="btn btn-outline-success btn-block">
+                           <i class="fas fa-play"></i> Start Processing
+                       </a>
+                       {% endif %}
+                       {% if batch.status == 'completed' %}
+                       <a href="{% url 'documents:batch_report' batch.pk %}" class="btn btn-outline-info btn-block">
+                           <i class="fas fa-download"></i> Download Report
+                       </a>
+                       {% endif %}
+                       <a href="{% url 'documents:batch_list' %}" class="btn btn-outline-secondary btn-block">
+                           <i class="fas fa-list"></i> All Batches
+                       </a>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Status Timeline -->
+           <div class="card">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-clock"></i> Timeline
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="timeline">
+                       <div class="timeline-item {% if batch.created_at %}active{% endif %}">
+                           <div class="timeline-marker bg-primary"></div>
+                           <div class="timeline-content">
+                               <h6 class="timeline-title">Created</h6>
+                               <p class="timeline-description">{{ batch.created_at|date:"F d, Y H:i" }}</p>
+                           </div>
+                       </div>
+                       {% if batch.status == 'in_progress' or batch.status == 'completed' or batch.status == 'failed' %}
+                       <div class="timeline-item active">
+                           <div class="timeline-marker bg-info"></div>
+                           <div class="timeline-content">
+                               <h6 class="timeline-title">Processing Started</h6>
+                               <p class="timeline-description">{{ batch.created_at|date:"F d, Y H:i" }}</p>
+                           </div>
+                       </div>
+                       {% endif %}
+                       {% if batch.completed_at %}
+                       <div class="timeline-item active">
+                           <div class="timeline-marker bg-{% if batch.status == 'completed' %}success{% else %}danger{% endif %}"></div>
+                           <div class="timeline-content">
+                               <h6 class="timeline-title">{{ batch.get_status_display }}</h6>
+                               <p class="timeline-description">{{ batch.completed_at|date:"F d, Y H:i" }}</p>
+                           </div>
+                       </div>
+                       {% endif %}
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+
+<style>
+.stats-box {
+   padding: 10px;
+   border-radius: 5px;
+   margin-bottom: 10px;
+}
+
+.timeline {
+   position: relative;
+   padding-left: 30px;
+}
+
+.timeline-item {
+   position: relative;
+   padding-bottom: 20px;
+}
+
+.timeline-item:not(:last-child):before {
+   content: '';
+   position: absolute;
+   left: -21px;
+   top: 30px;
+   height: calc(100% - 10px);
+   width: 2px;
+   background-color: #e9ecef;
+}
+
+.timeline-item.active:not(:last-child):before {
+   background-color: #007bff;
+}
+
+.timeline-marker {
+   position: absolute;
+   left: -25px;
+   top: 5px;
+   width: 12px;
+   height: 12px;
+   border-radius: 50%;
+   border: 2px solid #fff;
+   box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-item.active .timeline-marker {
+   box-shadow: 0 0 0 2px #007bff;
+}
+
+.timeline-title {
+   margin-bottom: 5px;
+   font-weight: 600;
+}
+
+.timeline-description {
+   margin-bottom: 0;
+   font-size: 0.875rem;
+   color: #6c757d;
+}
+</style>
+{% endblock %}

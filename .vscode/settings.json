@@ -1,0 +1,11 @@
+{
+    "python.defaultInterpreterPath": "./venv/Scripts/python.exe",
+    "python.linting.enabled": true,
+    "python.linting.pylintEnabled": false,
+    "python.linting.pycodestyleEnabled": false,
+    "python.linting.flake8Enabled": true,
+    "python.analysis.extraPaths": ["./venv/Lib/site-packages"],
+    "python.analysis.autoSearchPaths": true,
+    "python.analysis.diagnosticMode": "workspace",
+    
+}

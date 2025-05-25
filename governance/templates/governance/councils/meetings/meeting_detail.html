@@ -1,0 +1,593 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}{{ meeting.title }} - Meetings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .meeting-header {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .info-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .stats-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    .badge-status {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    .attendee-card {
+        border-left: 4px solid #17a2b8;
+        transition: all 0.3s ease;
+        margin-bottom: 10px;
+    }
+    .attendee-card:hover {
+        border-left-color: #6c757d;
+        background-color: #f8f9fa;
+    }
+    .resolution-card {
+        border-left: 4px solid #28a745;
+        margin-bottom: 15px;
+        transition: all 0.3s ease;
+    }
+    .resolution-card:hover {
+        background-color: #f8f9fa;
+    }
+    .agenda-section {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .minutes-section {
+        background-color: #e9ecef;
+        border-radius: 8px;
+        padding: 20px;
+    }
+    .meeting-status {
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ meeting.title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:meeting_list' %}">Meetings</a></li>
+                    <li class="breadcrumb-item active">{{ meeting.title }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'governance:meeting_update' meeting.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-secondary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown">
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        {% if meeting.status == 'scheduled' %}
+                        <a class="dropdown-item" href="#" onclick="updateMeetingStatus('{{ meeting.pk }}', 'in_progress')">
+                            <i class="fas fa-play"></i> Start Meeting
+                        </a>
+                        <a class="dropdown-item" href="#" onclick="updateMeetingStatus('{{ meeting.pk }}', 'completed')">
+                            <i class="fas fa-check"></i> Mark Complete
+                        </a>
+                        <a class="dropdown-item text-warning" href="#" onclick="updateMeetingStatus('{{ meeting.pk }}', 'cancelled')">
+                            <i class="fas fa-times"></i> Cancel Meeting
+                        </a>
+                        {% endif %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="{% url 'governance:meeting_delete' meeting.pk %}">
+                            <i class="fas fa-trash"></i> Delete Meeting
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Meeting Overview -->
+    <div class="meeting-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3">{{ meeting.title }}</h2>
+                <p class="mb-3">
+                    <i class="fas fa-calendar"></i> {{ meeting.date|date:"F d, Y" }} at {{ meeting.time|time:"H:i" }}
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-map-marker-alt"></i> {{ meeting.location }}
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-calendar-check" style="font-size: 4rem; opacity: 0.3;"></i>
+                <br>
+                <div class="meeting-status mt-2">
+                    {% if meeting.status == 'scheduled' %}
+                    <span class="badge badge-primary badge-status">{{ meeting.get_status_display }}</span>
+                    {% elif meeting.status == 'completed' %}
+                    <span class="badge badge-success badge-status">{{ meeting.get_status_display }}</span>
+                    {% elif meeting.status == 'cancelled' %}
+                    <span class="badge badge-danger badge-status">{{ meeting.get_status_display }}</span>
+                    {% elif meeting.status == 'in_progress' %}
+                    <span class="badge badge-warning badge-status">{{ meeting.get_status_display }}</span>
+                    {% else %}
+                    <span class="badge badge-secondary badge-status">{{ meeting.get_status_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Meeting Information -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-secondary"></i> Meeting Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Traditional Council:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:council_detail' meeting.council.pk %}" class="text-decoration-none">
+                                            {{ meeting.council.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date:</strong></td>
+                                    <td>{{ meeting.date|date:"F d, Y (l)" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Time:</strong></td>
+                                    <td>{{ meeting.time|time:"H:i" }}</td>
+                                <tr>
+                                   <td><strong>Location:</strong></td>
+                                   <td>{{ meeting.location }}</td>
+                               </tr>
+                           </table>
+                       </div>
+                       <div class="col-md-6">
+                           <table class="table table-borderless">
+                               <tr>
+                                   <td><strong>Municipality:</strong></td>
+                                   <td>
+                                       <a href="{% url 'governance:municipality_detail' meeting.council.municipality.pk %}" class="text-decoration-none">
+                                           {{ meeting.council.municipality.name }}
+                                       </a>
+                                   </td>
+                               </tr>
+                               <tr>
+                                   <td><strong>Status:</strong></td>
+                                   <td>
+                                       {% if meeting.status == 'scheduled' %}
+                                       <span class="badge badge-primary">{{ meeting.get_status_display }}</span>
+                                       {% elif meeting.status == 'completed' %}
+                                       <span class="badge badge-success">{{ meeting.get_status_display }}</span>
+                                       {% elif meeting.status == 'cancelled' %}
+                                       <span class="badge badge-danger">{{ meeting.get_status_display }}</span>
+                                       {% elif meeting.status == 'in_progress' %}
+                                       <span class="badge badge-warning">{{ meeting.get_status_display }}</span>
+                                       {% else %}
+                                       <span class="badge badge-secondary">{{ meeting.get_status_display }}</span>
+                                       {% endif %}
+                                   </td>
+                               </tr>
+                               <tr>
+                                   <td><strong>Attendees:</strong></td>
+                                   <td><span class="badge badge-info">{{ attendees.count }}</span></td>
+                               </tr>
+                               <tr>
+                                   <td><strong>Resolutions:</strong></td>
+                                   <td><span class="badge badge-success">{{ resolutions.count }}</span></td>
+                               </tr>
+                           </table>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Agenda -->
+           <div class="card info-card mt-4">
+               <div class="card-header">
+                   <h4 class="card-title">
+                       <i class="fas fa-list-ul text-primary"></i> Meeting Agenda
+                   </h4>
+               </div>
+               <div class="card-body">
+                   {% if meeting.agenda %}
+                   <div class="agenda-section">
+                       {{ meeting.agenda|linebreaks }}
+                   </div>
+                   {% else %}
+                   <div class="text-center py-4">
+                       <i class="fas fa-clipboard-list fa-2x text-muted mb-2"></i>
+                       <br>
+                       <span class="text-muted">No agenda set for this meeting</span>
+                       <br>
+                       <a href="{% url 'governance:meeting_update' meeting.pk %}" class="btn btn-sm btn-outline-primary mt-2">
+                           <i class="fas fa-edit"></i> Add Agenda
+                       </a>
+                   </div>
+                   {% endif %}
+               </div>
+           </div>
+
+           <!-- Minutes -->
+           {% if meeting.status == 'completed' or meeting.minutes %}
+           <div class="card info-card mt-4">
+               <div class="card-header">
+                   <h4 class="card-title">
+                       <i class="fas fa-file-alt text-warning"></i> Meeting Minutes
+                   </h4>
+               </div>
+               <div class="card-body">
+                   {% if meeting.minutes %}
+                   <div class="minutes-section">
+                       {{ meeting.minutes|linebreaks }}
+                   </div>
+                   {% else %}
+                   <div class="text-center py-4">
+                       <i class="fas fa-sticky-note fa-2x text-muted mb-2"></i>
+                       <br>
+                       <span class="text-muted">No minutes recorded for this meeting</span>
+                       <br>
+                       <a href="{% url 'governance:meeting_update' meeting.pk %}" class="btn btn-sm btn-outline-warning mt-2">
+                           <i class="fas fa-edit"></i> Add Minutes
+                       </a>
+                   </div>
+                   {% endif %}
+               </div>
+           </div>
+           {% endif %}
+
+           <!-- Resolutions -->
+           <div class="card info-card mt-4">
+               <div class="card-header">
+                   <h4 class="card-title">
+                       <i class="fas fa-gavel text-success"></i> Meeting Resolutions
+                   </h4>
+                   <a href="#" class="btn btn-success btn-sm float-right">
+                       <i class="fas fa-plus"></i> Add Resolution
+                   </a>
+               </div>
+               <div class="card-body">
+                   {% if resolutions %}
+                       {% for resolution in resolutions %}
+                       <div class="card resolution-card">
+                           <div class="card-body">
+                               <div class="row">
+                                   <div class="col-md-8">
+                                       <h6 class="font-weight-bold">{{ resolution.title }}</h6>
+                                       <p class="mb-2">{{ resolution.description|truncatechars:200 }}</p>
+                                       {% if resolution.proposed_by %}
+                                       <small class="text-muted">
+                                           Proposed by: {{ resolution.proposed_by.user.get_full_name }} ({{ resolution.proposed_by.get_role_display }})
+                                       </small>
+                                       {% endif %}
+                                   </div>
+                                   <div class="col-md-4 text-right">
+                                       {% if resolution.status == 'proposed' %}
+                                       <span class="badge badge-secondary">{{ resolution.get_status_display }}</span>
+                                       {% elif resolution.status == 'approved' %}
+                                       <span class="badge badge-success">{{ resolution.get_status_display }}</span>
+                                       {% elif resolution.status == 'rejected' %}
+                                       <span class="badge badge-danger">{{ resolution.get_status_display }}</span>
+                                       {% elif resolution.status == 'implemented' %}
+                                       <span class="badge badge-primary">{{ resolution.get_status_display }}</span>
+                                       {% else %}
+                                       <span class="badge badge-warning">{{ resolution.get_status_display }}</span>
+                                       {% endif %}
+                                       <br>
+                                       <small class="text-muted">{{ resolution.created_at|date:"M d, Y" }}</small>
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
+                       {% endfor %}
+                   {% else %}
+                       <div class="text-center py-4">
+                           <i class="fas fa-gavel fa-2x text-muted mb-2"></i>
+                           <br>
+                           <span class="text-muted">No resolutions recorded for this meeting</span>
+                           <br>
+                           <a href="#" class="btn btn-sm btn-outline-success mt-2">
+                               <i class="fas fa-plus"></i> Add First Resolution
+                           </a>
+                       </div>
+                   {% endif %}
+               </div>
+           </div>
+       </div>
+
+       <!-- Sidebar -->
+       <div class="col-lg-4">
+           <!-- Quick Statistics -->
+           <div class="card info-card">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-chart-bar text-primary"></i> Meeting Statistics
+                   </h5>
+               </div>
+               <div class="card-body text-center">
+                   <div class="row">
+                       <div class="col-6">
+                           <i class="fas fa-users text-info stats-icon"></i>
+                           <h3 class="text-info">{{ attendees.count }}</h3>
+                           <p class="text-muted mb-0">Attendees</p>
+                       </div>
+                       <div class="col-6">
+                           <i class="fas fa-gavel text-success stats-icon"></i>
+                           <h3 class="text-success">{{ resolutions.count }}</h3>
+                           <p class="text-muted mb-0">Resolutions</p>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Attendees -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-users text-info"></i> Meeting Attendees
+                   </h5>
+               </div>
+               <div class="card-body">
+                   {% if attendees %}
+                       {% for attendee in attendees %}
+                       <div class="attendee-card p-3">
+                           <div class="d-flex justify-content-between align-items-center">
+                               <div>
+                                   <strong>{{ attendee.user.get_full_name }}</strong>
+                                   <br><small class="text-muted">{{ attendee.get_role_display }}</small>
+                               </div>
+                               <div>
+                                   {% if attendee.is_active %}
+                                   <span class="badge badge-success">Active</span>
+                                   {% else %}
+                                   <span class="badge badge-secondary">Inactive</span>
+                                   {% endif %}
+                               </div>
+                           </div>
+                       </div>
+                       {% endfor %}
+                   {% else %}
+                       <div class="text-center py-3">
+                           <i class="fas fa-user-times fa-2x text-muted mb-2"></i>
+                           <br>
+                           <small class="text-muted">No attendees recorded</small>
+                       </div>
+                   {% endif %}
+               </div>
+           </div>
+
+           <!-- Meeting Timeline -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-clock text-warning"></i> Meeting Timeline
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="timeline">
+                       <div class="timeline-item">
+                           <div class="timeline-marker bg-primary"></div>
+                           <div class="timeline-content">
+                               <h6>Meeting Scheduled</h6>
+                               <small class="text-muted">{{ meeting.created_at|date:"M d, Y H:i" }}</small>
+                           </div>
+                       </div>
+                       
+                       {% if meeting.status == 'in_progress' or meeting.status == 'completed' %}
+                       <div class="timeline-item">
+                           <div class="timeline-marker bg-warning"></div>
+                           <div class="timeline-content">
+                               <h6>Meeting Started</h6>
+                               <small class="text-muted">{{ meeting.date|date:"M d, Y" }} {{ meeting.time|time:"H:i" }}</small>
+                           </div>
+                       </div>
+                       {% endif %}
+                       
+                       {% if meeting.status == 'completed' %}
+                       <div class="timeline-item">
+                           <div class="timeline-marker bg-success"></div>
+                           <div class="timeline-content">
+                               <h6>Meeting Completed</h6>
+                               <small class="text-muted">{{ meeting.updated_at|date:"M d, Y H:i" }}</small>
+                           </div>
+                       </div>
+                       {% endif %}
+                       
+                       {% if meeting.status == 'cancelled' %}
+                       <div class="timeline-item">
+                           <div class="timeline-marker bg-danger"></div>
+                           <div class="timeline-content">
+                               <h6>Meeting Cancelled</h6>
+                               <small class="text-muted">{{ meeting.updated_at|date:"M d, Y H:i" }}</small>
+                           </div>
+                       </div>
+                       {% endif %}
+                   </div>
+               </div>
+           </div>
+
+           <!-- Record Information -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-info text-muted"></i> Record Information
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <table class="table table-borderless table-sm">
+                       <tr>
+                           <td><strong>Created:</strong></td>
+                           <td>{{ meeting.created_at|date:"M d, Y" }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Updated:</strong></td>
+                           <td>{{ meeting.updated_at|date:"M d, Y" }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Council:</strong></td>
+                           <td>{{ meeting.council.name }}</td>
+                       </tr>
+                   </table>
+               </div>
+           </div>
+
+           <!-- Quick Actions -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-bolt text-secondary"></i> Quick Actions
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="d-grid gap-2">
+                       <a href="{% url 'governance:meeting_update' meeting.pk %}" class="btn btn-outline-primary">
+                           <i class="fas fa-edit"></i> Edit Meeting
+                       </a>
+                       <a href="{% url 'governance:council_detail' meeting.council.pk %}" class="btn btn-outline-info">
+                           <i class="fas fa-users"></i> View Council
+                       </a>
+                       {% if meeting.status == 'scheduled' %}
+                       <button onclick="updateMeetingStatus('{{ meeting.pk }}', 'in_progress')" class="btn btn-outline-warning">
+                           <i class="fas fa-play"></i> Start Meeting
+                       </button>
+                       {% endif %}
+                       <a href="{% url 'governance:meeting_list' %}" class="btn btn-outline-secondary">
+                           <i class="fas fa-list"></i> Back to Meetings
+                       </a>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+   // Initialize tooltips
+   $('[title]').tooltip();
+   
+   // Add animations
+   $('.card').hide().fadeIn(800);
+   $('.meeting-header').hide().slideDown(600);
+   
+   // Add hover effects to resolution cards
+   $('.resolution-card').hover(
+       function() {
+           $(this).addClass('shadow-sm');
+       },
+       function() {
+           $(this).removeClass('shadow-sm');
+       }
+   );
+   
+   // Add hover effects to attendee cards
+   $('.attendee-card').hover(
+       function() {
+           $(this).addClass('bg-light');
+       },
+       function() {
+           $(this).removeClass('bg-light');
+       }
+   );
+});
+
+// Function to update meeting status
+function updateMeetingStatus(meetingId, newStatus) {
+   if (confirm('Are you sure you want to update the meeting status?')) {
+       // Add AJAX call to update status
+       $.ajax({
+           url: '/governance/meetings/' + meetingId + '/update-status/',
+           method: 'POST',
+           data: {
+               'status': newStatus,
+               'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+           },
+           success: function(data) {
+               if (data.success) {
+                   location.reload();
+               } else {
+                   alert('Error updating meeting status');
+               }
+           },
+           error: function() {
+               alert('Error updating meeting status');
+           }
+       });
+   }
+}
+</script>
+
+<style>
+/* Timeline styles */
+.timeline {
+   position: relative;
+   padding-left: 30px;
+}
+
+.timeline::before {
+   content: '';
+   position: absolute;
+   left: 15px;
+   top: 0;
+   bottom: 0;
+   width: 2px;
+   background: #e9ecef;
+}
+
+.timeline-item {
+   position: relative;
+   margin-bottom: 20px;
+}
+
+.timeline-marker {
+   position: absolute;
+   left: -37px;
+   top: 5px;
+   width: 12px;
+   height: 12px;
+   border-radius: 50%;
+   border: 2px solid #fff;
+   box-shadow: 0 0 0 2px #e9ecef;
+}
+
+.timeline-content h6 {
+   margin-bottom: 5px;
+   font-weight: 600;
+}
+</style>
+{% endblock %}

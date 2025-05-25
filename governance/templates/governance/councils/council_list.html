@@ -1,0 +1,360 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Traditional Councils - Governance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .council-row {
+        transition: all 0.3s ease;
+    }
+    .council-row:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .badge-lg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .leader-info {
+        font-weight: 500;
+    }
+    .term-expired {
+        color: #dc3545;
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Traditional Councils</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item active">Traditional Councils</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'governance:council_create' %}" class="btn btn-info">
+                    <i class="fas fa-plus"></i> Add Traditional Council
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-number">{{ councils.paginator.count }}</div>
+                <div class="stats-label">Total Councils</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">
+                    {% with total_villages=0 %}
+                        {% for council in councils %}
+                            {% with total_villages=total_villages|add:council.village_count %}
+                            {% endwith %}
+                        {% endfor %}
+                        {{ total_villages }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Total Villages</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">
+                    {% with total_members=0 %}
+                        {% for council in councils %}
+                            {% with total_members=total_members|add:council.member_count %}
+                            {% endwith %}
+                        {% endfor %}
+                        {{ total_members }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Council Members</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">
+                    {% with active_councils=0 %}
+                        {% for council in councils %}
+                            {% if council.is_active %}
+                                {% with active_councils=active_councils|add:1 %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ active_councils }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Active Councils</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Council name or leader..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <label for="municipality" class="form-label">Municipality</label>
+                <select name="municipality" id="municipality" class="form-control">
+                    <option value="">All Municipalities</option>
+                    {% for municipality in municipalities %}
+                    <option value="{{ municipality.id }}" {% if current_filters.municipality == municipality.id|stringformat:"s" %}selected{% endif %}>
+                        {{ municipality.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Status</option>
+                    {% for status_code, status_name in council_statuses %}
+                    <option value="{{ status_code }}" {% if current_filters.status == status_code %}selected{% endif %}>
+                        {{ status_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-info">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'governance:council_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Councils Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-users"></i> Traditional Councils
+                    </h4>
+                    <div class="card-options">
+                        <a href="{% url 'governance:council_create' %}" class="btn btn-sm btn-outline-info">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if councils %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="25%">Council</th>
+                                        <th width="20%">Leader</th>
+                                        <th width="15%">Municipality</th>
+                                        <th width="10%">Villages</th>
+                                        <th width="10%">Established</th>
+                                        <th width="8%">Status</th>
+                                        <th width="12%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for council in councils %}
+                                    <tr class="council-row">
+                                        <td>{{ forloop.counter|add:councils.start_index|add:"-1" }}</td>
+                                        <td>
+                                            <strong>{{ council.name }}</strong>
+                                            {% if council.recognition_certificate %}
+                                            <br><small class="text-muted">Cert: {{ council.recognition_certificate }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="leader-info">{{ council.leader_title }} {{ council.leader_name }}</div>
+                                            {% if council.is_term_expired %}
+                                            <small class="term-expired">
+                                                <i class="fas fa-exclamation-triangle"></i> Term Expired
+                                            </small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:municipality_detail' council.municipality.pk %}" class="text-decoration-none">
+                                                {{ council.municipality.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-success">{{ council.village_count }}</span>
+                                        </td>
+                                        <td>
+                                            <small>{{ council.establishment_date|date:"M Y" }}</small>
+                                        </td>
+                                        <td>
+                                            {% if council.status == 'active' %}
+                                            <span class="badge badge-success">{{ council.get_status_display }}</span>
+                                            {% elif council.status == 'inactive' %}
+                                            <span class="badge badge-secondary">{{ council.get_status_display }}</span>
+                                            {% elif council.status == 'suspended' %}
+                                            <span class="badge badge-warning">{{ council.get_status_display }}</span>
+                                            {% else %}
+                                            <span class="badge badge-danger">{{ council.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{% url 'governance:council_detail' council.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'governance:council_update' council.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Edit Council">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'governance:village_create' %}?council={{ council.pk }}" 
+                                                   class="btn btn-sm btn-outline-success" 
+                                                   title="Add Village">
+                                                    <i class="fas fa-plus"></i>
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if councils.has_other_pages %}
+                        <nav aria-label="Council pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if councils.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ councils.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.municipality %}&municipality={{ current_filters.municipality }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        Previous
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in councils.paginator.page_range %}
+                                {% if councils.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > councils.number|add:'-3' and num < councils.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.municipality %}&municipality={{ current_filters.municipality }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if councils.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ councils.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.municipality %}&municipality={{ current_filters.municipality }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        Next
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Traditional Councils Found</h5>
+                            <p class="text-muted">Start by adding the first traditional council to the system.</p>
+                            <a href="{% url 'governance:council_create' %}" class="btn btn-info">
+                                <i class="fas fa-plus"></i> Add First Council
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Enhanced hover effects for council rows
+    $('.council-row').hover(
+        function() {
+            $(this).addClass('table-active');
+        },
+        function() {
+            $(this).removeClass('table-active');
+        }
+    );
+});
+</script>
+{% endblock %}

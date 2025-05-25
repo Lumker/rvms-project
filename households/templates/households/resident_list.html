@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Residents{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/plugins/datatables/datatables.min.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Residents</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'households:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Residents</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'households:resident_create' %}" class="btn btn-primary">
+                    <i class="fe fe-user-plus"></i> Add Resident
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="card mb-4">
+        <div class="card-body">
+            <form method="get" class="row align-items-end">
+                <div class="col-md-3">
+                    {{ search_form.search.label_tag }}
+                    {{ search_form.search }}
+                </div>
+                <div class="col-md-2">
+                    {{ search_form.household.label_tag }}
+                    {{ search_form.household }}
+                </div>
+                <div class="col-md-2">
+                    {{ search_form.employment_status.label_tag }}
+                    {{ search_form.employment_status }}
+                </div>
+                <div class="col-md-2">
+                    {{ search_form.age_group.label_tag }}
+                    {{ search_form.age_group }}
+                </div>
+                <div class="col-md-3">
+                    <button type="submit" class="btn btn-primary mr-2">
+                        <i class="fe fe-search"></i> Filter
+                    </button>
+                    <a href="{% url 'households:resident_list' %}" class="btn btn-outline-secondary">
+                        <i class="fe fe-x"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">Residents ({{ total_count }})</h4>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover table-center mb-0">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>ID Number</th>
+                            <th>Age</th>
+                            <th>Gender</th>
+                            <th>Household</th>
+                            <th>Role</th>
+                            <th>Employment</th>
+                            <th>System User</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for resident in page_obj %}
+                        <tr>
+                            <td>
+                                <strong>{{ resident.full_name }}</strong>
+                                {% if resident.phone_number %}
+                                <br><small class="text-muted">
+                                    <i class="fe fe-phone"></i> {{ resident.phone_number }}
+                                </small>
+                                {% endif %}
+                            </td>
+                            <td>{{ resident.id_number }}</td>
+                            <td>{{ resident.age }} years</td>
+                            <td>
+                                <span class="badge badge-{% if resident.gender == 'M' %}primary{% else %}info{% endif %}">
+                                    {{ resident.get_gender_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{% url 'households:household_detail' resident.household.pk %}">
+                                    {{ resident.household.household_id }}
+                                </a>
+                                <br><small class="text-muted">{{ resident.household.village.name }}</small>
+                            </td>
+                            <td>
+                                {% if resident.is_head_of_household %}
+                                    <span class="badge badge-danger">
+                                        <i class="fe fe-star"></i> Head
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-secondary">Member</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if resident.employment_status %}
+                                    <small>{{ resident.get_employment_status_display }}</small>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if resident.user_account %}
+                                    <span class="badge badge-success">
+                                        <i class="fe fe-check"></i> Yes
+                                    </span>
+                                {% else %}
+                                    <span class="badge badge-warning">
+                                        <i class="fe fe-x"></i> No
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="text-right">
+                                <div class="actions">
+                                    <a href="{% url 'households:resident_detail' resident.pk %}" 
+                                       class="btn btn-sm bg-success-light mr-2" title="View Details">
+                                        <i class="fe fe-eye"></i>
+                                    </a>
+                                    <a href="{% url 'households:resident_update' resident.pk %}" 
+                                       class="btn btn-sm bg-info-light mr-2" title="Edit">
+                                        <i class="fe fe-edit"></i>
+                                    </a>
+                                    {% if not resident.user_account and resident.is_adult and resident.email %}
+                                    <a href="{% url 'households:create_user_account' resident.pk %}" 
+                                       class="btn btn-sm bg-primary-light" title="Create User Account">
+                                        <i class="fe fe-user-plus"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="9" class="text-center text-muted">
+                                <i class="fe fe-users fe-2x mb-3"></i>
+                                <p>No residents found</p>
+                                <a href="{% url 'households:resident_create' %}" class="btn btn-primary">
+                                    <i class="fe fe-user-plus"></i> Add First Resident
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if page_obj.has_other_pages %}
+            <nav aria-label="Resident pagination" class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                    {% endif %}
+                    
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+                    
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+});
+</script>
+{% endblock %}

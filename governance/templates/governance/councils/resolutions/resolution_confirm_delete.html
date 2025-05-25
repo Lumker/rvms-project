@@ -1,0 +1,347 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Resolution - {{ resolution.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .warning-card {
+        border-left: 4px solid #dc3545;
+        background-color: #f8f9fa;
+    }
+    .info-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .btn-delete {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        font-weight: 600;
+    }
+    .btn-delete:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+        transform: translateY(-1px);
+    }
+    .resolution-preview {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        border-left: 4px solid #28a745;
+    }
+    .impact-item {
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-left: 3px solid #dc3545;
+        background-color: #fff5f5;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Delete Resolution</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:resolution_list' %}">Resolutions</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:resolution_detail' resolution.pk %}">{{ resolution.title|truncatechars:30 }}</a></li>
+                    <li class="breadcrumb-item active">Delete</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Header -->
+    <div class="delete-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-exclamation-triangle"></i> Delete Resolution
+                </h2>
+                <p class="mb-0">You are about to permanently delete this council resolution</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-trash-alt" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Warning Card -->
+            <div class="card warning-card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+                        </div>
+                        <div class="col-md-10">
+                            <h5 class="text-danger mb-2">Warning: This action cannot be undone!</h5>
+                            <p class="mb-1">Deleting this resolution will:</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="impact-item">
+                                        <i class="fas fa-times text-danger"></i>
+                                        Permanently remove the resolution from the system
+                                    </div>
+                                    <div class="impact-item">
+                                        <i class="fas fa-times text-danger"></i>
+                                        Remove it from the associated meeting record
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="impact-item">
+                                        <i class="fas fa-times text-danger"></i>
+                                        Affect resolution statistics and reports
+                                    </div>
+                                    <div class="impact-item">
+                                        <i class="fas fa-times text-danger"></i>
+                                        Remove all tracking and audit history
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resolution Information -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-gavel text-success"></i> Resolution to be Deleted
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Title:</strong></td>
+                                    <td>{{ resolution.title }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if resolution.status == 'proposed' %}
+                                        <span class="badge badge-secondary">{{ resolution.get_status_display }}</span>
+                                        {% elif resolution.status == 'approved' %}
+                                        <span class="badge badge-success">{{ resolution.get_status_display }}</span>
+                                        {% elif resolution.status == 'rejected' %}
+                                        <span class="badge badge-danger">{{ resolution.get_status_display }}</span>
+                                        {% elif resolution.status == 'implemented' %}
+                                        <span class="badge badge-primary">{{ resolution.get_status_display }}</span>
+                                        {% else %}
+                                        <span class="badge badge-warning">{{ resolution.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Meeting:</strong></td>
+                                    <td>{{ resolution.meeting.title }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Meeting Date:</strong></td>
+                                    <td>{{ resolution.meeting.date|date:"F d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Council:</strong></td>
+                                    <td>{{ resolution.meeting.council.name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Proposed By:</strong></td>
+                                    <td>
+                                        {% if resolution.proposed_by %}
+                                        {{ resolution.proposed_by.user.get_full_name }}
+                                        <br><small class="text-muted">{{ resolution.proposed_by.get_role_display }}</small>
+                                        {% else %}
+                                        <span class="text-muted">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ resolution.created_at|date:"F d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Updated:</strong></td>
+                                    <td>{{ resolution.updated_at|date:"F d, Y" }}</td>
+                                </tr>
+                                {% if resolution.date_implemented %}
+                                <tr>
+                                    <td><strong>Implemented:</strong></td>
+                                    <td>{{ resolution.date_implemented|date:"F d, Y" }}</td>
+                                </tr>
+                                {% endif %}
+                                <tr>
+                                    <td><strong>Municipality:</strong></td>
+                                    <td>{{ resolution.meeting.council.municipality.name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Resolution Preview -->
+                    <div class="mt-4">
+                        <strong>Resolution Description:</strong>
+                        <div class="resolution-preview mt-2">
+                            {{ resolution.description|linebreaks }}
+                        </div>
+                    </div>
+
+                    <!-- Impact Assessment -->
+                    {% if resolution.status == 'implemented' %}
+                    <div class="mt-4">
+                        <div class="alert alert-warning" role="alert">
+                            <h6 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Important Notice</h6>
+                            <p class="mb-0">This resolution has been <strong>implemented</strong>. Deleting it may affect:</p>
+                            <ul class="mb-0 mt-2">
+                                <li>Implementation tracking and compliance records</li>
+                                <li>Historical decision audit trails</li>
+                                <li>Performance metrics and reporting</li>
+                                <li>Legal and administrative documentation</li>
+                            </ul>
+                        </div>
+                    </div>
+                    {% elif resolution.status == 'approved' %}
+                    <div class="mt-4">
+                        <div class="alert alert-info" role="alert">
+                            <h6 class="alert-heading"><i class="fas fa-info-circle"></i> Notice</h6>
+                            <p class="mb-0">This resolution has been <strong>approved</strong> but not yet implemented. Consider updating the status instead of deleting if the resolution is no longer valid.</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Confirmation Form -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-check-circle text-success"></i> Confirm Deletion
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Final Confirmation:</strong> 
+                            Are you absolutely sure you want to delete the resolution "{{ resolution.title }}"? 
+                            This action will permanently remove the resolution and all its associated tracking information.
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                <label class="form-check-label" for="confirmDelete">
+                                    I understand that this action cannot be undone and I want to proceed with deleting this resolution and all its associated data.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmImpact" required>
+                                <label class="form-check-label" for="confirmImpact">
+                                    I acknowledge that deleting this resolution may affect meeting records, statistics, and audit trails.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-danger btn-delete" id="deleteBtn" disabled>
+                                <i class="fas fa-trash-alt"></i> Delete Resolution
+                            </button>
+                            <a href="{% url 'governance:resolution_detail' resolution.pk %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <a href="{% url 'governance:resolution_update' resolution.pk %}" class="btn btn-warning ml-2">
+                                <i class="fas fa-edit"></i> Edit Instead
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.delete-header').hide().slideDown(600);
+    
+    // Enable/disable delete button based on checkboxes
+    function updateDeleteButton() {
+        const confirmDelete = $('#confirmDelete').is(':checked');
+        const confirmImpact = $('#confirmImpact').is(':checked');
+        
+        if (confirmDelete && confirmImpact) {
+            $('#deleteBtn').prop('disabled', false).removeClass('btn-secondary').addClass('btn-danger');
+        } else {
+            $('#deleteBtn').prop('disabled', true).removeClass('btn-danger').addClass('btn-secondary');
+        }
+    }
+    
+    $('#confirmDelete, #confirmImpact').change(updateDeleteButton);
+    
+    // Form submission confirmation
+    $('form').on('submit', function(e) {
+        if (!$('#confirmDelete').is(':checked') || !$('#confirmImpact').is(':checked')) {
+            e.preventDefault();
+            alert('Please confirm that you want to delete this resolution.');
+            return false;
+        }
+        
+        // Triple confirmation for implemented resolutions
+        {% if resolution.status == 'implemented' %}
+        if (!confirm('This resolution has been implemented. Are you absolutely certain you want to delete it? This may affect compliance and audit records.')) {
+            e.preventDefault();
+            return false;
+        }
+        {% endif %}
+        
+        // Final confirmation
+        if (!confirm('Last chance: Are you absolutely sure you want to delete "{{ resolution.title }}"? This action cannot be undone.')) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show loading state
+        $('#deleteBtn').html('<i class="fas fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
+    });
+    
+    // Add visual feedback for form interactions
+    $('.form-check-input').change(function() {
+        const label = $(this).next('label');
+        if ($(this).is(':checked')) {
+            label.addClass('text-success');
+        } else {
+            label.removeClass('text-success');
+        }
+    });
+});
+</script>
+{% endblock %}

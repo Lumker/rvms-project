@@ -1,0 +1,90 @@
+{# templates/includes/datatable_js.html #}
+{% load static %}
+
+<script src="{% static 'plugins/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'plugins/datatables/datatables.min.js' %}"></script>
+<script>
+    $(document).ready(function() {
+        // Preserve original sidebar toggle functionality
+        var originalSidebarToggle = $('.sidebar-toggle').clone(true);
+        
+        // Initialize DataTables with simpler config first
+        var table = $('#{{ table_id }}').DataTable({
+            responsive: true,
+            searching: {{ searching|default:"true" }},
+            ordering: {{ ordering|default:"true" }},
+            paging: {{ paging|default:"true" }},
+            info: {{ info|default:"true" }}
+        });
+        
+        // Restore sidebar toggle functionality 
+        $('.sidebar-toggle').off('click');
+        $('.sidebar-toggle').on('click', function(e) {
+            e.preventDefault();
+            $('body').toggleClass('mini-sidebar');
+        });
+        
+        {% if enable_export %}
+        // Add Export functionality without reinitializing the table
+        new $.fn.dataTable.Buttons(table, {
+            buttons: [
+                {
+                    extend: 'collection',
+                    text: 'Export',
+                    className: 'btn btn-outline-secondary dropdown-toggle ml-2',
+                    buttons: [
+                        {
+                            extend: 'print',
+                            text: 'Print',
+                            className: 'dropdown-item',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'csv',
+                            text: 'CSV',
+                            className: 'dropdown-item',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'excel',
+                            text: 'Excel',
+                            className: 'dropdown-item',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'pdf',
+                            text: 'PDF',
+                            className: 'dropdown-item',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        },
+                        {
+                            extend: 'copy',
+                            text: 'Copy',
+                            className: 'dropdown-item',
+                            exportOptions: {
+                                columns: ':visible'
+                            }
+                        }
+                    ]
+                }
+            ]
+        });
+        
+        // Add the export buttons to the DataTable
+        table.buttons().container()
+            .appendTo('.dataTables_length');
+        {% endif %}
+        
+        // Make sure search and buttons styling matches the template
+        $('.dataTables_filter input').addClass('form-control form-control-sm');
+        $('.dataTables_length select').addClass('custom-select custom-select-sm form-control form-control-sm');
+    });
+</script>

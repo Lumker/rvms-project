@@ -1,0 +1,372 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ ward_committee.name }} - Ward Committee{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    .info-row {
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    .info-value {
+        color: #333;
+    }
+    .stats-mini {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        padding: 15px;
+        border-radius: 8px;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+    .stats-mini h4 {
+        margin: 0;
+        font-size: 1.8rem;
+    }
+    .stats-mini p {
+        margin: 5px 0 0 0;
+        opacity: 0.9;
+    }
+    .member-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.2s ease;
+    }
+    .member-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    }
+    .council-item {
+        background: #f8f9fa;
+        border-radius: 6px;
+        padding: 12px;
+        margin-bottom: 10px;
+        border-left: 4px solid #667eea;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Ward {{ ward_committee.ward_number }} - {{ ward_committee.name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:ward_committee_list' %}">Ward Committees</a></li>
+                    <li class="breadcrumb-item active">{{ ward_committee.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'governance:ward_committee_update' ward_committee.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Committee
+                    </a>
+                    <a href="{% url 'governance:ward_committee_member_create' %}?ward_committee={{ ward_committee.pk }}" class="btn btn-success">
+                        <i class="fas fa-user-plus"></i> Add Member
+                    </a>
+                    <a href="{% url 'governance:council_create' %}?ward_committee={{ ward_committee.pk }}" class="btn btn-warning">
+                        <i class="fas fa-plus"></i> Add Council
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Overview -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-mini">
+                <h4>{{ committee_members.count }}</h4>
+                <p>Committee Members</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-mini" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h4>{{ traditional_councils.count }}</h4>
+                <p>Traditional Councils</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-mini" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h4>{{ total_villages }}</h4>
+                <p>Total Villages</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-mini" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h4>{% if ward_committee.population %}{{ ward_committee.population|floatformat:0 }}{% else %}N/A{% endif %}</h4>
+                <p>Population</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ward Committee Details -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h4><i class="fas fa-users"></i> Ward Committee Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-label">Ward Number</div>
+                                <div class="info-value">
+                                    <span class="badge badge-primary badge-lg">{{ ward_committee.ward_number }}</span>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Ward Code</div>
+                                <div class="info-value">
+                                    <span class="badge badge-warning badge-lg">{{ ward_committee.ward_code }}</span>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Municipality</div>
+                                <div class="info-value">
+                                    <a href="{% url 'governance:municipality_detail' ward_committee.municipality.pk %}">
+                                        {{ ward_committee.municipality.name }}
+                                    </a>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">District</div>
+                                <div class="info-value">{{ ward_committee.municipality.district.name }}</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-label">Ward Councillor</div>
+                                <div class="info-value">
+                                    {% if ward_committee.ward_councillor %}
+                                        {{ ward_committee.ward_councillor }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Committee Secretary</div>
+                                <div class="info-value">
+                                    {% if ward_committee.committee_secretary %}
+                                        {{ ward_committee.committee_secretary }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Meeting Venue</div>
+                                <div class="info-value">
+                                    {% if ward_committee.meeting_venue %}
+                                        {{ ward_committee.meeting_venue }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Status</div>
+                                <div class="info-value">
+                                    {% if ward_committee.is_active %}
+                                        <span class="badge badge-success">{{ ward_committee.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="badge badge-secondary">Inactive</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if ward_committee.geographic_boundaries %}
+                    <div class="info-row">
+                        <div class="info-label">Geographic Boundaries</div>
+                        <div class="info-value">{{ ward_committee.geographic_boundaries|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if ward_committee.councillor_contact %}
+                    <div class="info-row">
+                        <div class="info-label">Councillor Contact Information</div>
+                        <div class="info-value">{{ ward_committee.councillor_contact|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h5><i class="fas fa-info-circle"></i> Quick Info</h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-label">Established</div>
+                        <div class="info-value">{{ ward_committee.established_date|date:"F d, Y" }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Created</div>
+                        <div class="info-value">{{ ward_committee.created_at|date:"F d, Y H:i" }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Last Updated</div>
+                        <div class="info-value">{{ ward_committee.updated_at|date:"F d, Y H:i" }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Committee Members -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4><i class="fas fa-users"></i> Committee Members ({{ committee_members.count }})</h4>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'governance:ward_committee_member_create' %}?ward_committee={{ ward_committee.pk }}" class="btn btn-light btn-sm">
+                                <i class="fas fa-user-plus"></i> Add Member
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if committee_members %}
+                        <div class="row">
+                            {% for member in committee_members %}
+                            <div class="col-md-6">
+                                <div class="member-card">
+                                    <div class="row align-items-center">
+                                        <div class="col">
+                                            <h6 class="mb-1">{{ member.user.get_full_name }}</h6>
+                                            <p class="mb-1 text-muted">{{ member.get_role_display }}</p>
+                                            <small class="text-muted">Since {{ member.appointed_date|date:"M Y" }}</small>
+                                        </div>
+                                        <div class="col-auto">
+                                            <a href="{% url 'governance:ward_committee_member_detail' member.pk %}" class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-users fa-2x text-muted mb-3"></i>
+                            <p class="text-muted">No committee members added yet.</p>
+                            <a href="{% url 'governance:ward_committee_member_create' %}?ward_committee={{ ward_committee.pk }}" class="btn btn-warning">
+                                <i class="fas fa-user-plus"></i> Add First Member
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Traditional Councils -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4><i class="fas fa-crown"></i> Traditional Councils ({{ traditional_councils.count }})</h4>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'governance:council_create' %}?ward_committee={{ ward_committee.pk }}" class="btn btn-light btn-sm">
+                                <i class="fas fa-plus"></i> Add Council
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if traditional_councils %}
+                        {% for council in traditional_councils %}
+                        <div class="council-item">
+                            <div class="row align-items-center">
+                                <div class="col">
+                                    <h6 class="mb-1">
+                                        <a href="{% url 'governance:council_detail' council.pk %}" class="text-decoration-none">
+                                            {{ council.name }}
+                                        </a>
+                                    </h6>
+                                    <p class="mb-0 text-muted">
+                                        {{ council.leader_title }} {{ council.leader_name }}
+                                        {% if council.total_villages %}
+                                            • {{ council.total_villages }} village{{ council.total_villages|pluralize }}
+                                        {% endif %}
+                                        </p>
+                               </div>
+                               <div class="col-auto">
+                                   <span class="badge badge-{% if council.is_active %}success{% else %}secondary{% endif %}">
+                                       {{ council.get_status_display }}
+                                   </span>
+                               </div>
+                           </div>
+                       </div>
+                       {% endfor %}
+                   {% else %}
+                       <div class="text-center py-4">
+                           <i class="fas fa-crown fa-2x text-muted mb-3"></i>
+                           <p class="text-muted">No traditional councils assigned yet.</p>
+                           <a href="{% url 'governance:council_create' %}?ward_committee={{ ward_committee.pk }}" class="btn btn-warning">
+                               <i class="fas fa-plus"></i> Add First Council
+                           </a>
+                       </div>
+                   {% endif %}
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+   // Add animations
+   $('.detail-card').each(function(i) {
+       $(this).delay(i * 100).fadeIn(600);
+   });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,275 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Committee Member{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    .form-section {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .section-title {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    .form-help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .required-field {
+        color: #dc3545;
+    }
+    .role-description {
+        background: #f8f9fa;
+        border-radius: 5px;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 0.875rem;
+        color: #666;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:ward_committee_member_list' %}">Committee Members</a></li>
+                    {% if member %}
+                    <li class="breadcrumb-item"><a href="{% url 'governance:ward_committee_member_detail' member.pk %}">{{ member.user.get_full_name }}</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                    {% else %}
+                    <li class="breadcrumb-item active">Add</li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% if member %}{% url 'governance:ward_committee_member_detail' member.pk %}{% else %}{% url 'governance:ward_committee_member_list' %}{% endif %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="form-card">
+                <div class="form-header">
+                    <h4><i class="fas fa-user-plus"></i> {{ title }}</h4>
+                    <p class="mb-0">Enter the committee member information below</p>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Committee & User Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">Committee & Member Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.ward_committee.id_for_label }}" class="form-label">
+                                        Ward Committee <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.ward_committee }}
+                                    {% if form.ward_committee.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.ward_committee.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Select the ward committee this member belongs to</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.user.id_for_label }}" class="form-label">
+                                        Member <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.user }}
+                                    {% if form.user.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.user.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Select the user to add as a committee member</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">Role & Responsibilities</h5>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.role.id_for_label }}" class="form-label">
+                                        Role <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.role }}
+                                    {% if form.role.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.role.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="role-description">
+                                        <strong>Role Descriptions:</strong><br>
+                                        <strong>Chairperson:</strong> Leads meetings and represents the committee<br>
+                                        <strong>Deputy Chairperson:</strong> Assists the chairperson and acts in their absence<br>
+                                        <strong>Secretary:</strong> Keeps records and handles correspondence<br>
+                                        <strong>Treasurer:</strong> Manages committee finances<br>
+                                        <strong>Youth Representative:</strong> Represents youth interests (18-35 years)<br>
+                                        <strong>Women Representative:</strong> Represents women's interests<br>
+                                        <strong>Disability Representative:</strong> Represents people with disabilities<br>
+                                        <strong>Member:</strong> General committee member
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Term Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">Term Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.appointed_date.id_for_label }}" class="form-label">
+                                        Appointed Date <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.appointed_date }}
+                                    {% if form.appointed_date.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.appointed_date.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Date when the member was appointed to the committee</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.term_end_date.id_for_label }}" class="form-label">
+                                        Term End Date
+                                    </label>
+                                    {{ form.term_end_date }}
+                                    {% if form.term_end_date.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.term_end_date.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Optional: Leave blank for indefinite term</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="form-section">
+                        <h5 class="section-title">Status</h5>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                        Active Member
+                                    </label>
+                                    {% if form.is_active.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Uncheck to mark this member as inactive</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="form-section">
+                        <div class="row">
+                            <div class="col-md-12 text-right">
+                                <a href="{% if member %}{% url 'governance:ward_committee_member_detail' member.pk %}{% else %}{% url 'governance:ward_committee_member_list' %}{% endif %}" class="btn btn-outline-secondary mr-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-save"></i> 
+                                    {% if member %}Update{% else %}Add{% endif %} Member
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Dynamic ward committee filtering (if needed)
+    $('#id_ward_committee').on('change', function() {
+        var committeeId = $(this).val();
+        // You could add AJAX functionality here to filter users based on ward committee
+        // or update other form fields based on the selected committee
+    });
+    
+    // Role selection help
+    $('#id_role').on('change', function() {
+        var selectedRole = $(this).val();
+        // You could add dynamic help text or validation based on selected role
+    });
+    
+    // Form validation
+    $('form').on('submit', function() {
+        var isValid = true;
+        
+        // Check required fields
+        $('input[required], select[required]').each(function() {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                isValid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        // Check date logic
+        var appointedDate = $('#id_appointed_date').val();
+        var termEndDate = $('#id_term_end_date').val();
+        
+        if (appointedDate && termEndDate && new Date(termEndDate) <= new Date(appointedDate)) {
+            $('#id_term_end_date').addClass('is-invalid');
+            alert('Term end date must be after the appointed date.');
+            isValid = false;
+        }
+        
+        return isValid;
+    });
+    
+    // Real-time validation feedback
+    $('input, select').on('blur', function() {
+        if ($(this).prop('required') && !$(this).val()) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

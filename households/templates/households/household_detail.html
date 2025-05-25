@@ -1,0 +1,479 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ household.household_id }} - Household Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .detail-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .detail-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    .info-row {
+        padding: 15px 0;
+        border-bottom: 1px solid #eee;
+    }
+    .info-row:last-child {
+        border-bottom: none;
+    }
+    .info-label {
+        font-weight: 600;
+        color: #666;
+        margin-bottom: 5px;
+    }
+    .info-value {
+        color: #333;
+    }
+    .resident-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.2s ease;
+    }
+    .resident-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    }
+    .resident-card.head {
+        border-color: #f5576c;
+        background: #fff5f5;
+    }
+    .service-item {
+        display: flex;
+        justify-content: between;
+        align-items: center;
+        padding: 10px;
+        margin-bottom: 8px;
+        background: #f8f9fa;
+        border-radius: 6px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ household.household_id }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'households:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'households:household_list' %}">Households</a></li>
+                    <li class="breadcrumb-item active">{{ household.household_id }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'households:household_update' household.pk %}" class="btn btn-primary">
+                        <i class="fe fe-edit"></i> Edit Household
+                    </a>
+                    <a href="{% url 'households:resident_create' %}?household={{ household.pk }}" class="btn btn-success">
+                        <i class="fe fe-user-plus"></i> Add Resident
+                    </a>
+                    {% if not household.verified %}
+                    <a href="{% url 'households:household_verify' household.pk %}" class="btn btn-warning">
+                        <i class="fe fe-check-circle"></i> Verify
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Basic Information -->
+    <div class="row">
+        <div class="col-md-8">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h4><i class="fe fe-home"></i> Household Information</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-label">Household ID</div>
+                                <div class="info-value">
+                                    <strong>{{ household.household_id }}</strong>
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Village</div>
+                                <div class="info-value">{{ household.village.name }}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Ward Committee</div>
+                                <div class="info-value">
+                                    {% if household.ward_committee %}
+                                        <a href="{% url 'governance:ward_committee_detail' household.ward_committee.pk %}">
+                                            Ward {{ household.ward_committee.ward_number }}
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Housing Type</div>
+                                <div class="info-value">
+                                    <span class="badge badge-info">{{ household.get_housing_type_display }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="info-row">
+                                <div class="info-label">Land Tenure</div>
+                                <div class="info-value">{{ household.get_land_tenure_display }}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Rooms</div>
+                                <div class="info-value">{{ household.rooms_count }} room{{ household.rooms_count|pluralize }}</div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Plot Size</div>
+                                <div class="info-value">
+                                    {% if household.plot_size %}
+                                        {{ household.plot_size }} m²
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="info-row">
+                                <div class="info-label">Established</div>
+                                <div class="info-value">
+                                    {% if household.established_date %}
+                                        {{ household.established_date|date:"F d, Y" }}
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="info-row">
+                        <div class="info-label">Physical Address</div>
+                        <div class="info-value">{{ household.physical_address|linebreaks }}</div>
+                    </div>
+                    
+                    {% if household.gps_coordinates %}
+                    <div class="info-row">
+                        <div class="info-label">GPS Coordinates</div>
+                        <div class="info-value">
+                            <code>{{ household.gps_coordinates }}</code>
+                            <a href="https://www.google.com/maps?q={{ household.gps_coordinates }}" target="_blank" class="btn btn-sm btn-outline-primary ml-2">
+                                <i class="fe fe-map-pin"></i> View on Map
+                            </a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-4">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h5><i class="fe fe-info"></i> Quick Stats</h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-row">
+                        <div class="info-label">Total Residents</div>
+                        <div class="info-value">
+                            <span class="badge badge-primary badge-lg">{{ household.resident_count }}</span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Adults</div>
+                        <div class="info-value">{{ household.adult_count }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Children</div>
+                        <div class="info-value">{{ household.child_count }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Total Income</div>
+                        <div class="info-value">
+                            {% if total_income %}
+                                R{{ total_income|floatformat:2 }}
+                            {% else %}
+                                <span class="text-muted">Not specified</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">Status</div>
+                        <div class="info-value">
+                            {% if household.verified %}
+                                <span class="badge badge-success">
+                                    <i class="fe fe-check"></i> Verified
+                                </span>
+                                <br><small class="text-muted">
+                                    By {{ household.verified_by.get_full_name }} on {{ household.verification_date|date:"M d, Y" }}
+                                </small>
+                            {% else %}
+                                <span class="badge badge-warning">
+                                    <i class="fe fe-clock"></i> Pending Verification
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Services & Infrastructure -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h4><i class="fe fe-settings"></i> Services & Infrastructure</h4>
+                </div>
+                <div class="card-body">
+                    <div class="service-item">
+                        <div>
+                            <strong>Water Source</strong>
+                            <br><small class="text-muted">{{ household.get_water_source_display }}</small>
+                        </div>
+                        <span class="badge badge-{% if household.water_source in 'piped_indoor,piped_yard' %}success{% else %}warning{% endif %}">
+                            {% if household.water_source in 'piped_indoor,piped_yard' %}Good{% else %}Basic{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="service-item">
+                        <div>
+                            <strong>Electricity</strong>
+                            <br><small class="text-muted">{{ household.get_electricity_source_display }}</small>
+                        </div>
+                        <span class="badge badge-{% if household.electricity_source == 'grid' %}success{% else %}warning{% endif %}">
+                            {% if household.electricity_source == 'grid' %}Grid{% else %}Alternative{% endif %}
+                        </span>
+                    </div>
+                    
+                    <div class="service-item">
+                        <div>
+                            <strong>Toilet Facilities</strong>
+                            <br><small class="text-muted">
+                                {% if household.has_toilet %}
+                                    {{ household.toilet_type|default:"Available" }}
+                                {% else %}
+                                    No toilet facilities
+                                {% endif %}
+                            </small>
+                        </div>
+                        <span class="badge badge-{% if household.has_toilet %}success{% else %}danger{% endif %}">
+                            {% if household.has_toilet %}Available{% else %}None{% endif %}
+                        </span>
+                    </div>
+                    
+                    {% if household.waste_disposal %}
+                    <div class="service-item">
+                        <div>
+                            <strong>Waste Disposal</strong>
+                            <br><small class="text-muted">{{ household.waste_disposal }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h4><i class="fe fe-activity"></i> Service Records</h4>
+                </div>
+                <div class="card-body">
+                    {% if services %}
+                        {% for service in services %}
+                        <div class="service-item">
+                            <div>
+                                <strong>{{ service.get_service_type_display }}</strong>
+                                <br><small class="text-muted">
+                                    {% if service.distance_to_service %}
+                                        {{ service.distance_to_service }} km away
+                                    {% endif %}
+                                    {% if service.monthly_cost %}
+                                        • R{{ service.monthly_cost }}/month
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                <span class="badge badge-{% if service.status == 'available' %}success{% elif service.status == 'partial' %}warning{% else %}danger{% endif %}">
+                                    {{ service.get_status_display }}
+                                </span>
+                                {% if service.quality_rating %}
+                                <br><small class="text-muted">{{ service.quality_rating }}/5 stars</small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <p class="text-muted text-center">
+                            <i class="fe fe-info"></i> No service records available
+                            <br><a href="{% url 'households:service_create' %}?household={{ household.pk }}" class="btn btn-sm btn-primary mt-2">
+                                Add Service Record
+                            </a>
+                        </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Residents -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <div class="row align-items-center">
+                        <div class="col">
+                            <h4><i class="fe fe-users"></i> Household Members ({{ household.resident_count }})</h4>
+                        </div>
+                        <div class="col-auto">
+                            <a href="{% url 'households:resident_create' %}?household={{ household.pk }}" class="btn btn-light btn-sm">
+                                <i class="fe fe-user-plus"></i> Add Member
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if head_of_household %}
+                    <h5 class="mb-3"><i class="fe fe-star text-warning"></i> Head of Household</h5>
+                    <div class="resident-card head">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                <h6 class="mb-1">
+                                    <a href="{% url 'households:resident_detail' head_of_household.pk %}">
+                                        {{ head_of_household.full_name }}
+                                    </a>
+                                </h6>
+                                <p class="mb-1 text-muted">
+                                    {{ head_of_household.age }} years old • {{ head_of_household.get_gender_display }}
+                                    {% if head_of_household.employment_status %}
+                                        • {{ head_of_household.get_employment_status_display }}
+                                    {% endif %}
+                                </p>
+                                {% if head_of_household.phone_number %}
+                                <small class="text-muted">
+                                    <i class="fe fe-phone"></i> {{ head_of_household.phone_number }}
+                                </small>
+                                {% endif %}
+                            </div>
+                            <div class="col-auto">
+                                <span class="badge badge-danger">Head</span>
+                                <br><a href="{% url 'households:resident_detail' head_of_household.pk %}" class="btn btn-sm btn-outline-primary mt-1">
+                                    <i class="fe fe-eye"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if other_residents %}
+                    <h5 class="mb-3 mt-4"><i class="fe fe-users"></i> Other Members</h5>
+                    <div class="row">
+                        {% for resident in other_residents %}
+                        <div class="col-md-6">
+                            <div class="resident-card">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <h6 class="mb-1">
+                                            <a href="{% url 'households:resident_detail' resident.pk %}">
+                                                {{ resident.full_name }}
+                                            </a>
+                                        </h6>
+                                        <p class="mb-1 text-muted">
+                                            {{ resident.age }} years old • {{ resident.get_gender_display }}
+                                        </p>
+                                        {% if resident.relationship_to_head %}
+                                        <small class="text-muted">{{ resident.relationship_to_head }}</small>
+                                        {% endif %}
+                                    </div>
+                                    <div class="col-auto">
+                                        {% if resident.is_adult %}
+                                        <span class="badge badge-primary">Adult</span>
+                                        {% else %}
+                                        <span class="badge badge-info">Child</span>
+                                        {% endif %}
+                                        <br><a href="{% url 'households:resident_detail' resident.pk %}" class="btn btn-sm btn-outline-primary mt-1">
+                                            <i class="fe fe-eye"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if not head_of_household and not other_residents %}
+                    <div class="text-center py-4">
+                        <i class="fe fe-users fe-2x text-muted mb-3"></i>
+                        <p class="text-muted">No residents registered for this household yet.</p>
+                        <a href="{% url 'households:resident_create' %}?household={{ household.pk }}" class="btn btn-primary">
+                            <i class="fe fe-user-plus"></i> Add First Resident
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information -->
+    {% if household.special_circumstances or household.notes %}
+    <div class="row">
+        <div class="col-md-12">
+            <div class="detail-card">
+                <div class="detail-header">
+                    <h4><i class="fe fe-file-text"></i> Additional Information</h4>
+                </div>
+                <div class="card-body">
+                    {% if household.special_circumstances %}
+                    <div class="info-row">
+                        <div class="info-label">Special Circumstances</div>
+                        <div class="info-value">{{ household.special_circumstances|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if household.notes %}
+                    <div class="info-row">
+                        <div class="info-label">Notes</div>
+                        <div class="info-value">{{ household.notes|linebreaks }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Add animations
+    $('.detail-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+});
+</script>
+{% endblock %}

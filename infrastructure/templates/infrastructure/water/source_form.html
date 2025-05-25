@@ -1,0 +1,27 @@
+<!-- infrastructure/templates/infrastructure/water/source_form.html -->
+
+{% extends "infrastructure/asset_form.html" %}
+
+{% block title %}
+    {% if object %}Edit Water Source{% else %}Add New Water Source{% endif %} - Infrastructure
+{% endblock %}
+
+{% block content %}
+{{ block.super }}
+
+<!-- Additional water-specific sections can be added here -->
+<script>
+$(document).ready(function() {
+    // Auto-set category to water
+    $('#id_category').val('water').prop('readonly', true);
+    
+    // Water-specific form enhancements
+    initializeWaterFormEnhancements();
+});
+
+function initializeWaterFormEnhancements() {
+    // Add water-specific validations and enhancements
+    console.log('Water source form enhancements loaded');
+}
+</script>
+{% endblock %}

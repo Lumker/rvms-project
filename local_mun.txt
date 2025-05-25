@@ -1,0 +1,38 @@
+DC37 – Bojanala Platinum District Municipality
+
+| **Municipality**                  | **Code** |
+| --------------------------------- | -------- |
+| Moretele Local Municipality       | NW371    |
+| Madibeng Local Municipality       | NW372    |
+| Rustenburg Local Municipality     | NW373    |
+| Kgetlengrivier Local Municipality | NW374    |
+| Moses Kotane Local Municipality   | NW375    |
+| --------------------------------- | -------- |
+
+DC38 – Ngaka Modiri Molema District Municipality
+
+| **Municipality**                     | **Code** |
+| ------------------------------------ | -------- |
+| Ratlou Local Municipality            | NW381    |
+| Tswaing Local Municipality           | NW382    |
+| Mafikeng Local Municipality          | NW383    |
+| Ditsobotla Local Municipality        | NW384    |
+| Ramotshere Moiloa Local Municipality | NW385    |
+| ------------------------------------ | -------- |
+
+
+🟨 DC38 – Ngaka Modiri Molema District Municipality
+Municipality	Code
+Ratlou Local Municipality	NW381
+Tswaing Local Municipality	NW382
+Mafikeng Local Municipality	NW383
+Ditsobotla Local Municipality	NW384
+Ramotshere Moiloa Local Municipality	NW385
+
+DC39 – Dr Ruth Segomotsi Mompati District Municipality
+Municipality	Code
+Naledi Local Municipality	NW391
+Mamusa Local Municipality	NW392
+Greater Taung Local Municipality	NW393
+Lekwa-Teemane Local Municipality	NW394
+Kagisano-Molopo Local Municipality	NW395

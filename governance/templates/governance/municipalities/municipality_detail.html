@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}{{ municipality.name }} - Municipalities{% endblock %}
+
+{% block extra_css %}
+<style>
+    .municipality-header {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .info-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .stats-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    .badge-status {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    .council-card {
+        border-left: 4px solid #17a2b8;
+        transition: all 0.3s ease;
+    }
+    .council-card:hover {
+        border-left-color: #f5576c;
+        background-color: #f8f9fa;
+    }
+    .table-councils th {
+        background-color: #f8f9fa;
+        border-top: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ municipality.name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:municipality_list' %}">Municipalities</a></li>
+                    <li class="breadcrumb-item active">{{ municipality.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'governance:municipality_update' municipality.pk %}" class="btn btn-warning">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-warning dropdown-toggle dropdown-toggle-split" data-toggle="dropdown">
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{% url 'governance:council_create' %}?municipality={{ municipality.pk }}">
+                            <i class="fas fa-plus"></i> Add Traditional Council
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="{% url 'governance:municipality_delete' municipality.pk %}">
+                            <i class="fas fa-trash"></i> Delete Municipality
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Municipality Overview -->
+    <div class="municipality-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3">{{ municipality.name }}</h2>
+                <p class="mb-3">{{ municipality.get_municipality_type_display }}</p>
+                <p class="mb-0">
+                    <i class="fas fa-map-marker-alt"></i> {{ municipality.district.name }}, {{ municipality.district.province.name }}
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-building" style="font-size: 4rem; opacity: 0.3;"></i>
+                {% if not municipality.is_active %}
+                <br><span class="badge badge-warning badge-status mt-2">Inactive</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Municipality Information -->
+        <div class="col-lg-8">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-warning"></i> Municipality Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Code:</strong></td>
+                                    <td><span class="badge badge-warning">{{ municipality.code }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type:</strong></td>
+                                    <td>{{ municipality.get_municipality_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>District:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:district_detail' municipality.district.pk %}" class="text-decoration-none">
+                                            {{ municipality.district.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Province:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:province_detail' municipality.district.province.pk %}" class="text-decoration-none">
+                                            {{ municipality.district.province.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Mayor:</strong></td>
+                                    <td>{{ municipality.mayor_name|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Municipal Manager:</strong></td>
+                                    <td>{{ municipality.municipal_manager|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Population:</strong></td>
+                                    <td>
+                                        {% if municipality.population %}
+                                        {{ municipality.population|floatformat:0 }}
+                                        {% else %}
+                                        Not specified
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Area:</strong></td>
+                                    <td>
+                                        {% if municipality.area_km2 %}
+                                        {{ municipality.area_km2 }} km²
+                                        {% else %}
+                                        Not specified
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if municipality.website %}
+                    <div class="mt-3">
+                        <strong>Website:</strong> 
+                        <a href="{{ municipality.website }}" target="_blank" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-external-link-alt"></i> Visit Website
+                        </a>
+                    </div>
+                    {% endif %}
+
+                    <div class="mt-3">
+                        <strong>Contact Information:</strong>
+                        <div class="border p-3 bg-light rounded">
+                            {{ municipality.contact_info|linebreaks }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Traditional Councils -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-users text-info"></i> Traditional Councils
+                    </h4>
+                    <a href="{% url 'governance:council_create' %}?municipality={{ municipality.pk }}" class="btn btn-info btn-sm float-right">
+                        <i class="fas fa-plus"></i> Add Council
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if traditional_councils %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-councils">
+                            <thead>
+                                <tr>
+                                    <th>Council Name</th>
+                                    <th>Leader</th>
+                                    <th>Villages</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for council in traditional_councils %}
+                               <tr class="council-card">
+                                   <td>
+                                       <strong>{{ council.name }}</strong>
+                                       <br><small class="text-muted">Est. {{ council.establishment_date|date:"Y" }}</small>
+                                       {% if council.recognition_certificate %}
+                                       <br><small class="text-info">Cert: {{ council.recognition_certificate }}</small>
+                                       {% endif %}
+                                   </td>
+                                   <td>
+                                       {{ council.leader_title }} {{ council.leader_name }}
+                                       {% if council.is_term_expired %}
+                                       <br><small class="text-warning"><i class="fas fa-exclamation-triangle"></i> Term Expired</small>
+                                       {% endif %}
+                                   </td>
+                                   <td>
+                                       <span class="badge badge-info">{{ council.total_villages }}</span>
+                                   </td>
+                                   <td>
+                                       {% if council.status == 'active' %}
+                                       <span class="badge badge-success">{{ council.get_status_display }}</span>
+                                       {% elif council.status == 'inactive' %}
+                                       <span class="badge badge-secondary">{{ council.get_status_display }}</span>
+                                       {% elif council.status == 'suspended' %}
+                                       <span class="badge badge-warning">{{ council.get_status_display }}</span>
+                                       {% else %}
+                                       <span class="badge badge-danger">{{ council.get_status_display }}</span>
+                                       {% endif %}
+                                   </td>
+                                   <td>
+                                       <a href="{% url 'governance:council_detail' council.pk %}" class="btn btn-sm btn-outline-info">
+                                           <i class="fas fa-eye"></i> View
+                                       </a>
+                                       <a href="{% url 'governance:council_update' council.pk %}" class="btn btn-sm btn-outline-primary">
+                                           <i class="fas fa-edit"></i> Edit
+                                       </a>
+                                   </td>
+                               </tr>
+                               {% endfor %}
+                           </tbody>
+                       </table>
+                   </div>
+                   {% else %}
+                   <div class="text-center py-4">
+                       <i class="fas fa-users fa-2x text-muted mb-2"></i>
+                       <br>
+                       <span class="text-muted">No traditional councils registered</span>
+                       <br>
+                       <a href="{% url 'governance:council_create' %}?municipality={{ municipality.pk }}" class="btn btn-sm btn-info mt-2">
+                           <i class="fas fa-plus"></i> Add First Council
+                       </a>
+                   </div>
+                   {% endif %}
+               </div>
+           </div>
+       </div>
+
+       <!-- Statistics Sidebar -->
+       <div class="col-lg-4">
+           <!-- Quick Statistics -->
+           <div class="card info-card">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-chart-bar text-primary"></i> Quick Statistics
+                   </h5>
+               </div>
+               <div class="card-body text-center">
+                   <div class="row">
+                       <div class="col-6">
+                           <i class="fas fa-users text-info stats-icon"></i>
+                           <h3 class="text-info">{{ municipality.total_traditional_councils }}</h3>
+                           <p class="text-muted mb-0">Traditional Councils</p>
+                       </div>
+                       <div class="col-6">
+                           <i class="fas fa-home text-success stats-icon"></i>
+                           <h3 class="text-success">{{ municipality.total_villages }}</h3>
+                           <p class="text-muted mb-0">Villages</p>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Administrative Hierarchy -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-sitemap text-secondary"></i> Administrative Hierarchy
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="list-group list-group-flush">
+                       <div class="list-group-item d-flex justify-content-between align-items-center">
+                           <div>
+                               <i class="fas fa-map text-primary"></i>
+                               <strong>Province</strong>
+                           </div>
+                           <a href="{% url 'governance:province_detail' municipality.district.province.pk %}" class="btn btn-sm btn-outline-primary">
+                               {{ municipality.district.province.name }}
+                           </a>
+                       </div>
+                       <div class="list-group-item d-flex justify-content-between align-items-center">
+                           <div>
+                               <i class="fas fa-city text-success"></i>
+                               <strong>District</strong>
+                           </div>
+                           <a href="{% url 'governance:district_detail' municipality.district.pk %}" class="btn btn-sm btn-outline-success">
+                               {{ municipality.district.name }}
+                           </a>
+                       </div>
+                       <div class="list-group-item d-flex justify-content-between align-items-center bg-light">
+                           <div>
+                               <i class="fas fa-building text-warning"></i>
+                               <strong>Municipality</strong>
+                           </div>
+                           <span class="badge badge-warning">{{ municipality.name }}</span>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Record Information -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-clock text-muted"></i> Record Information
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <table class="table table-borderless table-sm">
+                       <tr>
+                           <td><strong>Created:</strong></td>
+                           <td>{{ municipality.created_at|date:"M d, Y" }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Updated:</strong></td>
+                           <td>{{ municipality.updated_at|date:"M d, Y" }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Status:</strong></td>
+                           <td>
+                               {% if municipality.is_active %}
+                               <span class="badge badge-success">Active</span>
+                               {% else %}
+                               <span class="badge badge-secondary">Inactive</span>
+                               {% endif %}
+                           </td>
+                       </tr>
+                   </table>
+               </div>
+           </div>
+
+           <!-- Quick Actions -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-bolt text-warning"></i> Quick Actions
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="d-grid gap-2">
+                       <a href="{% url 'governance:council_create' %}?municipality={{ municipality.pk }}" class="btn btn-outline-info">
+                           <i class="fas fa-plus"></i> Add Traditional Council
+                       </a>
+                       <a href="{% url 'governance:municipality_update' municipality.pk %}" class="btn btn-outline-primary">
+                           <i class="fas fa-edit"></i> Edit Municipality
+                       </a>
+                       <a href="{% url 'governance:municipality_list' %}" class="btn btn-outline-secondary">
+                           <i class="fas fa-list"></i> Back to List
+                       </a>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+   // Initialize tooltips
+   $('[title]').tooltip();
+   
+   // Add animations
+   $('.card').hide().fadeIn(800);
+   $('.municipality-header').hide().slideDown(600);
+   
+   // Add hover effects to council cards
+   $('.council-card').hover(
+       function() {
+           $(this).addClass('table-active');
+       },
+       function() {
+           $(this).removeClass('table-active');
+       }
+   );
+});
+</script>
+{% endblock %}

@@ -1,0 +1,451 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Remove Member - {{ member.user.get_full_name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .warning-card {
+        border-left: 4px solid #dc3545;
+        background-color: #f8f9fa;
+    }
+    .info-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .btn-delete {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        font-weight: 600;
+    }
+    .btn-delete:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+        transform: translateY(-1px);
+    }
+    .member-avatar {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    .impact-item {
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border-left: 3px solid #dc3545;
+        background-color: #fff5f5;
+    }
+    .attendance-summary {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-top: 15px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Remove Council Member</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:council_member_list' %}">Council Members</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:council_member_detail' member.pk %}">{{ member.user.get_full_name }}</a></li>
+                    <li class="breadcrumb-item active">Remove</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Header -->
+    <div class="delete-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-user-times"></i> Remove Council Member
+                </h2>
+                <p class="mb-0">You are about to remove this member from the traditional council</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-user-minus" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <!-- Warning Card -->
+            <div class="card warning-card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+                        </div>
+                        <div class="col-md-10">
+                            <h5 class="text-danger mb-2">Warning: This action cannot be undone!</h5>
+                            <p class="mb-1">Removing this member will:</p>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="impact-item">
+                                        <i class="fas fa-times text-danger"></i>
+                                        Permanently remove them from the council
+                                    </div>
+                                    <div class="impact-item">
+                                        <i class="fas fa-times text-danger"></i>
+                                        Remove access to council meetings and decisions
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="impact-item">
+                                        <i class="fas fa-times text-danger"></i>
+                                        Affect meeting attendance records
+                                    </div>
+                                    <div class="impact-item">
+                                        <i class="fas fa-times text-danger"></i>
+                                        Impact {{ member.proposed_resolutions.count }} proposed resolution(s)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Information -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-user text-primary"></i> Member to be Removed
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-4">
+                        <div class="member-avatar">
+                            {{ member.user.first_name|first }}{{ member.user.last_name|first }}
+                        </div>
+                        <div>
+                            <h5 class="mb-1">{{ member.user.get_full_name }}</h5>
+                            <p class="mb-1">{{ member.get_role_display }} - {{ member.council.name }}</p>
+                            <small class="text-muted">{{ member.user.email|default:"No email provided" }}</small>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Role:</strong></td>
+                                    <td>{{ member.get_role_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Council:</strong></td>
+                                    <td>{{ member.council.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Municipality:</strong></td>
+                                    <td>{{ member.council.municipality.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Appointed:</strong></td>
+                                    <td>{{ member.appointed_date|date:"F d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Term End:</strong></td>
+                                    <td>
+                                        {% if member.term_end_date %}
+                                        {{ member.term_end_date|date:"F d, Y" }}
+                                        {% if member.term_end_date < today %}
+                                        <span class="badge badge-warning ml-2">Expired</span>
+                                        {% endif %}
+                                        {% else %}
+                                        No end date set
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if member.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Meetings Attended:</strong></td>
+                                    <td><span class="badge badge-info">{{ member.attended_meetings.count }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Resolutions Proposed:</strong></td>
+                                    <td><span class="badge badge-success">{{ member.proposed_resolutions.count }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Service Duration:</strong></td>
+                                    <td>
+                                        {% if member.term_end_date %}
+                                        {{ member.appointed_date|timesince:member.term_end_date }}
+                                        {% else %}
+                                        {{ member.appointed_date|timesince }}
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Member Since:</strong></td>
+                                    <td>{{ member.created_at|date:"F d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Member Activity Summary -->
+                    <div class="attendance-summary">
+                        <h6><i class="fas fa-chart-line text-primary"></i> Member Activity Summary</h6>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h4 class="text-info">{{ member.attended_meetings.count }}</h4>
+                                    <small class="text-muted">Meetings Attended</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h4 class="text-success">{{ member.proposed_resolutions.count }}</h4>
+                                    <small class="text-muted">Resolutions Proposed</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h4 class="text-warning">
+                                        {% with approved_resolutions=member.proposed_resolutions.filter.status='approved'.count %}
+                                        {{ approved_resolutions }}
+                                        {% endwith %}
+                                    </h4>
+                                    <small class="text-muted">Approved Resolutions</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Role-specific warnings -->
+                    {% if member.role == 'chairperson' %}
+                    <div class="alert alert-warning mt-3" role="alert">
+                        <h6 class="alert-heading"><i class="fas fa-crown"></i> Chairperson Role</h6>
+                        <p class="mb-0">This member is the <strong>Chairperson</strong> of the council. Removing them may affect council leadership and meeting coordination. Consider appointing a new chairperson before removal.</p>
+                    </div>
+                    {% elif member.role == 'secretary' %}
+                    <div class="alert alert-info mt-3" role="alert">
+                        <h6 class="alert-heading"><i class="fas fa-file-alt"></i> Secretary Role</h6>
+                        <p class="mb-0">This member is the <strong>Secretary</strong> of the council. They are responsible for meeting minutes and documentation. Ensure someone else can take over these responsibilities.</p>
+                    </div>
+                    {% elif member.role == 'treasurer' %}
+                    <div class="alert alert-info mt-3" role="alert">
+                        <h6 class="alert-heading"><i class="fas fa-coins"></i> Treasurer Role</h6>
+                        <p class="mb-0">This member is the <strong>Treasurer</strong> of the council. They manage council finances. Ensure financial records are up to date and transferred appropriately.</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Confirmation Form -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-check-circle text-success"></i> Confirm Removal
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Final Confirmation:</strong> 
+                            Are you absolutely sure you want to remove {{ member.user.get_full_name }} from the {{ member.council.name }} council? 
+                            This action will permanently remove their membership and all associated access rights.
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmRemoval" required>
+                                <label class="form-check-label" for="confirmRemoval">
+                                    I understand that this action cannot be undone and I want to proceed with removing this member from the council.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmResponsibilities" required>
+                                <label class="form-check-label" for="confirmResponsibilities">
+                                    I acknowledge that removing this member may affect their current responsibilities and any ongoing council activities they are involved in.
+                                </label>
+                            </div>
+                        </div>
+
+                        {% if member.role in 'chairperson,secretary,treasurer' %}
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmRole" required>
+                                <label class="form-check-label" for="confirmRole">
+                                    I understand that this member holds the important role of {{ member.get_role_display }} and have made appropriate arrangements for their responsibilities.
+                                </label>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-danger btn-delete" id="deleteBtn" disabled>
+                                <i class="fas fa-user-times"></i> Remove Member
+                            </button>
+                            <a href="{% url 'governance:council_member_detail' member.pk %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <a href="{% url 'governance:council_member_update' member.pk %}" class="btn btn-warning ml-2">
+                                <i class="fas fa-user-edit"></i> Edit Instead
+                            </a>
+                            {% if member.is_active %}
+                            <button type="button" onclick="deactivateInstead()" class="btn btn-info ml-2">
+                                <i class="fas fa-user-slash"></i> Deactivate Instead
+                            </button>
+                            {% endif %}
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.delete-header').hide().slideDown(600);
+    
+    // Enable/disable delete button based on checkboxes
+    function updateDeleteButton() {
+        const confirmRemoval = $('#confirmRemoval').is(':checked');
+        const confirmResponsibilities = $('#confirmResponsibilities').is(':checked');
+        {% if member.role in 'chairperson,secretary,treasurer' %}
+        const confirmRole = $('#confirmRole').is(':checked');
+        const allConfirmed = confirmRemoval && confirmResponsibilities && confirmRole;
+        {% else %}
+        const allConfirmed = confirmRemoval && confirmResponsibilities;
+        {% endif %}
+        
+        if (allConfirmed) {
+            $('#deleteBtn').prop('disabled', false).removeClass('btn-secondary').addClass('btn-danger');
+        } else {
+            $('#deleteBtn').prop('disabled', true).removeClass('btn-danger').addClass('btn-secondary');
+        }
+    }
+    
+    $('input[type="checkbox"]').change(updateDeleteButton);
+    
+    // Form submission confirmation
+    $('form').on('submit', function(e) {
+        const requiredChecks = $('input[type="checkbox"][required]');
+        let allChecked = true;
+        
+        requiredChecks.each(function() {
+            if (!$(this).is(':checked')) {
+                allChecked = false;
+            }
+        });
+        
+        if (!allChecked) {
+            e.preventDefault();
+            alert('Please confirm all requirements before proceeding.');
+            return false;
+        }
+        
+        // Extra confirmation for important roles
+        {% if member.role == 'chairperson' %}
+        if (!confirm('This member is the CHAIRPERSON. Are you absolutely certain you want to remove them? This will affect council leadership.')) {
+            e.preventDefault();
+            return false;
+        }
+        {% elif member.role == 'secretary' %}
+        if (!confirm('This member is the SECRETARY. Are you certain you want to remove them? Make sure meeting documentation responsibilities are transferred.')) {
+            e.preventDefault();
+            return false;
+        }
+        {% elif member.role == 'treasurer' %}
+        if (!confirm('This member is the TREASURER. Are you certain you want to remove them? Make sure financial responsibilities are properly transferred.')) {
+            e.preventDefault();
+            return false;
+        }
+        {% endif %}
+        
+        // Final confirmation
+        if (!confirm('Last chance: Are you absolutely sure you want to remove {{ member.user.get_full_name }} from the council? This action cannot be undone.')) {
+            e.preventDefault();
+            return false;
+        }
+        
+        // Show loading state
+        $('#deleteBtn').html('<i class="fas fa-spinner fa-spin"></i> Removing...').prop('disabled', true);
+    });
+    
+    // Add visual feedback for form interactions
+    $('.form-check-input').change(function() {
+        const label = $(this).next('label');
+        if ($(this).is(':checked')) {
+            label.addClass('text-success');
+        } else {
+            label.removeClass('text-success');
+        }
+    });
+});
+
+function deactivateInstead() {
+    if (confirm('Would you like to deactivate this member instead of removing them? This preserves their history while removing their active access.')) {
+        $.ajax({
+            url: '/governance/council-members/{{ member.pk }}/deactivate/',
+            method: 'POST',
+            data: {
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data) {
+                if (data.success) {
+                    alert('Member has been deactivated successfully.');
+                    window.location.href = '{% url "governance:council_member_detail" member.pk %}';
+                } else {
+                    alert('Error deactivating member');
+                }
+            },
+            error: function() {
+                alert('Error deactivating member');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

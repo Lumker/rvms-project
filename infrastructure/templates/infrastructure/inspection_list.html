@@ -1,0 +1,404 @@
+<!-- infrastructure/templates/infrastructure/inspection_list.html (updated sections) -->
+
+{% extends "base.html" %}
+{% load static %}
+{% load infrastructure_tags %}
+
+{% block title %}Asset Inspections - Infrastructure{% endblock %}
+
+{% block extra_css %}
+<!-- Same CSS as before -->
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .priority-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .inspection-type-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-search text-success"></i> Asset Inspections
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item active">Inspections</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'infrastructure:inspection_create' %}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Schedule Inspection
+                    </a>
+                    <a href="{% url 'infrastructure:asset_list' %}?overdue=true" class="btn btn-warning">
+                        <i class="fas fa-exclamation-triangle"></i> Overdue Assets
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_inspections }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-clipboard-check"></i> Total Inspections
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-number">{{ this_month_count }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-calendar-check"></i> This Month
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ poor_condition_count }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-exclamation-triangle"></i> Poor Condition Found
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">{{ excellent_condition_count }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-thumbs-up"></i> Excellent Condition
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end" id="filterForm">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Asset name or inspector..." value="{{ current_filters.search }}">
+            </div>
+            <div class="col-md-2">
+                <label for="inspection_type" class="form-label">Inspection Type</label>
+                <select name="inspection_type" id="inspection_type" class="form-control">
+                    <option value="">All Types</option>
+                    {% for value, label in inspection_types %}
+                    <option value="{{ value }}" {% if current_filters.inspection_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="asset_category" class="form-label">Asset Category</label>
+                <select name="asset_category" id="asset_category" class="form-control">
+                    <option value="">All Categories</option>
+                    {% for value, label in asset_categories %}
+                    <option value="{{ value }}" {% if current_filters.asset_category == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="overall_condition" class="form-label">Condition Found</label>
+                <select name="overall_condition" id="overall_condition" class="form-control">
+                    <option value="">All Conditions</option>
+                    {% for value, label in conditions %}
+                    <option value="{{ value }}" {% if current_filters.overall_condition == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="date_from" class="form-label">Date Range</label>
+                <div class="input-group">
+                    <input type="date" name="date_from" id="date_from" class="form-control" 
+                           value="{{ current_filters.date_from }}">
+                    <input type="date" name="date_to" id="date_to" class="form-control" 
+                           value="{{ current_filters.date_to }}">
+                </div>
+            </div>
+        </form>
+        <div class="row mt-3">
+            <div class="col-md-12">
+                <button type="submit" form="filterForm" class="btn btn-success">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'infrastructure:inspection_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+                <div class="float-right">
+                    <button onclick="exportInspections()" class="btn btn-outline-info">
+                        <i class="fas fa-download"></i> Export CSV
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rest of the template remains the same -->
+    <!-- Inspections Table -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">
+                <i class="fas fa-clipboard-check"></i> Inspection Records
+            </h4>
+            <div class="card-options">
+                <a href="{% url 'infrastructure:inspection_create' %}" class="btn btn-sm btn-outline-success">
+                    <i class="fas fa-plus"></i> New Inspection
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if inspections %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                <th width="8%">Date</th>
+                                <th width="25%">Asset</th>
+                                <th width="12%">Type</th>
+                                <th width="15%">Inspector</th>
+                                <th width="12%">Condition Found</th>
+                                <th width="8%">Status</th>
+                                <th width="8%">Priority</th>
+                                <th width="12%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inspection in inspections %}
+                            <tr>
+                                <td>
+                                    <strong>{{ inspection.inspection_date|date:"M d, Y" }}</strong>
+                                    <br><small class="text-muted">{{ inspection.inspection_date|date:"H:i" }}</small>
+                                </td>
+                                <td>
+                                    <strong>
+                                        <a href="{% url 'infrastructure:asset_detail' inspection.asset.pk %}" class="text-decoration-none">
+                                            {{ inspection.asset.name }}
+                                        </a>
+                                    </strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> {{ inspection.asset.village.name }}
+                                    </small>
+                                    <br>
+                                    <span class="badge badge-secondary badge-sm">{{ inspection.asset.get_category_display }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-info inspection-type-badge">
+                                        {{ inspection.get_inspection_type_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    {% if inspection.inspector %}
+                                        <div class="d-flex align-items-center">
+                                            <div class="avatar avatar-sm bg-success text-white rounded-circle me-2">
+                                                {{ inspection.inspector.first_name.0 }}{{ inspection.inspector.last_name.0 }}
+                                            </div>
+                                            <div>
+                                                <strong>{{ inspection.inspector.get_full_name }}</strong>
+                                                <br><small class="text-muted">{{ inspection.inspector.profile.get_role_display }}</small>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <span class="text-muted">Not assigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% condition_badge inspection.overall_condition %}
+                                    {% if not inspection.operational_status %}
+                                        <br><span class="badge badge-danger badge-sm mt-1">Non-Operational</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if inspection.operational_status %}
+                                        <span class="badge badge-success">Operational</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Non-Operational</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ inspection.priority_level|condition_color }} priority-badge">
+                                        {{ inspection.get_priority_level_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'infrastructure:inspection_detail' inspection.pk %}" 
+                                           class="btn btn-sm btn-outline-info" 
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'infrastructure:inspection_update' inspection.pk %}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           title="Edit Inspection">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        {% if inspection.inspection_photos %}
+                                        <a href="{{ inspection.inspection_photos.url }}" 
+                                           target="_blank"
+                                           class="btn btn-sm btn-outline-secondary" 
+                                           title="View Photos">
+                                            <i class="fas fa-camera"></i>
+                                        </a>
+                                        {% endif %}
+                                        {% if inspection.immediate_actions_required %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-warning" 
+                                                title="Immediate Actions Required"
+                                                onclick="showActionModal('{{ inspection.pk }}')">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Inspection pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Next
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-clipboard-check fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Inspections Found</h5>
+                    <p class="text-muted">Start by scheduling the first asset inspection.</p>
+                    <a href="{% url 'infrastructure:inspection_create' %}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Schedule First Inspection
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    console.log('Inspection list page loaded');
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Form submission for filters
+    $('#search, #inspection_type, #asset_category, #overall_condition, #date_from, #date_to').change(function() {
+        $(this).closest('form').submit();
+    });
+});
+
+function showActionModal(inspectionId) {
+    alert('Action modal for inspection ' + inspectionId + ' will be implemented');
+}
+
+function exportInspections() {
+    const currentParams = new URLSearchParams(window.location.search);
+    // Add export functionality here
+    alert('Export functionality will be implemented');
+}
+</script>
+{% endblock %}

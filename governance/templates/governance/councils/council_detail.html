@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ council.name }} - Traditional Council{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ council.name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:council_list' %}">Traditional Councils</a></li>
+                    <li class="breadcrumb-item active">{{ council.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Actions <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="#">Edit Council</a>
+                        <a class="dropdown-item" href="#">Add Member</a>
+                        <a class="dropdown-item" href="{% url 'governance:meeting_create' %}">Schedule Meeting</a>
+                        <a class="dropdown-item" href="{% url 'governance:village_create' %}">Add Village</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Council Information -->
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Council Information</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Leader:</strong></td>
+                                    <td>{{ council.leader_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Municipality:</strong></td>
+                                    <td>{{ council.municipality.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>District:</strong></td>
+                                    <td>{{ council.municipality.district.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Province:</strong></td>
+                                    <td>{{ council.municipality.district.province.name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Established:</strong></td>
+                                    <td>{{ council.establishment_date|date:"M d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Term Ends:</strong></td>
+                                    <td>{{ council.term_end_date|date:"M d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if council.is_term_active %}
+                                            <span class="badge badge-success">Active Term</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Term Expired</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Geographic Jurisdiction</h6>
+                        <p class="text-muted">{{ council.geographic_jurisdiction }}</p>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <h6>Contact Information</h6>
+                        <p class="text-muted">{{ council.contact_info|linebreaks }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Stats</h5>
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ villages.count }}</h4>
+                            <small class="text-muted">Villages</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ members.count }}</h4>
+                            <small class="text-muted">Members</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Villages -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Villages ({{ villages.count }})</h5>
+                    <a href="{% url 'governance:village_create' %}" class="btn btn-sm btn-primary float-right">
+                        <i class="fas fa-plus"></i> Add Village
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if villages %}
+                        <div class="list-group list-group-flush">
+                            {% for village in villages %}
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 class="mb-1">{{ village.name }}</h6>
+                                    <small class="text-muted">{{ village.location }}</small>
+                                </div>
+                                {% if village.population %}
+                                    <span class="badge badge-primary">{{ village.population }} people</span>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No villages registered</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Council Members -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Council Members ({{ members.count }})</h5>
+                    <button class="btn btn-sm btn-primary float-right">
+                        <i class="fas fa-plus"></i> Add Member
+                    </button>
+                </div>
+                <div class="card-body">
+                    {% if members %}
+                        <div class="list-group list-group-flush">
+                            {% for member in members %}
+                            <div class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <h6 class="mb-1">{{ member.user.get_full_name }}</h6>
+                                        <small class="text-muted">{{ member.get_role_display }}</small>
+                                    </div>
+                                    <small class="text-muted">Since {{ member.appointed_date|date:"M Y" }}</small>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No council members assigned</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Meetings -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Recent Meetings</h5>
+                    <a href="{% url 'governance:meeting_create' %}" class="btn btn-sm btn-primary float-right">
+                        <i class="fas fa-plus"></i> Schedule Meeting
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if recent_meetings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Meeting Title</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for meeting in recent_meetings %}
+                                    <tr>
+                                        <td>{{ meeting.title }}</td>
+                                        <td>{{ meeting.date|date:"M d, Y" }} at {{ meeting.time|time:"H:i" }}</td>
+                                        <td>
+                                            <span class="badge badge-{{ meeting.status|yesno:'success,warning,danger' }}">
+                                                {{ meeting.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:meeting_detail' meeting.pk %}" 
+                                               class="btn btn-sm btn-outline-primary">View</a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No meetings scheduled</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

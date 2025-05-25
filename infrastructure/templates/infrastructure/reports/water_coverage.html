@@ -1,0 +1,324 @@
+<!-- infrastructure/templates/infrastructure/reports/water_coverage.html -->
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Water Coverage Report - Infrastructure{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .coverage-excellent { background-color: #d4edda !important; color: #155724; }
+    .coverage-good { background-color: #d1ecf1 !important; color: #0c5460; }
+    .coverage-fair { background-color: #fff3cd !important; color: #856404; }
+    .coverage-poor { background-color: #f8d7da !important; color: #721c24; }
+    .export-buttons .btn {
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+    .progress-thin {
+        height: 8px;
+        border-radius: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-tint text-primary"></i> Water Coverage Report
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item"><a href="#">Reports</a></li>
+                    <li class="breadcrumb-item active">Water Coverage</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="export-buttons">
+                    <a href="?export=csv" class="btn btn-success">
+                        <i class="fas fa-file-csv"></i> Export CSV
+                    </a>
+                    <a href="?export=excel" class="btn btn-info">
+                        <i class="fas fa-file-excel"></i> Export Excel
+                    </a>
+                    <a href="?export=pdf" class="btn btn-danger">
+                        <i class="fas fa-file-pdf"></i> Export PDF
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_villages }}</div>
+                <div class="stats-label">Total Villages</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">{{ villages_with_water }}</div>
+                <div class="stats-label">Villages with Water</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ villages_without_water }}</div>
+                <div class="stats-label">Villages without Water</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-number">{{ average_coverage }}%</div>
+                <div class="stats-label">Average Coverage</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Info -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-users text-info"></i> Population Summary
+                    </h5>
+                    <p class="card-text">
+                        <strong>Total Population:</strong> {{ total_population|floatformat:0|default:"Not specified" }}<br>
+                        <strong>Report Generated:</strong> {{ report_date|date:"F d, Y H:i" }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-pie text-success"></i> Coverage Overview
+                    </h5>
+                    <div class="progress progress-thin mb-2">
+                        <div class="progress-bar bg-success" role="progressbar" 
+                             style="width: {{ average_coverage }}%" 
+                             aria-valuenow="{{ average_coverage }}" 
+                             aria-valuemin="0" aria-valuemax="100">
+                        </div>
+                    </div>
+                    <small class="text-muted">Overall water coverage: {{ average_coverage }}%</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if note %}
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> {{ note }}
+    </div>
+    {% endif %}
+
+    <!-- Villages Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-table"></i> Village Water Coverage Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if villages %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="20%">Village</th>
+                                        <th width="18%">Traditional Council</th>
+                                        <th width="15%">Municipality</th>
+                                        <th width="10%">Population</th>
+                                        <th width="10%">Households</th>
+                                        <th width="10%">With Water</th>
+                                        <th width="12%">Coverage</th>
+                                        <th width="10%">Infrastructure</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for village in villages %}
+                                    <tr class="
+                                        {% if village.water_coverage_percentage >= 90 %}coverage-excellent
+                                        {% elif village.water_coverage_percentage >= 70 %}coverage-good
+                                        {% elif village.water_coverage_percentage >= 40 %}coverage-fair
+                                        {% else %}coverage-poor
+                                        {% endif %}
+                                    ">
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>
+                                            <strong>{{ village.name }}</strong>
+                                            <br><small class="text-muted">{{ village.code }}</small>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:council_detail' village.traditional_council.pk %}" 
+                                               class="text-decoration-none">
+                                                {{ village.traditional_council.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:municipality_detail' village.traditional_council.municipality.pk %}" 
+                                               class="text-decoration-none">
+                                                {{ village.traditional_council.municipality.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary">
+                                                {{ village.total_population|floatformat:0|default:"—" }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">
+                                                {{ village.total_households|default:"0" }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-success">
+                                                {{ village.households_with_water|default:"0" }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="progress progress-thin flex-grow-1 me-2" style="width: 60px;">
+                                                    <div class="progress-bar 
+                                                        {% if village.water_coverage_percentage >= 90 %}bg-success
+                                                        {% elif village.water_coverage_percentage >= 70 %}bg-info
+                                                        {% elif village.water_coverage_percentage >= 40 %}bg-warning
+                                                        {% else %}bg-danger
+                                                        {% endif %}" 
+                                                         role="progressbar" 
+                                                         style="width: {{ village.water_coverage_percentage }}%">
+                                                    </div>
+                                                </div>
+                                                <small class="ms-2">{{ village.water_coverage_percentage|floatformat:1 }}%</small>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            {% if village.water_infrastructure_count > 0 %}
+                                                <span class="badge badge-primary">
+                                                    {{ village.water_infrastructure_count }} item{{ village.water_infrastructure_count|pluralize }}
+                                                </span>
+                                            {% else %}
+                                                <span class="badge badge-light">None</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-tint fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Villages Found</h5>
+                            <p class="text-muted">No village data available for water coverage analysis.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Coverage Legend -->
+    <div class="row mt-4">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        <i class="fas fa-info-circle"></i> Coverage Legend
+                    </h6>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="coverage-excellent p-2 rounded text-center">
+                                <strong>Excellent (90%+)</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="coverage-good p-2 rounded text-center">
+                                <strong>Good (70-89%)</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="coverage-fair p-2 rounded text-center">
+                                <strong>Fair (40-69%)</strong>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="coverage-poor p-2 rounded text-center">
+                                <strong>Poor (0-39%)</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[data-toggle="tooltip"]').tooltip();
+    
+    // Add some animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Add click handlers for export buttons
+    $('.export-buttons a').on('click', function() {
+        const exportType = $(this).text().trim();
+        console.log(`Exporting as ${exportType}...`);
+    });
+    
+    console.log('Water coverage report loaded successfully');
+});
+</script>
+{% endblock %}

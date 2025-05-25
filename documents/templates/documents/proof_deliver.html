@@ -1,0 +1,71 @@
+{% extends "documents/base.html" %}
+{% load static %}
+
+{% block title %}Mark as Delivered - {{ document.document_number }}{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Mark Document as Delivered</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'documents:dashboard' %}">Documents</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'documents:proof_list' %}">Proof of Residence</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'documents:proof_detail' document.pk %}">{{ document.document_number }}</a></li>
+                    <li class="breadcrumb-item active">Mark Delivered</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-truck"></i> Document Delivery Confirmation
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <!-- Document Summary -->
+                    <div class="alert alert-info">
+                        <h6><strong>Document Details:</strong></h6>
+                        <ul class="mb-0">
+                            <li><strong>Document Number:</strong> {{ document.document_number }}</li>
+                            <li><strong>Resident:</strong> {{ document.resident.full_name }}</li>
+                            <li><strong>Village:</strong> {{ document.village.name }}</li>
+                            <li><strong>Generated:</strong> {{ document.generated_at|date:"F d, Y H:i" }}</li>
+                        </ul>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="form-group">
+                            <label for="notes" class="form-label">Delivery Notes</label>
+                            <textarea name="notes" id="notes" class="form-control" rows="4" 
+                                      placeholder="Add delivery details such as who received the document, delivery method, etc."></textarea>
+                        </div>
+
+                        <div class="alert alert-success">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Confirmation:</strong> By marking this document as delivered, you confirm that it has been successfully handed over to the intended recipient.
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-warning btn-lg">
+                                <i class="fas fa-truck"></i> Mark as Delivered
+                            </button>
+                            <a href="{% url 'documents:proof_detail' document.pk %}" class="btn btn-secondary btn-lg">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

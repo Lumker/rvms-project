@@ -1,0 +1,539 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Council Meetings - Governance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    }
+    .stats-card.danger {
+        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .meeting-row {
+        transition: all 0.3s ease;
+    }
+    .meeting-row:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .meeting-row.scheduled {
+        border-left: 4px solid #007bff;
+    }
+    .meeting-row.completed {
+        border-left: 4px solid #28a745;
+    }
+    .meeting-row.cancelled {
+        border-left: 4px solid #dc3545;
+    }
+    .meeting-row.in_progress {
+        border-left: 4px solid #ffc107;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .badge-lg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .meeting-time {
+        font-weight: 500;
+        color: #495057;
+    }
+    .modal-header.bg-secondary {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+    }
+    .upcoming-meeting {
+        background-color: #e3f2fd;
+    }
+    .past-meeting {
+        opacity: 0.8;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Council Meetings</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item active">Meetings</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'governance:meeting_create' %}" class="btn btn-secondary">
+                    <i class="fas fa-plus"></i> Schedule Meeting
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card secondary">
+                <div class="stats-number">{{ meetings.paginator.count }}</div>
+                <div class="stats-label">Total Meetings</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">
+                    {% with scheduled_count=0 %}
+                        {% for meeting in meetings %}
+                            {% if meeting.status == 'scheduled' %}
+                                {% with scheduled_count=scheduled_count|add:1 %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ scheduled_count }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Scheduled</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">
+                    {% with completed_count=0 %}
+                        {% for meeting in meetings %}
+                            {% if meeting.status == 'completed' %}
+                                {% with completed_count=completed_count|add:1 %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ completed_count }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Completed</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card danger">
+                <div class="stats-number">
+                    {% with cancelled_count=0 %}
+                        {% for meeting in meetings %}
+                            {% if meeting.status == 'cancelled' %}
+                                {% with cancelled_count=cancelled_count|add:1 %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ cancelled_count }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Cancelled</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Meeting title or location..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <label for="council" class="form-label">Traditional Council</label>
+                <select name="council" id="council" class="form-control">
+                    <option value="">All Councils</option>
+                    {% for council in councils %}
+                    <option value="{{ council.id }}" {% if selected_council == council.id|stringformat:"s" %}selected{% endif %}>
+                        {{ council.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Status</option>
+                    {% for status_code, status_name in status_choices %}
+                    <option value="{{ status_code }}" {% if selected_status == status_code %}selected{% endif %}>
+                        {{ status_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="date_filter" class="form-label">Date Filter</label>
+                <select name="date_filter" id="date_filter" class="form-control">
+                    <option value="">All Dates</option>
+                    <option value="upcoming" {% if date_filter == 'upcoming' %}selected{% endif %}>Upcoming</option>
+                    <option value="past" {% if date_filter == 'past' %}selected{% endif %}>Past</option>
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'governance:meeting_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Meetings Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-calendar-check"></i> Traditional Council Meetings
+                    </h4>
+                    <div class="card-options">
+                        <a href="{% url 'governance:meeting_create' %}" class="btn btn-sm btn-outline-secondary">
+                            <i class="fas fa-plus"></i> Schedule New
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if meetings %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="25%">Meeting</th>
+                                        <th width="20%">Council</th>
+                                        <th width="15%">Date & Time</th>
+                                        <th width="15%">Location</th>
+                                        <th width="8%">Status</th>
+                                        <th width="8%">Attendees</th>
+                                        <th width="12%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for meeting in meetings %}
+                                    <tr class="meeting-row {{ meeting.status }} {% if meeting.date >= today %}upcoming-meeting{% else %}past-meeting{% endif %}">
+                                        <td>{{ forloop.counter|add:meetings.start_index|add:"-1" }}</td>
+                                        <td>
+                                            <strong>{{ meeting.title }}</strong>
+                                            {% if meeting.agenda %}
+                                            <br><small class="text-muted">{{ meeting.agenda|truncatechars:60 }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:council_detail' meeting.council.pk %}" class="text-decoration-none">
+                                                {{ meeting.council.name }}
+                                            </a>
+                                            <br><small class="text-muted">{{ meeting.council.municipality.name }}</small>
+                                        </td>
+                                        <td>
+                                            <div class="meeting-time">{{ meeting.date|date:"M d, Y" }}</div>
+                                            <small class="text-muted">{{ meeting.time|time:"H:i" }}</small>
+                                        </td>
+                                        <td>
+                                            <small>{{ meeting.location }}</small>
+                                        </td>
+                                        <td>
+                                            {% if meeting.status == 'scheduled' %}
+                                            <span class="badge badge-primary">{{ meeting.get_status_display }}</span>
+                                            {% elif meeting.status == 'completed' %}
+                                            <span class="badge badge-success">{{ meeting.get_status_display }}</span>
+                                            {% elif meeting.status == 'cancelled' %}
+                                            <span class="badge badge-danger">{{ meeting.get_status_display }}</span>
+                                            {% elif meeting.status == 'in_progress' %}
+                                            <span class="badge badge-warning">{{ meeting.get_status_display }}</span>
+                                            {% else %}
+                                            <span class="badge badge-secondary">{{ meeting.get_status_display }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ meeting.attendees.count }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{% url 'governance:meeting_detail' meeting.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'governance:meeting_update' meeting.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Edit Meeting">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-secondary view-details-btn" 
+                                                        title="Quick View"
+                                                        data-meeting-id="{{ meeting.pk }}"
+                                                        data-meeting-title="{{ meeting.title }}"
+                                                        data-council-name="{{ meeting.council.name }}"
+                                                        data-meeting-date="{{ meeting.date|date:'F d, Y' }}"
+                                                        data-meeting-time="{{ meeting.time|time:'H:i' }}"
+                                                        data-location="{{ meeting.location }}"
+                                                        data-status="{{ meeting.get_status_display }}"
+                                                        data-attendees="{{ meeting.attendees.count }}"
+                                                        data-agenda="{{ meeting.agenda|default:'No agenda set' }}"
+                                                        data-created="{{ meeting.created_at|date:'F d, Y H:i' }}">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if meetings.has_other_pages %}
+                        <nav aria-label="Meeting pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if meetings.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ meetings.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_council %}&council={{ selected_council }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
+                                        Previous
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in meetings.paginator.page_range %}
+                                {% if meetings.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > meetings.number|add:'-3' and num < meetings.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_council %}&council={{ selected_council }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if meetings.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ meetings.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_council %}&council={{ selected_council }}{% endif %}{% if selected_status %}&status={{ selected_status }}{% endif %}{% if date_filter %}&date_filter={{ date_filter }}{% endif %}">
+                                        Next
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Meetings Found</h5>
+                            <p class="text-muted">Start by scheduling the first council meeting.</p>
+                            <a href="{% url 'governance:meeting_create' %}" class="btn btn-secondary">
+                                <i class="fas fa-plus"></i> Schedule First Meeting
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Meeting Detail Modal -->
+<div class="modal fade" id="meetingDetailModal" tabindex="-1" role="dialog" aria-labelledby="meetingDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-secondary text-white">
+                <h5 class="modal-title" id="meetingDetailModalLabel">
+                    <i class="fas fa-calendar-check"></i> <span id="modalMeetingTitle">Meeting Details</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Meeting Title:</label>
+                            <p id="modalMeetingTitleDetail" class="text-secondary font-weight-bold"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Traditional Council:</label>
+                            <p id="modalCouncilName" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Date:</label>
+                            <p id="modalMeetingDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Time:</label>
+                            <p id="modalMeetingTime" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Location:</label>
+                            <p id="modalLocation" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Status:</label>
+                            <p><span id="modalStatus" class="badge badge-lg"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Attendees:</label>
+                            <p id="modalAttendees" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Created:</label>
+                            <p id="modalCreatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="info-group">
+                            <label>Agenda:</label>
+                            <p id="modalAgenda" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modalEditLink" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Meeting
+                </a>
+                <a href="#" id="modalViewLink" class="btn btn-info">
+                    <i class="fas fa-eye"></i> View Details
+                </a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    console.log('Meeting list page loaded');
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Handle view details button click
+    $(document).on('click', '.view-details-btn', function(e) {
+        e.preventDefault();
+        
+        // Get data from button attributes
+        var meetingId = $(this).data('meeting-id');
+        var meetingTitle = $(this).data('meeting-title');
+        var councilName = $(this).data('council-name');
+        var meetingDate = $(this).data('meeting-date');
+        var meetingTime = $(this).data('meeting-time');
+        var location = $(this).data('location');
+        var status = $(this).data('status');
+        var attendees = $(this).data('attendees');
+        var agenda = $(this).data('agenda');
+        var createdDate = $(this).data('created');
+        
+        // Populate modal with data
+        $('#modalMeetingTitle').text(meetingTitle);
+        $('#modalMeetingTitleDetail').text(meetingTitle);
+        $('#modalCouncilName').text(councilName);
+        $('#modalMeetingDate').text(meetingDate);
+        $('#modalMeetingTime').text(meetingTime);
+        $('#modalLocation').text(location);
+        $('#modalStatus').text(status).removeClass().addClass('badge badge-lg badge-secondary');
+        $('#modalAttendees').text(attendees + ' attendee' + (attendees != 1 ? 's' : ''));
+        $('#modalAgenda').text(agenda);
+        $('#modalCreatedDate').text(createdDate);
+        
+        // Update links
+        var editUrl = "{% url 'governance:meeting_update' 0 %}".replace('0', meetingId);
+        $('#modalEditLink').attr('href', editUrl);
+        
+        var viewUrl = "{% url 'governance:meeting_detail' 0 %}".replace('0', meetingId);
+        $('#modalViewLink').attr('href', viewUrl);
+        
+        // Show modal
+        $('#meetingDetailModal').modal('show');
+    });
+    
+    // Enhanced hover effects
+    $('.meeting-row').hover(
+        function() {
+            $(this).addClass('table-active');
+        },
+        function() {
+            $(this).removeClass('table-active');
+        }
+    );
+});
+</script>
+{% endblock %}

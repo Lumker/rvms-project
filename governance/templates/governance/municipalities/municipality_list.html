@@ -1,0 +1,508 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Municipalities - Governance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .badge-lg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .modal-header.bg-warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Municipalities</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item active">Municipalities</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'governance:municipality_create' %}" class="btn btn-warning">
+                    <i class="fas fa-plus"></i> Add Municipality
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+          <div class="col-md-2">
+        <div class="stats-card warning">
+            <div class="stats-number">{{ page_obj.paginator.count }}</div>
+            <div class="stats-label">Total Municipalities</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card info">
+            <div class="stats-number">
+                {% with total_wards=0 %}
+                    {% for municipality in page_obj %}
+                        {% with total_wards=total_wards|add:municipality.total_ward_committees %}
+                        {% endwith %}
+                    {% endfor %}
+                    {{ total_wards }}
+                {% endwith %}
+            </div>
+            <div class="stats-label">Ward Committees</div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="stats-card success">
+            <div class="stats-number">
+                {% with total_councils=0 %}
+                    {% for municipality in page_obj %}
+                        {% with total_councils=total_councils|add:municipality.total_traditional_councils %}
+                        {% endwith %}
+                    {% endfor %}
+                    {{ total_councils }}
+                {% endwith %}
+            </div>
+            <div class="stats-label">Traditional Councils</div>
+        </div>
+    </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">
+                    {{ page_obj|length|add:page_obj.paginator.count }}
+                </div>
+                <div class="stats-label">Active Municipalities</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ districts|length }}</div>
+                <div class="stats-label">Districts Covered</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Municipality name or code..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-2">
+                <label for="district" class="form-label">District</label>
+                <select name="district" id="district" class="form-control">
+                    <option value="">All Districts</option>
+                    {% for district in districts %}
+                    <option value="{{ district.id }}" {% if current_filters.district == district.id|stringformat:"s" %}selected{% endif %}>
+                        {{ district.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="type" class="form-label">Type</label>
+                <select name="type" id="type" class="form-control">
+                    <option value="">All Types</option>
+                    {% for type_code, type_name in municipality_types %}
+                    <option value="{{ type_code }}" {% if current_filters.type == type_code %}selected{% endif %}>
+                        {{ type_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Status</option>
+                    <option value="active" {% if current_filters.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if current_filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'governance:municipality_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Municipalities Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-building"></i> South African Municipalities
+                    </h4>
+                    <div class="card-options">
+                        <a href="{% url 'governance:municipality_create' %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if page_obj %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="20%">Municipality</th>
+                                        <th width="10%">Code</th>
+                                        <th width="15%">Type</th>
+                                        <th width="15%">District</th>
+                                        <th width="10%">Councils</th>
+                                        <th width="10%">Population</th>
+                                        <th width="8%">Status</th>
+                                        <th width="12%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for municipality in page_obj %}
+                                    <tr>
+                                        <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
+                                        <td>
+                                            <strong>{{ municipality.name }}</strong>
+                                            {% if municipality.mayor_name %}
+                                            <br><small class="text-muted">Mayor: {{ municipality.mayor_name }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-warning badge-lg">{{ municipality.code }}</span>
+                                        </td>
+                                        <td>
+                                            <small>{{ municipality.get_municipality_type_display }}</small>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:district_detail' municipality.district.pk %}" class="text-decoration-none">
+                                                {{ municipality.district.name }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ municipality.council_count }}</span>
+                                        </td>
+                                        <td>
+                                            {% if municipality.population %}
+                                            <small>{{ municipality.population|floatformat:0 }}</small>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if municipality.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                            {% else %}
+                                            <span class="badge badge-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{% url 'governance:municipality_detail' municipality.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'governance:municipality_update' municipality.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Edit Municipality">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <a href="{% url 'governance:council_create' %}?municipality={{ municipality.pk }}" 
+                                                   class="btn btn-sm btn-outline-success" 
+                                                   title="Add Council">
+                                                    <i class="fas fa-plus"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-secondary view-details-btn" 
+                                                        title="Quick View"
+                                                        data-municipality-id="{{ municipality.pk }}"
+                                                        data-municipality-name="{{ municipality.name }}"
+                                                        data-municipality-code="{{ municipality.code }}"
+                                                        data-municipality-type="{{ municipality.get_municipality_type_display }}"
+                                                        data-district-name="{{ municipality.district.name }}"
+                                                        data-council-count="{{ municipality.council_count }}"
+                                                        data-population="{{ municipality.population|default:'Not specified' }}"
+                                                        data-mayor="{{ municipality.mayor_name|default:'Not specified' }}"
+                                                        data-website="{{ municipality.website|default:'None' }}"
+                                                        data-created="{{ municipality.created_at|date:'F d, Y H:i' }}"
+                                                        data-updated="{{ municipality.updated_at|date:'F d, Y H:i' }}">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if page_obj.has_other_pages %}
+                        <nav aria-label="Municipality pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.district %}&district={{ current_filters.district }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        Previous
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.district %}&district={{ current_filters.district }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.district %}&district={{ current_filters.district }}{% endif %}{% if current_filters.type %}&type={{ current_filters.type }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        Next
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Municipalities Found</h5>
+                            <p class="text-muted">Start by adding the first municipality to the system.</p>
+                            <a href="{% url 'governance:municipality_create' %}" class="btn btn-warning">
+                                <i class="fas fa-plus"></i> Add First Municipality
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Municipality Detail Modal -->
+<div class="modal fade" id="municipalityDetailModal" tabindex="-1" role="dialog" aria-labelledby="municipalityDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title" id="municipalityDetailModalLabel">
+                    <i class="fas fa-building"></i> <span id="modalMunicipalityName">Municipality Details</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Municipality Name:</label>
+                            <p id="modalMunicipalityNameDetail" class="text-warning font-weight-bold"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Municipality Code:</label>
+                            <p><span id="modalMunicipalityCode" class="badge badge-warning badge-lg"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Type:</label>
+                            <p id="modalMunicipalityType" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>District:</label>
+                            <p id="modalDistrictName" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Traditional Councils:</label>
+                            <p><span id="modalCouncilCount" class="badge badge-info badge-lg"></span></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Population:</label>
+                            <p id="modalPopulation" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Mayor:</label>
+                            <p id="modalMayor" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Website:</label>
+                            <p id="modalWebsite" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Created:</label>
+                            <p id="modalCreatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Last Updated:</label>
+                            <p id="modalUpdatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modalEditLink" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Municipality
+                </a>
+                <a href="#" id="modalAddCouncilLink" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add Council
+                </a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    console.log('Municipality list page loaded');
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Handle view details button click
+    $(document).on('click', '.view-details-btn', function(e) {
+        e.preventDefault();
+        
+        // Get data from button attributes
+        var municipalityId = $(this).data('municipality-id');
+        var municipalityName = $(this).data('municipality-name');
+        var municipalityCode = $(this).data('municipality-code');
+        var municipalityType = $(this).data('municipality-type');
+        var districtName = $(this).data('district-name');
+        var councilCount = $(this).data('council-count');
+        var population = $(this).data('population');
+        var mayor = $(this).data('mayor');
+        var website = $(this).data('website');
+        var createdDate = $(this).data('created');
+        var updatedDate = $(this).data('updated');
+        
+        // Populate modal with data
+        $('#modalMunicipalityName').text(municipalityName);
+        $('#modalMunicipalityNameDetail').text(municipalityName);
+        $('#modalMunicipalityCode').text(municipalityCode);
+        $('#modalMunicipalityType').text(municipalityType);
+        $('#modalDistrictName').text(districtName);
+        $('#modalCouncilCount').text(councilCount + ' council' + (councilCount != 1 ? 's' : ''));
+        $('#modalPopulation').text(population);
+        $('#modalMayor').text(mayor);
+        $('#modalWebsite').text(website);
+        $('#modalCreatedDate').text(createdDate);
+        $('#modalUpdatedDate').text(updatedDate);
+        
+        // Update links
+        var editUrl = "{% url 'governance:municipality_update' 0 %}".replace('0', municipalityId);
+        $('#modalEditLink').attr('href', editUrl);
+        
+        var addCouncilUrl = "{% url 'governance:council_create' %}?municipality=" + municipalityId;
+        $('#modalAddCouncilLink').attr('href', addCouncilUrl);
+        
+        // Show modal
+        $('#municipalityDetailModal').modal('show');
+    });
+});
+</script>
+{% endblock %}

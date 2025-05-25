@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ province.name }} - Province Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .province-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    .stats-box {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: transform 0.2s ease;
+    }
+    .stats-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .district-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.2s ease;
+    }
+    .district-card:hover {
+        border-color: #667eea;
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ province.name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:province_list' %}">Provinces</a></li>
+                    <li class="breadcrumb-item active">{{ province.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'governance:district_create' %}?province={{ province.pk }}" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add District
+                    </a>
+                    <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                        Actions <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{% url 'governance:province_update' province.pk %}">
+                            <i class="fas fa-edit"></i> Edit Province
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item" href="{% url 'governance:district_list' %}?province={{ province.pk }}">
+                            <i class="fas fa-city"></i> View All Districts
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Province Header -->
+    <div class="province-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ province.name }}</h2>
+                <p class="mb-0">
+                    <span class="badge badge-light badge-lg">{{ province.code }}</span>
+                </p>
+            </div>
+            <div class="col-md-4 text-right">
+                <div class="stats-box bg-white text-dark">
+                    <div class="h2 text-primary mb-0">{{ districts.count }}</div>
+                    <div class="text-muted">Districts</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Province Information and Districts -->
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle"></i> Province Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6><i class="fas fa-tag"></i> Province Code</h6>
+                        <p><span class="badge badge-primary badge-lg">{{ province.code }}</span></p>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-calendar-plus"></i> Created</h6>
+                        <p class="mb-0">{{ province.created_at|date:"F d, Y" }}</p>
+                        <small class="text-muted">{{ province.created_at|timesince }} ago</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <h6><i class="fas fa-calendar-edit"></i> Last Updated</h6>
+                        <p class="mb-0">{{ province.updated_at|date:"F d, Y H:i" }}</p>
+                        <small class="text-muted">{{ province.updated_at|timesince }} ago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Districts List -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-city"></i> Districts ({{ districts.count }})
+                    </h5>
+                    <a href="{% url 'governance:district_create' %}?province={{ province.pk }}" class="btn btn-sm btn-success float-right">
+                        <i class="fas fa-plus"></i> Add District
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if districts %}
+                        {% for district in districts %}
+                        <div class="district-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-city text-success"></i>
+                                        {{ district.name }}
+                                    </h6>
+                                    <p class="mb-0">
+                                        <small class="text-muted">
+                                            <strong>Code:</strong> {{ district.code }} |
+                                            <strong>Municipalities:</strong> {{ district.municipality_count }}
+                                        </small>
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <div class="btn-group">
+                                        <a href="{% url 'governance:district_detail' district.pk %}" class="btn btn-sm btn-outline-success">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        <a href="{% url 'governance:district_update' district.pk %}" class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-city fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No Districts</h6>
+                            <p class="text-muted">This province doesn't have any districts yet.</p>
+                            <a href="{% url 'governance:district_create' %}?province={{ province.pk }}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add First District
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

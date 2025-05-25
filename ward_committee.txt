@@ -1,0 +1,22 @@
+🏛️ WardCommittee Context Needed:
+Where WardCommittee Fits:
+
+Hierarchical Position: Usually sits between Municipality and Traditional Council
+Relationship: Municipality → WardCommittee → TraditionalCouncil → Village
+Purpose: Represents municipal ward structures that interface with traditional governance
+
+Key Fields Likely Needed:
+
+Ward number/code
+Municipality relationship
+Ward councillor information
+Boundaries/jurisdiction
+Population data
+Committee members
+
+If you could provide:
+
+Current governance/models.py
+One complete template (I recommend municipality_list.html)
+Current governance/urls.py
+Your preferred color theme/icon for WardCommittee

@@ -1,0 +1,433 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}{{ village.name }} - Villages{% endblock %}
+
+{% block extra_css %}
+<style>
+    .village-header {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .info-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .stats-icon {
+        font-size: 2.5rem;
+        margin-bottom: 15px;
+    }
+    .badge-status {
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+    .hierarchy-item {
+        border-left: 4px solid #17a2b8;
+        transition: all 0.3s ease;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 0 8px 8px 0;
+    }
+    .hierarchy-item:hover {
+        border-left-color: #38f9d7;
+        background-color: #f8f9fa;
+    }
+    .current-item {
+        border-left-color: #38f9d7;
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ village.name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:village_list' %}">Villages</a></li>
+                    <li class="breadcrumb-item active">{{ village.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'governance:village_update' village.pk %}" class="btn btn-success">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown">
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="{% url 'governance:village_delete' village.pk %}">
+                            <i class="fas fa-trash"></i> Delete Village
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Village Overview -->
+    <div class="village-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3">{{ village.name }}</h2>
+                <p class="mb-3">
+                    <i class="fas fa-map-marker-alt"></i> {{ village.location }}
+                </p>
+                <p class="mb-0">
+                    Under {{ village.traditional_council.name }} Traditional Council
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-home" style="font-size: 4rem; opacity: 0.3;"></i>
+                {% if not village.is_active %}
+                <br><span class="badge badge-warning badge-status mt-2">Inactive</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Village Information -->
+        <div class="col-lg-8">
+            <div class="card info-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-success"></i> Village Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Village Code:</strong></td>
+                                    <td><span class="badge badge-success">{{ village.code }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Location:</strong></td>
+                                    <td>{{ village.location }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Population:</strong></td>
+                                    <td>
+                                        {% if village.population %}
+                                        {{ village.population|floatformat:0 }} people
+                                        {% else %}
+                                        Not specified
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if village.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Traditional Council:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:council_detail' village.traditional_council.pk %}" class="text-decoration-none">
+                                            {{ village.traditional_council.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Municipality:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:municipality_detail' village.traditional_council.municipality.pk %}" class="text-decoration-none">
+                                            {{ village.traditional_council.municipality.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>District:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:district_detail' village.traditional_council.municipality.district.pk %}" class="text-decoration-none">
+                                            {{ village.traditional_council.municipality.district.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Province:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:province_detail' village.traditional_council.municipality.district.province.pk %}" class="text-decoration-none">
+                                            {{ village.traditional_council.municipality.district.province.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if village.description %}
+                    <div class="mt-3">
+                        <strong>Description:</strong>
+                        <div class="border p-3 bg-light rounded">
+                            {{ village.description|linebreaks }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Traditional Leadership Info -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-crown text-warning"></i> Traditional Leadership
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Traditional Leader:</strong></td>
+                                    <td>{{ village.traditional_council.leader_title }} {{ village.traditional_council.leader_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Council:</strong></td>
+                                    <td>{{ village.traditional_council.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Established:</strong></td>
+                                    <td>{{ village.traditional_council.establishment_date|date:"F Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Council Status:</strong></td>
+                                    <td>
+                                        {% if village.traditional_council.status == 'active' %}
+                                        <span class="badge badge-success">{{ village.traditional_council.get_status_display }}</span>
+                                        {% else %}
+                                        <span class="badge badge-warning">{{ village.traditional_council.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Term Status:</strong></td>
+                                    <td>
+                                        {% if village.traditional_council.is_term_expired %}
+                                        <span class="badge badge-danger">Term Expired</span>
+                                        {% else %}
+                                        <span class="badge badge-success">Active Term</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Statistics -->
+            <div class="card info-card">
+                <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-chart-bar text-primary"></i> Village Statistics
+                   </h5>
+               </div>
+               <div class="card-body text-center">
+                   <div class="row">
+                       <div class="col-12 mb-3">
+                           <i class="fas fa-users text-info stats-icon"></i>
+                           <h3 class="text-info">
+                               {% if village.population %}
+                               {{ village.population|floatformat:0 }}
+                               {% else %}
+                               <span class="text-muted">-</span>
+                               {% endif %}
+                           </h3>
+                           <p class="text-muted mb-0">Population</p>
+                       </div>
+                   </div>
+                   <hr>
+                   <div class="row">
+                       <div class="col-6">
+                           <h4 class="text-success">{{ village.traditional_council.total_villages }}</h4>
+                           <small class="text-muted">Villages in Council</small>
+                       </div>
+                       <div class="col-6">
+                           <h4 class="text-warning">{{ village.traditional_council.municipality.total_traditional_councils }}</h4>
+                           <small class="text-muted">Councils in Municipality</small>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Administrative Hierarchy -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-sitemap text-secondary"></i> Administrative Hierarchy
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="hierarchy-item">
+                       <div class="d-flex justify-content-between align-items-center">
+                           <div>
+                               <i class="fas fa-map text-primary"></i>
+                               <strong>Province</strong>
+                           </div>
+                           <a href="{% url 'governance:province_detail' village.traditional_council.municipality.district.province.pk %}" class="btn btn-sm btn-outline-primary">
+                               {{ village.traditional_council.municipality.district.province.name }}
+                           </a>
+                       </div>
+                   </div>
+                   <div class="hierarchy-item">
+                       <div class="d-flex justify-content-between align-items-center">
+                           <div>
+                               <i class="fas fa-city text-success"></i>
+                               <strong>District</strong>
+                           </div>
+                           <a href="{% url 'governance:district_detail' village.traditional_council.municipality.district.pk %}" class="btn btn-sm btn-outline-success">
+                               {{ village.traditional_council.municipality.district.name }}
+                           </a>
+                       </div>
+                   </div>
+                   <div class="hierarchy-item">
+                       <div class="d-flex justify-content-between align-items-center">
+                           <div>
+                               <i class="fas fa-building text-warning"></i>
+                               <strong>Municipality</strong>
+                           </div>
+                           <a href="{% url 'governance:municipality_detail' village.traditional_council.municipality.pk %}" class="btn btn-sm btn-outline-warning">
+                               {{ village.traditional_council.municipality.name }}
+                           </a>
+                       </div>
+                   </div>
+                   <div class="hierarchy-item">
+                       <div class="d-flex justify-content-between align-items-center">
+                           <div>
+                               <i class="fas fa-users text-info"></i>
+                               <strong>Traditional Council</strong>
+                           </div>
+                           <a href="{% url 'governance:council_detail' village.traditional_council.pk %}" class="btn btn-sm btn-outline-info">
+                               {{ village.traditional_council.name }}
+                           </a>
+                       </div>
+                   </div>
+                   <div class="hierarchy-item current-item">
+                       <div class="d-flex justify-content-between align-items-center">
+                           <div>
+                               <i class="fas fa-home text-success"></i>
+                               <strong>Village</strong>
+                           </div>
+                           <span class="badge badge-success">{{ village.name }}</span>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Record Information -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-clock text-muted"></i> Record Information
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <table class="table table-borderless table-sm">
+                       <tr>
+                           <td><strong>Created:</strong></td>
+                           <td>{{ village.created_at|date:"M d, Y" }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Updated:</strong></td>
+                           <td>{{ village.updated_at|date:"M d, Y" }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Status:</strong></td>
+                           <td>
+                               {% if village.is_active %}
+                               <span class="badge badge-success">Active</span>
+                               {% else %}
+                               <span class="badge badge-secondary">Inactive</span>
+                               {% endif %}
+                           </td>
+                       </tr>
+                   </table>
+               </div>
+           </div>
+
+           <!-- Quick Actions -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-bolt text-success"></i> Quick Actions
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="d-grid gap-2">
+                       <a href="{% url 'governance:village_update' village.pk %}" class="btn btn-outline-primary">
+                           <i class="fas fa-edit"></i> Edit Village
+                       </a>
+                       <a href="{% url 'governance:council_detail' village.traditional_council.pk %}" class="btn btn-outline-info">
+                           <i class="fas fa-users"></i> View Traditional Council
+                       </a>
+                       <a href="{% url 'governance:village_list' %}" class="btn btn-outline-secondary">
+                           <i class="fas fa-list"></i> Back to Villages
+                       </a>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+   // Initialize tooltips
+   $('[title]').tooltip();
+   
+   // Add animations
+   $('.card').hide().fadeIn(800);
+   $('.village-header').hide().slideDown(600);
+   
+   // Add hover effects to hierarchy items
+   $('.hierarchy-item').hover(
+       function() {
+           if (!$(this).hasClass('current-item')) {
+               $(this).addClass('bg-light');
+           }
+       },
+       function() {
+           if (!$(this).hasClass('current-item')) {
+               $(this).removeClass('bg-light');
+           }
+       }
+   );
+});
+</script>
+{% endblock %}

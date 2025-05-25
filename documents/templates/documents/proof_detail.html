@@ -1,0 +1,290 @@
+{% extends "documents/base.html" %}
+{% load static %}
+
+{% block title %}{{ document.document_number }} - Document Details{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Document Details</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'documents:dashboard' %}">Documents</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'documents:proof_list' %}">Proof of Residence</a></li>
+                    <li class="breadcrumb-item active">{{ document.document_number }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'documents:proof_update' document.pk %}" class="btn btn-secondary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    {% if document.can_be_approved %}
+                    <a href="{% url 'documents:proof_approve' document.pk %}" class="btn btn-success">
+                        <i class="fas fa-check"></i> Approve
+                    </a>
+                    {% endif %}
+                    {% if document.can_be_generated %}
+                    <a href="{% url 'documents:proof_generate' document.pk %}" class="btn btn-info">
+                        <i class="fas fa-file-pdf"></i> Generate
+                    </a>
+                    {% endif %}
+                    {% if document.can_be_delivered %}
+                    <a href="{% url 'documents:proof_deliver' document.pk %}" class="btn btn-warning">
+                        <i class="fas fa-truck"></i> Mark Delivered
+                    </a>
+                    {% endif %}
+                    {% if document.document_file %}
+                    <a href="{% url 'documents:proof_download' document.pk %}" class="btn btn-primary">
+                        <i class="fas fa-download"></i> Download
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Document Information -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-file-alt"></i> Document Information
+                    </h4>
+                    <div class="float-right">
+                        {% if document.status == 'pending' %}
+                            <span class="badge badge-warning badge-lg">{{ document.get_status_display }}</span>
+                        {% elif document.status == 'approved' %}
+                            <span class="badge badge-info badge-lg">{{ document.get_status_display }}</span>
+                        {% elif document.status == 'generated' %}
+                            <span class="badge badge-success badge-lg">{{ document.get_status_display }}</span>
+                        {% elif document.status == 'delivered' %}
+                            <span class="badge badge-secondary badge-lg">{{ document.get_status_display }}</span>
+                        {% elif document.status == 'rejected' %}
+                            <span class="badge badge-danger badge-lg">{{ document.get_status_display }}</span>
+                        {% else %}
+                            <span class="badge badge-light badge-lg">{{ document.get_status_display }}</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Document Number:</strong></td>
+                                    <td>{{ document.document_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Resident:</strong></td>
+                                    <td>{{ document.resident.full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>ID Number:</strong></td>
+                                    <td>{{ document.resident.id_number|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Village:</strong></td>
+                                    <td>{{ document.village.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Municipality:</strong></td>
+                                    <td>{{ document.village.municipality.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>District:</strong></td>
+                                    <td>{{ document.village.municipality.district.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Province:</strong></td>
+                                    <td>{{ document.village.municipality.district.province.name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Purpose:</strong></td>
+                                    <td>{{ document.purpose }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Requested By:</strong></td>
+                                    <td>{{ document.requested_by.get_full_name|default:"Unknown" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Requested Date:</strong></td>
+                                    <td>{{ document.requested_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                                {% if document.approved_by %}
+                                <tr>
+                                    <td><strong>Approved By:</strong></td>
+                                    <td>{{ document.approved_by.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Approved Date:</strong></td>
+                                    <td>{{ document.approved_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if document.generated_at %}
+                                <tr>
+                                    <td><strong>Generated Date:</strong></td>
+                                    <td>{{ document.generated_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                                {% if document.delivered_at %}
+                                <tr>
+                                    <td><strong>Delivered Date:</strong></td>
+                                    <td>{{ document.delivered_at|date:"F d, Y H:i" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                    </div>
+
+                    {% if document.valid_from or document.valid_until %}
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><strong>Validity Period:</strong></h6>
+                            <p>
+                                {% if document.valid_from %}From: {{ document.valid_from|date:"F d, Y" }}{% endif %}
+                                {% if document.valid_until %}To: {{ document.valid_until|date:"F d, Y" }}{% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    {% if document.notes %}
+                    <div class="row">
+                        <div class="col-12">
+                            <h6><strong>Notes:</strong></h6>
+                            <p>{{ document.notes }}</p>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Document Log -->
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-history"></i> Document History
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if logs %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Action</th>
+                                    <th>User</th>
+                                    <th>Date</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                <tr>
+                                    <td>
+                                        <span class="badge badge-primary">{{ log.action }}</span>
+                                    </td>
+                                    <td>{{ log.action_by.get_full_name|default:"System" }}</td>
+                                    <td>{{ log.action_at|date:"M d, Y H:i" }}</td>
+                                    <td>{{ log.notes|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-muted">No activity logged for this document.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Document Status -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle"></i> Document Status
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    {% if document.status == 'pending' %}
+                        <i class="fas fa-clock fa-3x text-warning mb-3"></i>
+                        <h5 class="text-warning">Pending Approval</h5>
+                        <p class="text-muted">This document is awaiting approval from an authorized officer.</p>
+                    {% elif document.status == 'approved' %}
+                        <i class="fas fa-check-circle fa-3x text-info mb-3"></i>
+                        <h5 class="text-info">Approved</h5>
+                        <p class="text-muted">This document has been approved and is ready for generation.</p>
+                    {% elif document.status == 'generated' %}
+                        <i class="fas fa-file-pdf fa-3x text-success mb-3"></i>
+                        <h5 class="text-success">Generated</h5>
+                        <p class="text-muted">PDF document has been generated and is ready for download.</p>
+                    {% elif document.status == 'delivered' %}
+                        <i class="fas fa-check-double fa-3x text-secondary mb-3"></i>
+                        <h5 class="text-secondary">Delivered</h5>
+                        <p class="text-muted">Document has been delivered to the resident.</p>
+                    {% elif document.status == 'rejected' %}
+                        <i class="fas fa-times-circle fa-3x text-danger mb-3"></i>
+                        <h5 class="text-danger">Rejected</h5>
+                        <p class="text-muted">This document request has been rejected.</p>
+                    {% endif %}
+
+                    {% if document.is_valid %}
+                    <div class="alert alert-success mt-3">
+                        <i class="fas fa-check"></i> Document is currently valid
+                    </div>
+                    {% elif document.valid_until %}
+                    <div class="alert alert-warning mt-3">
+                        <i class="fas fa-exclamation-triangle"></i> Document has expired
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'documents:proof_update' document.pk %}" class="btn btn-outline-secondary btn-block">
+                            <i class="fas fa-edit"></i> Edit Document
+                        </a>
+                        {% if document.can_be_approved %}
+                        <a href="{% url 'documents:proof_approve' document.pk %}" class="btn btn-outline-success btn-block">
+                            <i class="fas fa-check"></i> Approve Document
+                        </a>
+                        {% endif %}
+                        {% if document.can_be_generated %}
+                        <a href="{% url 'documents:proof_generate' document.pk %}" class="btn btn-outline-info btn-block">
+                            <i class="fas fa-file-pdf"></i> Generate PDF
+                        </a>
+                        {% endif %}
+                        {% if document.document_file %}
+                        <a href="{% url 'documents:proof_download' document.pk %}" class="btn btn-outline-primary btn-block">
+                            <i class="fas fa-download"></i> Download PDF
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'documents:proof_list' %}" class="btn btn-outline-dark btn-block">
+                            <i class="fas fa-list"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

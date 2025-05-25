@@ -1,0 +1,207 @@
+{% extends "documents/base.html" %}
+{% load static %}
+
+{% block title %}Proof of Residence Documents{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Proof of Residence Documents</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'documents:dashboard' %}">Documents</a></li>
+                    <li class="breadcrumb-item active">Proof of Residence</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'documents:proof_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> New Document
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-section">
+        <form method="get" class="row">
+            <div class="col-md-3">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Statuses</option>
+                    {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if current_filters.status == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="village" class="form-label">Village</label>
+                <select name="village" id="village" class="form-control">
+                    <option value="">All Villages</option>
+                    {% for village in villages %}
+                    <option value="{{ village.id }}" {% if current_filters.village == village.id|stringformat:"s" %}selected{% endif %}>
+                        {{ village.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Document number, resident name, purpose..." 
+                       value="{{ current_filters.search }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Filter
+                    </button>
+                    <a href="{% url 'documents:proof_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Documents List -->
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Document Number</th>
+                            <th>Resident</th>
+                            <th>Village</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                            <th>Requested</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for document in documents %}
+                        <tr>
+                            <td>
+                                <strong>{{ document.document_number }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    Requested by: {{ document.requested_by.get_full_name|default:"Unknown" }}
+                                </small>
+                            </td>
+                            <td>
+                                {{ document.resident.full_name }}
+                                {% if document.resident.id_number %}
+                                <br><small class="text-muted">ID: {{ document.resident.id_number }}</small>
+                                {% endif %}
+                            </td>
+                            <td>{{ document.village.name }}</td>
+                            <td>{{ document.purpose|truncatechars:40 }}</td>
+                            <td>
+                                {% if document.status == 'pending' %}
+                                    <span class="badge badge-warning status-badge">{{ document.get_status_display }}</span>
+                                {% elif document.status == 'approved' %}
+                                    <span class="badge badge-info status-badge">{{ document.get_status_display }}</span>
+                                {% elif document.status == 'generated' %}
+                                    <span class="badge badge-success status-badge">{{ document.get_status_display }}</span>
+                                {% elif document.status == 'delivered' %}
+                                    <span class="badge badge-secondary status-badge">{{ document.get_status_display }}</span>
+                                {% elif document.status == 'rejected' %}
+                                    <span class="badge badge-danger status-badge">{{ document.get_status_display }}</span>
+                                {% else %}
+                                    <span class="badge badge-light status-badge">{{ document.get_status_display }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ document.requested_at|date:"M d, Y" }}</td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="{% url 'documents:proof_detail' document.pk %}" 
+                                       class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{% url 'documents:proof_update' document.pk %}" 
+                                       class="btn btn-sm btn-outline-secondary" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% if document.can_be_approved %}
+                                    <a href="{% url 'documents:proof_approve' document.pk %}" 
+                                       class="btn btn-sm btn-outline-success" title="Approve">
+                                        <i class="fas fa-check"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if document.can_be_generated %}
+                                    <a href="{% url 'documents:proof_generate' document.pk %}" 
+                                       class="btn btn-sm btn-outline-info" title="Generate PDF">
+                                        <i class="fas fa-file-pdf"></i>
+                                    </a>
+                                    {% endif %}
+                                    {% if document.document_file %}
+                                    <a href="{% url 'documents:proof_download' document.pk %}" 
+                                       class="btn btn-sm btn-outline-dark" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center py-5">
+                                <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">No documents found</h5>
+                                <p class="text-muted">Try adjusting your filters or create a new document.</p>
+                                <a href="{% url 'documents:proof_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Create New Document
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}">
+                            Previous
+                        </a>
+                    </li>
+                    {% endif %}
+
+                    {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                    <li class="page-item active">
+                        <span class="page-link">{{ num }}</span>
+                    </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}">
+                            {{ num }}
+                        </a>
+                    </li>
+                    {% endif %}
+                    {% endfor %}
+
+                    {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}">
+                            Next
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

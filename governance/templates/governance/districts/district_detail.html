@@ -1,0 +1,430 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}{{ district.name }} - District Details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .district-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 30px;
+        border-radius: 10px;
+        margin-bottom: 30px;
+    }
+    .stats-box {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+        transition: transform 0.2s ease;
+    }
+    .stats-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+    .stats-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #28a745;
+    }
+    .stats-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-top: 5px;
+    }
+    .info-card {
+        background: #f8f9fa;
+        border-left: 4px solid #28a745;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .municipality-card {
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 15px;
+        transition: all 0.2s ease;
+    }
+    .municipality-card:hover {
+        border-color: #28a745;
+        box-shadow: 0 2px 8px rgba(40, 167, 69, 0.15);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ district.name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:district_list' %}">Districts</a></li>
+                    <li class="breadcrumb-item active">{{ district.name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <button class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+                        Actions <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu">
+                        <a class="dropdown-item" href="{% url 'governance:district_update' district.pk %}">
+                            <i class="fas fa-edit"></i> Edit District
+                        </a>
+                        <a class="dropdown-item" href="#">
+                            <i class="fas fa-plus"></i> Add Municipality
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="#" data-toggle="modal" data-target="#deleteModal">
+                            <i class="fas fa-trash"></i> Delete District
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- District Header Info -->
+    <div class="district-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ district.name }}</h2>
+                <p class="mb-2">
+                    <i class="fas fa-map-marker-alt"></i> 
+                    {{ district.province.name }} Province
+                </p>
+                <p class="mb-0">
+                    <span class="badge badge-light badge-lg">{{ district.code }}</span>
+                </p>
+            </div>
+            <div class="col-md-4 text-right">
+                <div class="stats-box bg-white text-dark">
+                    <div class="stats-number text-success">{{ district.municipality_count }}</div>
+                    <div class="stats-label">Local Municipalities</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-box">
+                <div class="stats-number">{{ municipalities.count }}</div>
+                <div class="stats-label">Total Municipalities</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-box">
+                <div class="stats-number">{{ district.province.districts.count }}</div>
+                <div class="stats-label">Districts in Province</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-box">
+                <div class="stats-number">
+                    {% with total_councils=0 %}
+                        {% for municipality in municipalities %}
+                            {% with total_councils=total_councils|add:municipality.traditional_councils.count %}
+                            {% endwith %}
+                        {% endfor %}
+                        {{ total_councils }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Traditional Councils</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-box">
+                <div class="stats-number">
+                    <small>{{ district.created_at|date:"M Y" }}</small>
+                </div>
+                <div class="stats-label">Established</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- District Information and Municipalities -->
+    <div class="row">
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle"></i> District Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="info-card">
+                        <h6><i class="fas fa-tag"></i> District Code</h6>
+                        <p class="mb-0">
+                            <span class="badge badge-success badge-lg">{{ district.code }}</span>
+                        </p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h6><i class="fas fa-map-marked-alt"></i> Province</h6>
+                        <p class="mb-0">
+                            <span class="badge badge-primary">{{ district.province.code }}</span>
+                            {{ district.province.name }}
+                        </p>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h6><i class="fas fa-calendar-plus"></i> Created</h6>
+                        <p class="mb-0">{{ district.created_at|date:"F d, Y" }}</p>
+                        <small class="text-muted">{{ district.created_at|timesince }} ago</small>
+                    </div>
+                    
+                    <div class="info-card">
+                        <h6><i class="fas fa-calendar-edit"></i> Last Updated</h6>
+                        <p class="mb-0">{{ district.updated_at|date:"F d, Y H:i" }}</p>
+                        <small class="text-muted">{{ district.updated_at|timesince }} ago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Municipalities List -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-building"></i> Local Municipalities ({{ municipalities.count }})
+                    </h5>
+                    <a href="#" class="btn btn-sm btn-success float-right">
+                        <i class="fas fa-plus"></i> Add Municipality
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if municipalities %}
+                        {% for municipality in municipalities %}
+                        <div class="municipality-card">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h6 class="mb-1">
+                                        <i class="fas fa-building text-success"></i>
+                                        {{ municipality.name }}
+                                    </h6>
+                                    <p class="mb-1">
+                                        <small class="text-muted">
+                                            <strong>Code:</strong> {{ municipality.code }}
+                                        </small>
+                                    </p>
+                                    {% if municipality.website %}
+                                    <p class="mb-0">
+                                        <small>
+                                            <i class="fas fa-globe"></i>
+                                            <a href="{{ municipality.website }}" target="_blank" class="text-success">
+                                                Website
+                                            </a>
+                                        </small>
+                                    </p>
+                                    {% endif %}
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-success dropdown-toggle" data-toggle="dropdown">
+                                            Actions
+                                        </button>
+                                        <div class="dropdown-menu">
+                                            <a class="dropdown-item" href="#">
+                                                <i class="fas fa-eye"></i> View Details
+                                            </a>
+                                            <a class="dropdown-item" href="#">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                            <div class="dropdown-divider"></div>
+                                            <a class="dropdown-item" href="#">
+                                                <i class="fas fa-users"></i> Traditional Councils
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            {% if municipality.traditional_councils.exists %}
+                            <div class="mt-2 pt-2 border-top">
+                                <small class="text-muted">
+                                    <i class="fas fa-users"></i>
+                                    {{ municipality.traditional_councils.count }} Traditional Council{{ municipality.traditional_councils.count|pluralize }}
+                                </small>
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4">
+                            <i class="fas fa-building fa-3x text-muted mb-3"></i>
+                            <h6 class="text-muted">No Municipalities</h6>
+                            <p class="text-muted">This district doesn't have any municipalities yet.</p>
+                            <a href="#" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add First Municipality
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-history"></i> Recent Activity
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6>District Created</h6>
+                                <p class="text-muted mb-0">{{ district.created_at|date:"F d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                        {% if district.updated_at != district.created_at %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-info"></div>
+                            <div class="timeline-content">
+                                <h6>Last Updated</h6>
+                                <p class="text-muted mb-0">{{ district.updated_at|date:"F d, Y H:i" }}</p>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the district <strong>"{{ district.name }}"</strong>?</p>
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Warning:</strong> This action cannot be undone. All associated municipalities and traditional councils will also be affected.
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <form method="post" action="#" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Delete District
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-box').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Timeline styles
+    $('.timeline').css({
+        'position': 'relative',
+        'padding-left': '30px'
+    });
+    
+    $('.timeline-item').css({
+        'position': 'relative',
+        'margin-bottom': '20px'
+    });
+    
+    $('.timeline-marker').css({
+        'position': 'absolute',
+        'left': '-35px',
+        'top': '0',
+        'width': '12px',
+        'height': '12px',
+        'border-radius': '50%',
+        'border': '2px solid white'
+    });
+    
+    $('.timeline-content').css({
+        'background': '#f8f9fa',
+        'padding': '10px 15px',
+        'border-radius': '5px',
+        'border-left': '3px solid #28a745'
+    });
+});
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -35px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid white;
+    z-index: 1;
+}
+
+.timeline-content {
+    background: #f8f9fa;
+    padding: 10px 15px;
+    border-radius: 5px;
+    border-left: 3px solid #28a745;
+}
+
+.timeline-content h6 {
+    margin-bottom: 5px;
+    color: #495057;
+}
+</style>
+{% endblock %}

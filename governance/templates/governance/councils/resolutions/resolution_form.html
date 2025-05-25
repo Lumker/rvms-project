@@ -1,0 +1,488 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Resolutions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .form-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.25);
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(40, 167, 69, 0.4);
+    }
+    .help-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #28a745;
+    }
+    .form-text {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    .required {
+        color: #dc3545;
+    }
+    .status-preview {
+        padding: 10px;
+        border-radius: 6px;
+        margin-top: 10px;
+        font-size: 0.9rem;
+    }
+    .char-counter {
+        font-size: 0.8rem;
+        color: #6c757d;
+        float: right;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:resolution_list' %}">Resolutions</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Header -->
+    <div class="form-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ title }}</h2>
+                <p class="mb-0">Enter the resolution information below</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-gavel" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card form-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-success"></i> Resolution Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.meeting.id_for_label }}">Meeting <span class="required">*</span></label>
+                                    {{ form.meeting }}
+                                    {% if form.meeting.errors %}
+                                    <div class="text-danger mt-1">{{ form.meeting.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Select the meeting where this resolution was discussed</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.proposed_by.id_for_label }}">Proposed By</label>
+                                    {{ form.proposed_by }}
+                                    {% if form.proposed_by.errors %}
+                                    <div class="text-danger mt-1">{{ form.proposed_by.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Council member who proposed this resolution</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.title.id_for_label }}">Resolution Title <span class="required">*</span></label>
+                            <div class="position-relative">
+                                {{ form.title }}
+                                <div class="char-counter">
+                                    <span id="title-count">0</span>/255
+                                </div>
+                            </div>
+                            {% if form.title.errors %}
+                            <div class="text-danger mt-1">{{ form.title.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Clear and concise title for the resolution</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.description.id_for_label }}">Resolution Description <span class="required">*</span></label>
+                            <div class="position-relative">
+                                {{ form.description }}
+                                <div class="char-counter">
+                                    <span id="description-count">0</span>/2000
+                                </div>
+                            </div>
+                            {% if form.description.errors %}
+                            <div class="text-danger mt-1">{{ form.description.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Detailed description of the resolution, including background and expected outcomes</small>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}">Status</label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                    <div class="text-danger mt-1">{{ form.status.errors.0 }}</div>
+                                    {% endif %}
+                                    <div id="status-preview" class="status-preview" style="display: none;"></div>
+                                    <small class="form-text">Current status of the resolution</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.date_implemented.id_for_label }}">Implementation Date</label>
+                                    {{ form.date_implemented }}
+                                    {% if form.date_implemented.errors %}
+                                    <div class="text-danger mt-1">{{ form.date_implemented.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Date when the resolution was implemented (if applicable)</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-success btn-save">
+                                <i class="fas fa-save"></i> Save Resolution
+                            </button>
+                            <a href="{% url 'governance:resolution_list' %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Resolution Guidelines -->
+            <div class="card help-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-gavel text-success"></i> Resolution Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Writing Resolutions:</strong>
+                        <p class="small text-muted mb-2">Write clear, specific, and actionable resolutions that can be easily understood and implemented.</p>
+                   </div>
+                   <div class="mb-3">
+                       <strong>Structure:</strong>
+                       <ul class="small text-muted mb-2">
+                           <li>State the issue or problem</li>
+                           <li>Propose the solution</li>
+                           <li>Define expected outcomes</li>
+                           <li>Set implementation timeline</li>
+                       </ul>
+                   </div>
+                   <div class="mb-0">
+                       <strong>Language:</strong>
+                       <p class="small text-muted mb-0">Use formal but accessible language. Avoid jargon and ensure the resolution can be understood by all community members.</p>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Status Information -->
+           <div class="card help-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-info-circle text-info"></i> Resolution Status
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="mb-2">
+                       <span class="badge badge-secondary">Proposed:</span>
+                       <small class="text-muted">Initial submission, awaiting review</small>
+                   </div>
+                   <div class="mb-2">
+                       <span class="badge badge-success">Approved:</span>
+                       <small class="text-muted">Accepted by the council</small>
+                   </div>
+                   <div class="mb-2">
+                       <span class="badge badge-danger">Rejected:</span>
+                       <small class="text-muted">Not accepted by the council</small>
+                   </div>
+                   <div class="mb-2">
+                       <span class="badge badge-warning">Amended:</span>
+                       <small class="text-muted">Modified from original proposal</small>
+                   </div>
+                   <div class="mb-0">
+                       <span class="badge badge-primary">Implemented:</span>
+                       <small class="text-muted">Put into action</small>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Best Practices -->
+           <div class="card help-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-lightbulb text-warning"></i> Best Practices
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <ul class="list-unstyled mb-0">
+                       <li class="mb-2">
+                           <i class="fas fa-check text-success"></i>
+                           <small>Be specific about proposed actions</small>
+                       </li>
+                       <li class="mb-2">
+                           <i class="fas fa-check text-success"></i>
+                           <small>Include measurable outcomes</small>
+                       </li>
+                       <li class="mb-2">
+                           <i class="fas fa-check text-success"></i>
+                           <small>Consider resource requirements</small>
+                       </li>
+                       <li class="mb-2">
+                           <i class="fas fa-check text-success"></i>
+                           <small>Set realistic timelines</small>
+                       </li>
+                       <li class="mb-0">
+                           <i class="fas fa-check text-success"></i>
+                           <small>Ensure community benefit</small>
+                       </li>
+                   </ul>
+               </div>
+           </div>
+
+           {% if resolution %}
+           <!-- Edit Information -->
+           <div class="card help-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-edit text-primary"></i> Editing: {{ resolution.title|truncatechars:30 }}
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <table class="table table-borderless table-sm mb-0">
+                       <tr>
+                           <td><strong>Current Status:</strong></td>
+                           <td>
+                               <span class="badge badge-{{ resolution.status|yesno:'success,secondary' }}">
+                                   {{ resolution.get_status_display }}
+                               </span>
+                           </td>
+                       </tr>
+                       <tr>
+                           <td><strong>Meeting:</strong></td>
+                           <td>{{ resolution.meeting.title }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Proposed:</strong></td>
+                           <td>{{ resolution.created_at|date:"M d, Y" }}</td>
+                       </tr>
+                       {% if resolution.proposed_by %}
+                       <tr>
+                           <td><strong>Proposer:</strong></td>
+                           <td>{{ resolution.proposed_by.user.get_full_name }}</td>
+                       </tr>
+                       {% endif %}
+                   </table>
+               </div>
+           </div>
+           {% endif %}
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+   // Initialize tooltips
+   $('[title]').tooltip();
+   
+   // Add animations
+   $('.card').hide().fadeIn(800);
+   $('.form-header').hide().slideDown(600);
+   
+   // Form validation feedback
+   $('form').on('submit', function() {
+       $('.btn-save').html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+   });
+   
+   // Character counters
+   function updateCharCount(inputId, countId, maxLength) {
+       $('#' + inputId).on('input', function() {
+           var currentLength = $(this).val().length;
+           $('#' + countId).text(currentLength);
+           
+           if (currentLength > maxLength * 0.8) {
+               $('#' + countId).addClass('text-warning');
+           } else {
+               $('#' + countId).removeClass('text-warning');
+           }
+           
+           if (currentLength > maxLength) {
+               $('#' + countId).addClass('text-danger').removeClass('text-warning');
+           } else {
+               $('#' + countId).removeClass('text-danger');
+           }
+       });
+   }
+   
+   // Initialize character counters
+   updateCharCount('{{ form.title.id_for_label }}', 'title-count', 255);
+   updateCharCount('{{ form.description.id_for_label }}', 'description-count', 2000);
+   
+   // Trigger initial count
+   $('#{{ form.title.id_for_label }}').trigger('input');
+   $('#{{ form.description.id_for_label }}').trigger('input');
+   
+   // Status descriptions
+   const statusDescriptions = {
+       'proposed': 'Resolution has been submitted and is awaiting council review.',
+       'approved': 'Resolution has been accepted by the council and is ready for implementation.',
+       'rejected': 'Resolution was not accepted by the council.',
+       'amended': 'Resolution has been modified from its original form.',
+       'implemented': 'Resolution has been put into action and is being carried out.'
+   };
+   
+   const statusClasses = {
+       'proposed': 'bg-light text-secondary',
+       'approved': 'bg-light text-success',
+       'rejected': 'bg-light text-danger',
+       'amended': 'bg-light text-warning',
+       'implemented': 'bg-light text-primary'
+   };
+   
+   // Show status description when status is selected
+   $('#{{ form.status.id_for_label }}').on('change', function() {
+       const selectedStatus = $(this).val();
+       const previewDiv = $('#status-preview');
+       
+       if (selectedStatus && statusDescriptions[selectedStatus]) {
+           previewDiv
+               .removeClass()
+               .addClass('status-preview ' + statusClasses[selectedStatus])
+               .text(statusDescriptions[selectedStatus])
+               .show();
+       } else {
+           previewDiv.hide();
+       }
+   });
+   
+   // Trigger initial status description
+   $('#{{ form.status.id_for_label }}').trigger('change');
+   
+   // Auto-populate meeting if passed as parameter
+   var urlParams = new URLSearchParams(window.location.search);
+   var meetingId = urlParams.get('meeting');
+   if (meetingId) {
+       $('#{{ form.meeting.id_for_label }}').val(meetingId);
+       loadMeetingAttendees(meetingId);
+   }
+   
+   // Load meeting attendees when meeting changes
+   $('#{{ form.meeting.id_for_label }}').on('change', function() {
+       const meetingId = $(this).val();
+       if (meetingId) {
+           loadMeetingAttendees(meetingId);
+       }
+   });
+   
+   function loadMeetingAttendees(meetingId) {
+       // Load attendees for the proposer field
+       $.ajax({
+           url: '/governance/ajax/meeting-attendees/',
+           data: { 'meeting_id': meetingId },
+           success: function(data) {
+               const proposerField = $('#{{ form.proposed_by.id_for_label }}');
+               const currentValue = proposerField.val();
+               
+               proposerField.empty().append('<option value="">Select proposer</option>');
+               
+               $.each(data.attendees, function(index, attendee) {
+                   proposerField.append(
+                       $('<option></option>')
+                           .val(attendee.id)
+                           .text(attendee.name + ' (' + attendee.role + ')')
+                   );
+               });
+               
+               // Restore previous selection if it exists
+               if (currentValue) {
+                   proposerField.val(currentValue);
+               }
+           },
+           error: function() {
+               console.log('Could not load meeting attendees');
+           }
+       });
+   }
+   
+   // Auto-resize textarea
+   $('#{{ form.description.id_for_label }}').on('input', function() {
+       this.style.height = 'auto';
+       this.style.height = (this.scrollHeight) + 'px';
+   });
+   
+   // Show/hide implementation date based on status
+   $('#{{ form.status.id_for_label }}').on('change', function() {
+       const status = $(this).val();
+       const dateField = $('#{{ form.date_implemented.id_for_label }}').closest('.form-group');
+       
+       if (status === 'implemented') {
+           dateField.show();
+           // Set today's date if field is empty
+           if (!$('#{{ form.date_implemented.id_for_label }}').val()) {
+               const today = new Date().toISOString().split('T')[0];
+               $('#{{ form.date_implemented.id_for_label }}').val(today);
+           }
+       } else {
+           dateField.hide();
+           $('#{{ form.date_implemented.id_for_label }}').val('');
+       }
+   });
+   
+   // Trigger initial date field visibility
+   $('#{{ form.status.id_for_label }}').trigger('change');
+});
+</script>
+{% endblock %}

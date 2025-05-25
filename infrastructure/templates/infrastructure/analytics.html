@@ -1,0 +1,533 @@
+<!-- infrastructure/templates/infrastructure/analytics.html -->
+
+{% extends "base.html" %}
+{% load static %}
+{% load infrastructure_tags %}
+
+{% block title %}Infrastructure Analytics - RVMS{% endblock %}
+
+{% block extra_css %}
+<style>
+    .analytics-card {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .analytics-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .chart-container {
+        background: white;
+        border-radius: 10px;
+        padding: 25px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        min-height: 400px;
+    }
+    .chart-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    .metric-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 0;
+        border-bottom: 1px solid #f1f1f1;
+    }
+    .metric-item:last-child {
+        border-bottom: none;
+    }
+    .metric-label {
+        font-weight: 500;
+        color: #495057;
+    }
+    .metric-value {
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    .performance-indicator {
+        padding: 15px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .performance-excellent {
+        background-color: #d4edda;
+        border-left: 4px solid #28a745;
+    }
+    .performance-good {
+        background-color: #d1ecf1;
+        border-left: 4px solid #17a2b8;
+    }
+    .performance-warning {
+        background-color: #fff3cd;
+        border-left: 4px solid #ffc107;
+    }
+    .performance-danger {
+        background-color: #f8d7da;
+        border-left: 4px solid #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-chart-bar text-info"></i> Infrastructure Analytics
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item active">Analytics</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'infrastructure:maintenance_report' %}" class="btn btn-outline-info">
+                        <i class="fas fa-file-alt"></i> Maintenance Report
+                    </a>
+                    <a href="{% url 'infrastructure:water_coverage_report' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-tint"></i> Water Coverage
+                    </a>
+                    <a href="{% url 'infrastructure:asset_condition_report' %}" class="btn btn-outline-warning">
+                        <i class="fas fa-heartbeat"></i> Asset Condition
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Key Performance Indicators -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_assets }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-cogs"></i> Total Assets
+                </div>
+                <small class="d-block mt-2">{{ operational_percentage }}% Operational</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-number">{{ water_sources }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-tint"></i> Water Sources
+                </div>
+                <small class="d-block mt-2">{{ water_operational_percentage }}% Operational</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ assets_needing_attention }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-exclamation-triangle"></i> Need Attention
+                </div>
+                <small class="d-block mt-2">Critical + Overdue + Interruptions</small>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">R {{ total_maintenance_cost|floatformat:0 }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-calculator"></i> Annual Maintenance
+                </div>
+                <small class="d-block mt-2">{{ current_year }} Total Cost</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Performance Overview -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="analytics-card">
+                <h5 class="chart-title">
+                    <i class="fas fa-gauge text-success"></i> Performance Overview
+                </h5>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        {% if operational_percentage >= 90 %}
+                        <div class="performance-indicator performance-excellent">
+                            <strong>Excellent Performance</strong>
+                            <p class="mb-0">{{ operational_percentage }}% of assets are operational. Infrastructure is performing excellently.</p>
+                        </div>
+                        {% elif operational_percentage >= 75 %}
+                        <div class="performance-indicator performance-good">
+                            <strong>Good Performance</strong>
+                            <p class="mb-0">{{ operational_percentage }}% of assets are operational. Infrastructure is performing well.</p>
+                        </div>
+                        {% elif operational_percentage >= 60 %}
+                        <div class="performance-indicator performance-warning">
+                            <strong>Needs Attention</strong>
+                            <p class="mb-0">{{ operational_percentage }}% of assets are operational. Some infrastructure needs attention.</p>
+                        </div>
+                        {% else %}
+                        <div class="performance-indicator performance-danger">
+                            <strong>Critical Attention Required</strong>
+                            <p class="mb-0">Only {{ operational_percentage }}% of assets are operational. Immediate action required.</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="metric-item">
+                            <span class="metric-label">Average Asset Age</span>
+                            <span class="metric-value text-info">{{ avg_asset_age }} years</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Critical Condition Assets</span>
+                            <span class="metric-value text-danger">{{ critical_assets }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Pending Maintenance</span>
+                            <span class="metric-value text-warning">{{ pending_maintenance }}</span>
+                        </div>
+                        <div class="metric-item">
+                            <span class="metric-label">Active Service Interruptions</span>
+                            <span class="metric-value text-danger">{{ active_interruptions }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 1 -->
+    <div class="row">
+        <!-- Asset Distribution by Category -->
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h6 class="chart-title">
+                    <i class="fas fa-chart-pie text-primary"></i> Assets by Category
+                </h6>
+                <canvas id="categoryChart" height="300"></canvas>
+            </div>
+        </div>
+        
+        <!-- Asset Age Distribution -->
+        <div class="col-md-6">
+            <div class="chart-container">
+                <h6 class="chart-title">
+                    <i class="fas fa-chart-bar text-info"></i> Asset Age Distribution
+                </h6>
+                <canvas id="ageChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Charts Row 2 -->
+    <div class="row">
+        <!-- Monthly Maintenance Costs -->
+        <div class="col-md-12">
+            <div class="chart-container">
+                <h6 class="chart-title">
+                    <i class="fas fa-chart-line text-warning"></i> Monthly Maintenance Costs ({{ current_year }})
+                </h6>
+                <canvas id="maintenanceCostChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Water Infrastructure Analysis -->
+    <!-- Update the Water Infrastructure Analysis section -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="analytics-card">
+            <h5 class="chart-title">
+                <i class="fas fa-tint text-info"></i> Water Infrastructure Coverage
+            </h5>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h3 class="text-info">{{ total_water_capacity|floatformat:0 }}</h3>
+                        <p class="text-muted">Daily Capacity (Litres)</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h3 class="text-info">{{ village_coverage.count }}</h3>
+                        <p class="text-muted">Villages with Water Infrastructure</p>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="text-center">
+                        <h3 class="text-info">{{ water_operational_percentage }}%</h3>
+                        <p class="text-muted">Water Sources Operational</p>
+                    </div>
+                </div>
+            </div>
+            
+            {% if village_coverage %}
+            <div class="table-responsive mt-4">
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Village</th>
+                            <th>Water Sources</th>
+                            <th>Households</th>
+                            <th>Population</th>
+                            <th>Coverage Ratio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for village in village_coverage %}
+                        <tr>
+                            <td>
+                                <a href="{% url 'governance:village_detail' village.pk %}">
+                                    {{ village.name }}
+                                </a>
+                            </td>
+                            <td>
+                                <span class="badge badge-info">{{ village.water_sources_count }}</span>
+                            </td>
+                            <td>{{ village.households_count }}</td>
+                            <td>
+                                {% if village.calculated_population %}
+                                    {{ village.calculated_population }}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if village.households_count > 0 %}
+                                    {% with village.water_sources_count|percentage:village.households_count as coverage %}
+                                        <div class="progress" style="height: 20px;">
+                                            <div class="progress-bar {% if coverage >= 80 %}bg-success{% elif coverage >= 50 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                                 style="width: {{ coverage }}%">
+                                                {{ coverage }}%
+                                            </div>
+                                        </div>
+                                    {% endwith %}
+                                {% else %}
+                                    <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="mt-3">
+                <small class="text-muted">
+                    <i class="fas fa-info-circle"></i> 
+                    Coverage ratio shows water sources per household. Higher ratios indicate better water access.
+                </small>
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-tint fa-2x text-muted mb-3"></i>
+                <p class="text-muted">No village water coverage data available</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div> 
+    
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'assets/js/chart.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    console.log('Infrastructure analytics loaded');
+    
+    // Initialize charts
+    initializeCategoryChart();
+    initializeAgeChart();
+    initializeMaintenanceCostChart();
+    
+    // Add animations
+    $('.analytics-card, .chart-container').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+});
+
+function initializeCategoryChart() {
+    const ctx = document.getElementById('categoryChart');
+    if (!ctx) return;
+    
+    const categoryData = [
+        {% for category in category_data %}
+        {
+            label: '{{ category.category|title }}',
+            total: {{ category.total }},
+            operational: {{ category.operational }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: categoryData.map(item => item.label),
+            datasets: [{
+                data: categoryData.map(item => item.total),
+                backgroundColor: [
+                    '#4facfe', '#43e97b', '#f093fb', '#ffecd2',
+                    '#667eea', '#764ba2', '#fcb69f', '#ff9a9e'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+
+function initializeAgeChart() {
+    const ctx = document.getElementById('ageChart');
+    if (!ctx) return;
+    
+    const ageData = [
+        {% for age_item in age_distribution %}
+        {
+            category: '{{ age_item.category }}',
+            count: {{ age_item.count }}
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: ageData.map(item => item.category),
+            datasets: [{
+                label: 'Number of Assets',
+                data: ageData.map(item => item.count),
+                backgroundColor: '#4facfe',
+                borderColor: '#667eea',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+function initializeMaintenanceCostChart() {
+    const ctx = document.getElementById('maintenanceCostChart');
+    if (!ctx) return;
+    
+    const costData = [
+        {% for month_data in monthly_costs %}
+        {{ month_data.cost }}{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    ];
+    
+    const monthLabels = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: monthLabels,
+            datasets: [{
+                label: 'Maintenance Cost (ZAR)',
+                data: costData,
+                borderColor: '#f093fb',
+                backgroundColor: 'rgba(240, 147, 251, 0.1)',
+                borderWidth: 3,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return 'R' + value.toLocaleString();
+                        }
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return 'Cost: R' + context.parsed.y.toLocaleString();
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

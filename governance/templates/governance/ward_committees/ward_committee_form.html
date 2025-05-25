@@ -1,0 +1,324 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Ward Committee{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+    .form-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px 10px 0 0;
+    }
+    .form-section {
+        padding: 20px;
+        border-bottom: 1px solid #eee;
+    }
+    .form-section:last-child {
+        border-bottom: none;
+    }
+    .section-title {
+        color: #667eea;
+        font-weight: 600;
+        margin-bottom: 15px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f8f9fa;
+    }
+    .form-help-text {
+        font-size: 0.875rem;
+        color: #6c757d;
+        margin-top: 5px;
+    }
+    .required-field {
+        color: #dc3545;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:ward_committee_list' %}">Ward Committees</a></li>
+                    {% if ward_committee %}
+                    <li class="breadcrumb-item"><a href="{% url 'governance:ward_committee_detail' ward_committee.pk %}">{{ ward_committee.name }}</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                    {% else %}
+                    <li class="breadcrumb-item active">Create</li>
+                    {% endif %}
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% if ward_committee %}{% url 'governance:ward_committee_detail' ward_committee.pk %}{% else %}{% url 'governance:ward_committee_list' %}{% endif %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form -->
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="form-card">
+                <div class="form-header">
+                    <h4><i class="fas fa-users"></i> {{ title }}</h4>
+                    <p class="mb-0">Enter the ward committee information below</p>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    
+                    <!-- Basic Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">Basic Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.name.id_for_label }}" class="form-label">
+                                        Committee Name <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.name }}
+                                    {% if form.name.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.name.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Enter the official name of the ward committee</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.ward_number.id_for_label }}" class="form-label">
+                                        Ward Number <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.ward_number }}
+                                    {% if form.ward_number.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.ward_number.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">e.g., 15, 001</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.ward_code.id_for_label }}" class="form-label">
+                                        Ward Code <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.ward_code }}
+                                    {% if form.ward_code.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.ward_code.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Format: WRD123</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.municipality.id_for_label }}" class="form-label">
+                                        Municipality <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.municipality }}
+                                    {% if form.municipality.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.municipality.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                                        Status <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.status.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="{{ form.established_date.id_for_label }}" class="form-label">
+                                        Established Date <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.established_date }}
+                                    {% if form.established_date.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.established_date.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Leadership Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">Leadership Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.ward_councillor.id_for_label }}" class="form-label">
+                                        Ward Councillor
+                                    </label>
+                                    {{ form.ward_councillor }}
+                                    {% if form.ward_councillor.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.ward_councillor.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Name of the elected ward councillor</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.committee_secretary.id_for_label }}" class="form-label">
+                                        Committee Secretary
+                                    </label>
+                                    {{ form.committee_secretary }}
+                                    {% if form.committee_secretary.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.committee_secretary.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Name of the committee secretary</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.councillor_contact.id_for_label }}" class="form-label">
+                                        Councillor Contact Information
+                                    </label>
+                                    {{ form.councillor_contact }}
+                                    {% if form.councillor_contact.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.councillor_contact.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Phone, email, and other contact details</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Geographic & Demographic Information -->
+                    <div class="form-section">
+                        <h5 class="section-title">Geographic & Demographic Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.population.id_for_label }}" class="form-label">
+                                        Population
+                                    </label>
+                                    {{ form.population }}
+                                    {% if form.population.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.population.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Estimated ward population</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.meeting_venue.id_for_label }}" class="form-label">
+                                        Meeting Venue
+                                    </label>
+                                    {{ form.meeting_venue }}
+                                    {% if form.meeting_venue.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.meeting_venue.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Regular meeting location</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="{{ form.geographic_boundaries.id_for_label }}" class="form-label">
+                                        Geographic Boundaries <span class="required-field">*</span>
+                                    </label>
+                                    {{ form.geographic_boundaries }}
+                                    {% if form.geographic_boundaries.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.geographic_boundaries.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Describe the ward boundaries and areas covered</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Status -->
+                    <div class="form-section">
+                        <h5 class="section-title">Status</h5>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label for="{{ form.is_active.id_for_label }}" class="form-check-label">
+                                        Active Committee
+                                    </label>
+                                    {% if form.is_active.errors %}
+                                        <div class="invalid-feedback d-block">{{ form.is_active.errors.0 }}</div>
+                                    {% endif %}
+                                    <div class="form-help-text">Uncheck to mark this committee as inactive</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="form-section">
+                        <div class="row">
+                            <div class="col-md-12 text-right">
+                                <a href="{% if ward_committee %}{% url 'governance:ward_committee_detail' ward_committee.pk %}{% else %}{% url 'governance:ward_committee_list' %}{% endif %}" class="btn btn-outline-secondary mr-2">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-warning">
+                                    <i class="fas fa-save"></i> 
+                                    {% if ward_committee %}Update{% else %}Create{% endif %} Committee
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Add form validation styling
+    $('form').on('submit', function() {
+        var isValid = true;
+        
+        // Check required fields
+        $('input[required], select[required], textarea[required]').each(function() {
+            if (!$(this).val()) {
+                $(this).addClass('is-invalid');
+                isValid = false;
+            } else {
+                $(this).removeClass('is-invalid');
+            }
+        });
+        
+        return isValid;
+    });
+    
+    // Real-time validation feedback
+    $('input, select, textarea').on('blur', function() {
+        if ($(this).prop('required') && !$(this).val()) {
+            $(this).addClass('is-invalid');
+        } else {
+            $(this).removeClass('is-invalid');
+        }
+    });
+});
+</script>
+{% endblock %}

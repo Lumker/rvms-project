@@ -1,0 +1,58 @@
+<!-- infrastructure/templates/infrastructure/interruption_form.html -->
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}
+    {% if object %}Edit Service Interruption{% else %}Report Service Interruption{% endif %} - Infrastructure
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-exclamation-triangle text-danger"></i>
+                    {% if object %}Edit Service Interruption{% else %}Report Service Interruption{% endif %}
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:interruption_list' %}">Interruptions</a></li>
+                    <li class="breadcrumb-item active">
+                        {% if object %}Edit{% else %}Report{% endif %}
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Content -->
+    <div class="card">
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                
+                <!-- Basic form fields here -->
+                <div class="form-group">
+                    <label for="{{ form.asset.id_for_label }}">Asset</label>
+                    {{ form.asset }}
+                    {% if form.asset.errors %}
+                        <div class="text-danger small">{{ form.asset.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <!-- Add other fields -->
+                
+                <div class="text-right mt-3">
+                    <a href="{% url 'infrastructure:interruption_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-danger">
+                        {% if object %}Update{% else %}Report{% endif %} Interruption
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

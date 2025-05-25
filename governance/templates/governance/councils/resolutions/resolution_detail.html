@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}{{ resolution.title }} - Resolutions{% endblock %}
+
+{% block extra_css %}
+<style>
+    .resolution-header {
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .info-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .status-badge-large {
+        font-size: 1.1rem;
+        padding: 0.6rem 1.2rem;
+    }
+    .resolution-description {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .timeline-marker {
+        position: absolute;
+        left: -37px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #e9ecef;
+    }
+    .timeline-content h6 {
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+    .status-proposed {
+        border-left: 4px solid #6c757d;
+    }
+    .status-approved {
+        border-left: 4px solid #28a745;
+    }
+    .status-rejected {
+        border-left: 4px solid #dc3545;
+    }
+    .status-implemented {
+        border-left: 4px solid #007bff;
+    }
+    .status-amended {
+        border-left: 4px solid #ffc107;
+    }
+    .meeting-info-card {
+        border-left: 4px solid #17a2b8;
+        background-color: #f8f9fa;
+    }
+    .proposer-avatar {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #28a745 0%, #1e7e34 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 15px;
+    }
+    .action-button-lg {
+        padding: 10px 20px;
+        font-size: 1rem;
+        margin-right: 10px;
+        margin-bottom: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ resolution.title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:resolution_list' %}">Resolutions</a></li>
+                    <li class="breadcrumb-item active">{{ resolution.title }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'governance:resolution_update' resolution.pk %}" class="btn btn-success">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-success dropdown-toggle dropdown-toggle-split" data-toggle="dropdown">
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        {% if resolution.status == 'proposed' %}
+                        <a class="dropdown-item text-success" href="#" onclick="updateStatus('approved')">
+                            <i class="fas fa-check"></i> Approve Resolution
+                        </a>
+                        <a class="dropdown-item text-danger" href="#" onclick="updateStatus('rejected')">
+                            <i class="fas fa-times"></i> Reject Resolution
+                        </a>
+                        <a class="dropdown-item text-warning" href="#" onclick="updateStatus('amended')">
+                            <i class="fas fa-edit"></i> Mark as Amended
+                        </a>
+                        {% elif resolution.status == 'approved' %}
+                        <a class="dropdown-item text-primary" href="#" onclick="updateStatus('implemented')">
+                            <i class="fas fa-check-double"></i> Mark as Implemented
+                        </a>
+                        {% endif %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="{% url 'governance:resolution_delete' resolution.pk %}">
+                            <i class="fas fa-trash"></i> Delete Resolution
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resolution Overview -->
+    <div class="resolution-header status-{{ resolution.status }}">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3">{{ resolution.title }}</h2>
+                <p class="mb-2">
+                    <i class="fas fa-calendar-check"></i> 
+                    From meeting: <strong>{{ resolution.meeting.title }}</strong>
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-clock"></i> {{ resolution.meeting.date|date:"F d, Y" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-gavel" style="font-size: 4rem; opacity: 0.3;"></i>
+                <br>
+                <div class="mt-2">
+                    {% if resolution.status == 'proposed' %}
+                    <span class="badge badge-light status-badge-large">{{ resolution.get_status_display }}</span>
+                    {% elif resolution.status == 'approved' %}
+                    <span class="badge badge-light status-badge-large">{{ resolution.get_status_display }}</span>
+                    {% elif resolution.status == 'rejected' %}
+                    <span class="badge badge-light status-badge-large">{{ resolution.get_status_display }}</span>
+                    {% elif resolution.status == 'implemented' %}
+                    <span class="badge badge-light status-badge-large">{{ resolution.get_status_display }}</span>
+                    {% else %}
+                    <span class="badge badge-light status-badge-large">{{ resolution.get_status_display }}</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Resolution Information -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-success"></i> Resolution Details
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Title:</strong></td>
+                                    <td>{{ resolution.title }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if resolution.status == 'proposed' %}
+                                        <span class="badge badge-secondary">{{ resolution.get_status_display }}</span>
+                                        {% elif resolution.status == 'approved' %}
+                                        <span class="badge badge-success">{{ resolution.get_status_display }}</span>
+                                        {% elif resolution.status == 'rejected' %}
+                                        <span class="badge badge-danger">{{ resolution.get_status_display }}</span>
+                                        {% elif resolution.status == 'implemented' %}
+                                        <span class="badge badge-primary">{{ resolution.get_status_display }}</span>
+                                        {% else %}
+                                        <span class="badge badge-warning">{{ resolution.get_status_display }}</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Proposed:</strong></td>
+                                    <td>{{ resolution.created_at|date:"F d, Y" }}</td>
+                                </tr>
+                                {% if resolution.date_implemented %}
+                                <tr>
+                                    <td><strong>Implemented:</strong></td>
+                                    <td>{{ resolution.date_implemented|date:"F d, Y" }}</td>
+                                </tr>
+                                {% endif %}
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Meeting:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:meeting_detail' resolution.meeting.pk %}" class="text-decoration-none">
+                                            {{ resolution.meeting.title }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Council:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:council_detail' resolution.meeting.council.pk %}" class="text-decoration-none">
+                                            {{ resolution.meeting.council.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Municipality:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:municipality_detail' resolution.meeting.council.municipality.pk %}" class="text-decoration-none">
+                                            {{ resolution.meeting.council.municipality.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Last Updated:</strong></td>
+                                    <td>{{ resolution.updated_at|date:"F d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resolution Description -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-file-alt text-primary"></i> Resolution Description
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="resolution-description">
+                        {{ resolution.description|linebreaks }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Related Meeting -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-calendar-check text-info"></i> Related Meeting
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="card meeting-info-card">
+                        <div class="card-body">
+                            <div class="row align-items-center">
+                                <div class="col-md-8">
+                                    <h5 class="mb-2">{{ resolution.meeting.title }}</h5>
+                                    <p class="mb-1">
+                                        <i class="fas fa-calendar"></i> {{ resolution.meeting.date|date:"F d, Y" }} at {{ resolution.meeting.time|time:"H:i" }}
+                                    </p>
+                                    <p class="mb-1">
+                                        <i class="fas fa-map-marker-alt"></i> {{ resolution.meeting.location }}
+                                    </p>
+                                    <p class="mb-0">
+                                        <i class="fas fa-users"></i> {{ resolution.meeting.council.name }}
+                                    </p>
+                                </div>
+                                <div class="col-md-4 text-right">
+                                    <span class="badge badge-{{ resolution.meeting.status|yesno:'success,warning' }} mb-2">
+                                        {{ resolution.meeting.get_status_display }}
+                                    </span>
+                                    <br>
+                                    <a href="{% url 'governance:meeting_detail' resolution.meeting.pk %}" class="btn btn-outline-info">
+                                        <i class="fas fa-eye"></i> View Meeting
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Proposer Information -->
+            {% if resolution.proposed_by %}
+            <div class="card info-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-user text-primary"></i> Proposed By
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex align-items-center">
+                        <div class="proposer-avatar">
+                            {{ resolution.proposed_by.user.first_name|first }}{{ resolution.proposed_by.user.last_name|first }}
+                        </div>
+                        <div>
+                            <h6 class="mb-1">{{ resolution.proposed_by.user.get_full_name }}</h6>
+                            <small class="text-muted">{{ resolution.proposed_by.get_role_display }}</small>
+                            <br><small class="text-muted">{{ resolution.proposed_by.council.name }}</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <a href="{% url 'governance:council_member_detail' resolution.proposed_by.pk %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i> View Profile
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Status Timeline -->
+            <div class="card info-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-clock text-warning"></i> Resolution Timeline
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-secondary"></div>
+                            <div class="timeline-content">
+                                <h6>Proposed</h6>
+                                <small class="text-muted">{{ resolution.created_at|date:"M d, Y H:i" }}</small>
+                            </div>
+                        </div>
+                        
+                        {% if resolution.status == 'approved' or resolution.status == 'implemented' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-success"></div>
+                            <div class="timeline-content">
+                                <h6>Approved</h6>
+                                <small class="text-muted">{{ resolution.updated_at|date:"M d, Y H:i" }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if resolution.status == 'rejected' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-danger"></div>
+                            <div class="timeline-content">
+                                <h6>Rejected</h6>
+                                <small class="text-muted">{{ resolution.updated_at|date:"M d, Y H:i" }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if resolution.status == 'amended' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-warning"></div>
+                            <div class="timeline-content">
+                                <h6>Amended</h6>
+                                <small class="text-muted">{{ resolution.updated_at|date:"M d, Y H:i" }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if resolution.status == 'implemented' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker bg-primary"></div>
+                            <div class="timeline-content">
+                                <h6>Implemented</h6>
+                                <small class="text-muted">{{ resolution.date_implemented|date:"M d, Y" }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card info-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-bolt text-success"></i> Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if resolution.status == 'proposed' %}
+                    <button onclick="updateStatus('approved')" class="btn btn-success action-button-lg">
+                        <i class="fas fa-check"></i> Approve
+                    </button>
+                    <button onclick="updateStatus('rejected')" class="btn btn-danger action-button-lg">
+                        <i class="fas fa-times"></i> Reject
+                    </button>
+                    <button onclick="updateStatus('amended')" class="btn btn-warning action-button-lg">
+                        <i class="fas fa-edit"></i> Mark Amended
+                    </button>
+                    {% elif resolution.status == 'approved' %}
+                    <button onclick="updateStatus('implemented')" class="btn btn-primary action-button-lg">
+                        <i class="fas fa-check-double"></i> Mark Implemented
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{% url 'governance:resolution_update' resolution.pk %}" class="btn btn-outline-primary action-button-lg">
+                        <i class="fas fa-edit"></i> Edit Resolution
+                    </a>
+                    <a href="{% url 'governance:meeting_detail' resolution.meeting.pk %}" class="btn btn-outline-info action-button-lg">
+                        <i class="fas fa-calendar-check"></i> View Meeting
+                    </a>
+                    <a href="{% url 'governance:resolution_list' %}" class="btn btn-outline-secondary action-button-lg">
+                        <i class="fas fa-list"></i> Back to List
+                    </a>
+                </div>
+            </div>
+
+            <!-- Record Information -->
+            <div class="card info-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-info text-muted"></i> Record Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm">
+                        <tr>
+                            <td><strong>Created:</strong></td>
+                            <td>{{ resolution.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Updated:</strong></td>
+                            <td>{{ resolution.updated_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Meeting Date:</strong></td>
+                            <td>{{ resolution.meeting.date|date:"M d, Y" }}</td>
+                        </tr>
+                        {% if resolution.date_implemented %}
+                        <tr>
+                            <td><strong>Implemented:</strong></td>
+                            <td>{{ resolution.date_implemented|date:"M d, Y" }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.resolution-header').hide().slideDown(600);
+});
+
+function updateStatus(newStatus) {
+    var statusLabels = {
+        'approved': 'approve',
+        'rejected': 'reject', 
+        'implemented': 'mark as implemented',
+        'amended': 'mark as amended'
+    };
+    
+    var action = statusLabels[newStatus] || 'update';
+    
+    if (confirm('Are you sure you want to ' + action + ' this resolution?')) {
+        $.ajax({
+            url: '/governance/resolutions/{{ resolution.pk }}/update-status/',
+            method: 'POST',
+            data: {
+                'status': newStatus,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(data) {
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert('Error updating resolution status');
+                }
+            },
+            error: function() {
+                alert('Error updating resolution status');
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,306 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Households Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Households Dashboard</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Households</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'households:household_create' %}" class="btn btn-primary">
+                        <i class="fe fe-plus"></i> Add Household
+                    </a>
+                    <a href="{% url 'households:resident_create' %}" class="btn btn-success">
+                        <i class="fe fe-user-plus"></i> Add Resident
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_households }}</div>
+                <div class="stats-label">Total Households</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-number">{{ total_residents }}</div>
+                <div class="stats-label">Total Residents</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">{{ verified_households }}</div>
+                <div class="stats-label">Verified Households</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ verification_rate|floatformat:1 }}%</div>
+                <div class="stats-label">Verification Rate</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demographics Overview -->
+    <div class="row">
+        <div class="col-md-4">
+            <div class="stats-card info">
+                <div class="stats-number">{{ children_count }}</div>
+                <div class="stats-label">Children (Under 18)</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card">
+                <div class="stats-number">{{ adults_count }}</div>
+                <div class="stats-label">Adults (18-59)</div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ seniors_count }}</div>
+                <div class="stats-label">Seniors (60+)</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Service Access & Employment -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Service Access</h4>
+                </div>
+                <div class="card-body">
+                    <div class="progress-stats">
+                        <div class="progress-item">
+                            <div class="progress-info">
+                                <strong>Water Access</strong>
+                                <span class="float-right">{{ water_access_rate|floatformat:1 }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-info" style="width: {{ water_access_rate }}%"></div>
+                            </div>
+                        </div>
+                        <div class="progress-item">
+                            <div class="progress-info">
+                                <strong>Electricity Access</strong>
+                                <span class="float-right">{{ electricity_access_rate|floatformat:1 }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-warning" style="width: {{ electricity_access_rate }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Employment Statistics</h4>
+                </div>
+                <div class="card-body">
+                    <div class="progress-stats">
+                        <div class="progress-item">
+                            <div class="progress-info">
+                                <strong>Employment Rate</strong>
+                                <span class="float-right">{{ employment_rate|floatformat:1 }}%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar bg-success" style="width: {{ employment_rate }}%"></div>
+                            </div>
+                        </div>
+                        <div class="progress-item">
+                            <div class="progress-info">
+                                <strong>Employed</strong>
+                                <span class="float-right">{{ employed_count }} people</span>
+                            </div>
+                        </div>
+                        <div class="progress-item">
+                            <div class="progress-info">
+                                <strong>Unemployed</strong>
+                                <span class="float-right">{{ unemployed_count }} people</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Recent Households</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Village</th>
+                                    <th>Residents</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for household in recent_households %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'households:household_detail' household.pk %}">
+                                            {{ household.household_id }}
+                                        </a>
+                                    </td>
+                                    <td>{{ household.village.name }}</td>
+                                    <td>{{ household.resident_count }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if household.verified %}success{% else %}warning{% endif %}">
+                                            {% if household.verified %}Verified{% else %}Pending{% endif %}
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Recent Residents</h4>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Age</th>
+                                    <th>Household</th>
+                                    <th>Role</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for resident in recent_residents %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'households:resident_detail' resident.pk %}">
+                                            {{ resident.full_name }}
+                                        </a>
+                                    </td>
+                                    <td>{{ resident.age }}</td>
+                                    <td>{{ resident.household.household_id }}</td>
+                                    <td>
+                                        {% if resident.is_head_of_household %}
+                                        <span class="badge badge-primary">Head</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">Member</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Housing Types Distribution -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Housing Types Distribution</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for housing in housing_types %}
+                        <div class="col-md-3">
+                            <div class="progress-item">
+                                <div class="progress-info">
+                                    <strong>{{ housing.housing_type|capfirst }}</strong>
+                                    <span class="float-right">{{ housing.count }}</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar bg-primary" style="width: {% widthratio housing.count total_households 100 %}%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Add animations
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+});
+</script>
+{% endblock %}

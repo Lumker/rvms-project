@@ -1,0 +1,489 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Villages - Governance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .village-row {
+        transition: all 0.3s ease;
+    }
+    .village-row:hover {
+        background-color: #f8f9fa;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .badge-lg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .population-info {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    .modal-header.bg-success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Villages</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item active">Villages</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'governance:village_create' %}" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add Village
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">{{ villages.paginator.count }}</div>
+                <div class="stats-label">Total Villages</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-number">
+                    {% with total_population=0 %}
+                        {% for village in villages %}
+                            {% if village.population %}
+                                {% with total_population=total_population|add:village.population %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ total_population|floatformat:0 }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Total Population</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">
+                    {% with active_villages=0 %}
+                        {% for village in villages %}
+                            {% if village.is_active %}
+                                {% with active_villages=active_villages|add:1 %}
+                                {% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ active_villages }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Active Villages</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ councils|length }}</div>
+                <div class="stats-label">Traditional Councils</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-4">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Village name or code..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <label for="council" class="form-label">Traditional Council</label>
+                <select name="council" id="council" class="form-control">
+                    <option value="">All Councils</option>
+                    {% for council in councils %}
+                    <option value="{{ council.id }}" {% if selected_council == council.id|stringformat:"s" %}selected{% endif %}>
+                        {{ council.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Status</option>
+                    <option value="active" {% if current_filters.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if current_filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-success">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'governance:village_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Villages Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-home"></i> Rural Villages
+                    </h4>
+                    <div class="card-options">
+                        <a href="{% url 'governance:village_create' %}" class="btn btn-sm btn-outline-success">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if villages %}
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="20%">Village</th>
+                                        <th width="10%">Code</th>
+                                        <th width="20%">Traditional Council</th>
+                                        <th width="15%">Location</th>
+                                        <th width="10%">Population</th>
+                                        <th width="8%">Status</th>
+                                        <th width="12%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for village in villages %}
+                                    <tr class="village-row">
+                                        <td>{{ forloop.counter|add:villages.start_index|add:"-1" }}</td>
+                                        <td>
+                                            <strong>{{ village.name }}</strong>
+                                            {% if village.description %}
+                                            <br><small class="text-muted">{{ village.description|truncatechars:50 }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-success badge-lg">{{ village.code }}</span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:council_detail' village.traditional_council.pk %}" class="text-decoration-none">
+                                                {{ village.traditional_council.name }}
+                                            </a>
+                                            <br><small class="text-muted">{{ village.traditional_council.municipality.name }}</small>
+                                        </td>
+                                        <td>
+                                            <small>{{ village.location }}</small>
+                                        </td>
+                                        <td>
+                                            {% if village.population %}
+                                            <span class="population-info">{{ village.population|floatformat:0 }}</span>
+                                            {% else %}
+                                            <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if village.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                            {% else %}
+                                            <span class="badge badge-secondary">Inactive</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{% url 'governance:village_detail' village.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'governance:village_update' village.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Edit Village">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-secondary view-details-btn" 
+                                                        title="Quick View"
+                                                        data-village-id="{{ village.pk }}"
+                                                        data-village-name="{{ village.name }}"
+                                                        data-village-code="{{ village.code }}"
+                                                        data-council-name="{{ village.traditional_council.name }}"
+                                                        data-municipality-name="{{ village.traditional_council.municipality.name }}"
+                                                        data-location="{{ village.location }}"
+                                                        data-population="{{ village.population|default:'Not specified' }}"
+                                                        data-description="{{ village.description|default:'No description' }}"
+                                                        data-created="{{ village.created_at|date:'F d, Y H:i' }}"
+                                                        data-updated="{{ village.updated_at|date:'F d, Y H:i' }}">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if villages.has_other_pages %}
+                        <nav aria-label="Village pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if villages.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ villages.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_council %}&council={{ selected_council }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        Previous
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in villages.paginator.page_range %}
+                                {% if villages.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > villages.number|add:'-3' and num < villages.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_council %}&council={{ selected_council }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if villages.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ villages.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_council %}&council={{ selected_council }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}">
+                                        Next
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-home fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Villages Found</h5>
+                            <p class="text-muted">Start by adding the first village to the system.</p>
+                            <a href="{% url 'governance:village_create' %}" class="btn btn-success">
+                                <i class="fas fa-plus"></i> Add First Village
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Village Detail Modal -->
+<div class="modal fade" id="villageDetailModal" tabindex="-1" role="dialog" aria-labelledby="villageDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="villageDetailModalLabel">
+                    <i class="fas fa-home"></i> <span id="modalVillageName">Village Details</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Village Name:</label>
+                            <p id="modalVillageNameDetail" class="text-success font-weight-bold"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Village Code:</label>
+                            <p><span id="modalVillageCode" class="badge badge-success badge-lg"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Traditional Council:</label>
+                            <p id="modalCouncilName" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Municipality:</label>
+                            <p id="modalMunicipalityName" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Location:</label>
+                            <p id="modalLocation" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Population:</label>
+                            <p id="modalPopulation" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="info-group">
+                            <label>Description:</label>
+                            <p id="modalDescription" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Created:</label>
+                            <p id="modalCreatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Last Updated:</label>
+                            <p id="modalUpdatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modalEditLink" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Village
+                </a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    console.log('Village list page loaded');
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Handle view details button click
+    $(document).on('click', '.view-details-btn', function(e) {
+        e.preventDefault();
+        
+        // Get data from button attributes
+        var villageId = $(this).data('village-id');
+        var villageName = $(this).data('village-name');
+        var villageCode = $(this).data('village-code');
+        var councilName = $(this).data('council-name');
+        var municipalityName = $(this).data('municipality-name');
+        var location = $(this).data('location');
+        var population = $(this).data('population');
+        var description = $(this).data('description');
+        var createdDate = $(this).data('created');
+        var updatedDate = $(this).data('updated');
+        
+        // Populate modal with data
+        $('#modalVillageName').text(villageName);
+        $('#modalVillageNameDetail').text(villageName);
+        $('#modalVillageCode').text(villageCode);
+        $('#modalCouncilName').text(councilName);
+        $('#modalMunicipalityName').text(municipalityName);
+        $('#modalLocation').text(location);
+        $('#modalPopulation').text(population);
+        $('#modalDescription').text(description);
+        $('#modalCreatedDate').text(createdDate);
+        $('#modalUpdatedDate').text(updatedDate);
+        
+        // Update edit link
+        var editUrl = "{% url 'governance:village_update' 0 %}".replace('0', villageId);
+        $('#modalEditLink').attr('href', editUrl);
+        
+        // Show modal
+        $('#villageDetailModal').modal('show');
+    });
+    
+    // Enhanced hover effects
+    $('.village-row').hover(
+        function() {
+            $(this).addClass('table-active');
+        },
+        function() {
+            $(this).removeClass('table-active');
+        }
+    );
+});
+</script>
+{% endblock %}

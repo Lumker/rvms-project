@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete Municipality - {{ municipality.name }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .delete-header {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .warning-card {
+        border-left: 4px solid #dc3545;
+        background-color: #f8f9fa;
+    }
+    .info-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .btn-delete {
+        background-color: #dc3545;
+        border-color: #dc3545;
+        font-weight: 600;
+    }
+    .btn-delete:hover {
+        background-color: #c82333;
+        border-color: #bd2130;
+        transform: translateY(-1px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Delete Municipality</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:municipality_list' %}">Municipalities</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:municipality_detail' municipality.pk %}">{{ municipality.name }}</a></li>
+                    <li class="breadcrumb-item active">Delete</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Header -->
+    <div class="delete-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-exclamation-triangle"></i> Delete Municipality
+                </h2>
+                <p class="mb-0">You are about to permanently delete this municipality</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-trash-alt" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <!-- Warning Card -->
+            <div class="card warning-card mb-4">
+                <div class="card-body">
+                    <div class="row align-items-center">
+                        <div class="col-md-2 text-center">
+                            <i class="fas fa-exclamation-triangle fa-3x text-danger"></i>
+                        </div>
+                        <div class="col-md-10">
+                            <h5 class="text-danger mb-2">Warning: This action cannot be undone!</h5>
+                            <p class="mb-1">Deleting this municipality will:</p>
+                            <ul class="mb-0">
+                                <li>Permanently remove the municipality from the system</li>
+                                <li>Affect {{ municipality.total_traditional_councils }} traditional council(s)</li>
+                                <li>Affect {{ municipality.total_villages }} village(s)</li>
+                                <li>Remove all associated records and relationships</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Municipality Information -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-building text-warning"></i> Municipality to be Deleted
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Name:</strong></td>
+                                    <td>{{ municipality.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Code:</strong></td>
+                                    <td><span class="badge badge-warning">{{ municipality.code }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Type:</strong></td>
+                                    <td>{{ municipality.get_municipality_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>District:</strong></td>
+                                    <td>{{ municipality.district.name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Province:</strong></td>
+                                    <td>{{ municipality.district.province.name }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Mayor:</strong></td>
+                                    <td>{{ municipality.mayor_name|default:"Not specified" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Population:</strong></td>
+                                    <td>
+                                        {% if municipality.population %}
+                                        {{ municipality.population|floatformat:0 }}
+                                        {% else %}
+                                        Not specified
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Traditional Councils:</strong></td>
+                                    <td><span class="badge badge-info">{{ municipality.total_traditional_councils }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Villages:</strong></td>
+                                    <td><span class="badge badge-success">{{ municipality.total_villages }}</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Created:</strong></td>
+                                    <td>{{ municipality.created_at|date:"M d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Confirmation Form -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-check-circle text-success"></i> Confirm Deletion
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Final Confirmation:</strong> 
+                            Are you absolutely sure you want to delete the municipality "{{ municipality.name }}"? 
+                            This action will permanently remove all associated data.
+                        </div>
+
+                        <div class="form-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="confirmDelete" required>
+                                <label class="form-check-label" for="confirmDelete">
+                                    I understand that this action cannot be undone and I want to proceed with deleting this municipality.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-danger btn-delete" id="deleteBtn" disabled>
+                                <i class="fas fa-trash-alt"></i> Delete Municipality
+                            </button>
+                            <a href="{% url 'governance:municipality_detail' municipality.pk %}" class="btn btn-secondary ml-2">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+           </div>
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+   // Initialize tooltips
+   $('[title]').tooltip();
+   
+   // Add animations
+   $('.card').hide().fadeIn(800);
+   $('.delete-header').hide().slideDown(600);
+   
+   // Enable/disable delete button based on checkbox
+   $('#confirmDelete').change(function() {
+       if ($(this).is(':checked')) {
+           $('#deleteBtn').prop('disabled', false).removeClass('btn-secondary').addClass('btn-danger');
+       } else {
+           $('#deleteBtn').prop('disabled', true).removeClass('btn-danger').addClass('btn-secondary');
+       }
+   });
+   
+   // Form submission confirmation
+   $('form').on('submit', function(e) {
+       if (!$('#confirmDelete').is(':checked')) {
+           e.preventDefault();
+           alert('Please confirm that you want to delete this municipality.');
+           return false;
+       }
+       
+       // Double confirmation
+       if (!confirm('Are you absolutely sure you want to delete "{{ municipality.name }}"? This action cannot be undone.')) {
+           e.preventDefault();
+           return false;
+       }
+       
+       // Show loading state
+       $('#deleteBtn').html('<i class="fas fa-spinner fa-spin"></i> Deleting...').prop('disabled', true);
+   });
+});
+</script>
+{% endblock %}

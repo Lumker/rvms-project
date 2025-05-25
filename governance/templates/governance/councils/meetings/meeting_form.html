@@ -1,0 +1,413 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}{{ title }} - Meetings{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-header {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+    .form-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .form-group label {
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 8px;
+    }
+    .form-control {
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+        transition: all 0.3s ease;
+    }
+    .form-control:focus {
+        border-color: #6c757d;
+        box-shadow: 0 0 0 0.2rem rgba(108, 117, 125, 0.25);
+    }
+    .btn-save {
+        background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+        border: none;
+        border-radius: 8px;
+        padding: 12px 30px;
+        font-weight: 600;
+    }
+    .btn-save:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(108, 117, 125, 0.4);
+    }
+    .help-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        border-left: 4px solid #6c757d;
+    }
+    .form-check-input:checked {
+        background-color: #6c757d;
+        border-color: #6c757d;
+    }
+    .form-text {
+        color: #6c757d;
+        font-size: 0.875rem;
+    }
+    .required {
+        color: #dc3545;
+    }
+    .attendee-selection {
+        max-height: 200px;
+        overflow-y: auto;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ title }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:meeting_list' %}">Meetings</a></li>
+                    <li class="breadcrumb-item active">{{ title }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Header -->
+    <div class="form-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">{{ title }}</h2>
+                <p class="mb-0">Enter the meeting information below</p>
+            </div>
+            <div class="col-md-4 text-center">
+                <i class="fas fa-calendar-check" style="font-size: 3rem; opacity: 0.3;"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card form-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-info-circle text-secondary"></i> Meeting Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.title.id_for_label }}">Meeting Title <span class="required">*</span></label>
+                                    {{ form.title }}
+                                    {% if form.title.errors %}
+                                    <div class="text-danger mt-1">{{ form.title.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Descriptive title for the meeting</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.council.id_for_label }}">Traditional Council <span class="required">*</span></label>
+                                    {{ form.council }}
+                                    {% if form.council.errors %}
+                                    <div class="text-danger mt-1">{{ form.council.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Select the hosting council</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.date.id_for_label }}">Meeting Date <span class="required">*</span></label>
+                                    {{ form.date }}
+                                    {% if form.date.errors %}
+                                    <div class="text-danger mt-1">{{ form.date.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Date of the meeting</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.time.id_for_label }}">Meeting Time <span class="required">*</span></label>
+                                    {{ form.time }}
+                                    {% if form.time.errors %}
+                                    <div class="text-danger mt-1">{{ form.time.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Start time of the meeting</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}">Status</label>
+                                    {{ form.status }}
+                                    {% if form.status.errors %}
+                                    <div class="text-danger mt-1">{{ form.status.errors.0 }}</div>
+                                    {% endif %}
+                                    <small class="form-text">Current meeting status</small>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.location.id_for_label }}">Meeting Location <span class="required">*</span></label>
+                            {{ form.location }}
+                            {% if form.location.errors %}
+                            <div class="text-danger mt-1">{{ form.location.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Where the meeting will be held</small>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="{{ form.agenda.id_for_label }}">Meeting Agenda <span class="required">*</span></label>
+                            {{ form.agenda }}
+                            {% if form.agenda.errors %}
+                            <div class="text-danger mt-1">{{ form.agenda.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Detailed agenda and discussion points</small>
+                        </div>
+
+                        {% if form.attendees %}
+                        <div class="form-group">
+                            <label>Meeting Attendees</label>
+                            <div class="attendee-selection">
+                                {{ form.attendees }}
+                            </div>
+                            {% if form.attendees.errors %}
+                            <div class="text-danger mt-1">{{ form.attendees.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Select council members who will attend</small>
+                        </div>
+                        {% endif %}
+
+                        {% if form.minutes and meeting and meeting.status in 'completed,in_progress' %}
+                        <div class="form-group">
+                            <label for="{{ form.minutes.id_for_label }}">Meeting Minutes</label>
+                            {{ form.minutes }}
+                            {% if form.minutes.errors %}
+                            <div class="text-danger mt-1">{{ form.minutes.errors.0 }}</div>
+                            {% endif %}
+                            <small class="form-text">Record of discussions and decisions made</small>
+                        </div>
+                        {% endif %}
+
+                        <hr class="my-4">
+
+                        <div class="form-group mb-0">
+                            <button type="submit" class="btn btn-secondary btn-save">
+                                <i class="fas fa-save"></i> Save Meeting
+                            </button>
+                            <a href="{% url 'governance:meeting_list' %}" class="btn btn-outline-secondary ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Meeting Guidelines -->
+            <div class="card help-card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-calendar-check text-secondary"></i> Meeting Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <strong>Meeting Planning:</strong>
+                        <p class="small text-muted mb-2">Schedule meetings with adequate notice to ensure good attendance.</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong>Agenda Setting:</strong>
+                        <p class="small text-muted mb-2">Prepare a clear agenda with specific discussion points and expected outcomes.</p>
+                    </div>
+                    <div class="mb-0">
+                        <strong>Documentation:</strong>
+                        <p class="small text-muted mb-0">Keep detailed minutes for transparency and accountability.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status Information -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-info-circle text-info"></i> Meeting Status
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-2">
+                        <span class="badge badge-primary">Scheduled:</span>
+                        <small class="text-muted">Meeting is planned and confirmed</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge badge-warning">In Progress:</span>
+                        <small class="text-muted">Meeting is currently taking place</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge badge-success">Completed:</span>
+                        <small class="text-muted">Meeting has been concluded</small>
+                    </div>
+                    <div class="mb-2">
+                        <span class="badge badge-danger">Cancelled:</span>
+                        <small class="text-muted">Meeting has been cancelled</small>
+                    </div>
+                    <div class="mb-0">
+                        <span class="badge badge-secondary">Postponed:</span>
+                        <small class="text-muted">Meeting has been rescheduled</small>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Guidelines -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-lightbulb text-warning"></i> Form Guidelines
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-unstyled mb-0">
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Use descriptive meeting titles</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Schedule with adequate notice</small>
+                        </li>
+                        <li class="mb-2">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Include detailed agenda items</small>
+                        </li>
+                        <li class="mb-0">
+                            <i class="fas fa-check text-success"></i>
+                            <small>Select appropriate venue</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            {% if meeting %}
+            <!-- Edit Information -->
+            <div class="card help-card mt-3">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-edit text-primary"></i> Editing: {{ meeting.title }}
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-borderless table-sm mb-0">
+                        <tr>
+                            <td><strong>Created:</strong></td>
+                            <td>{{ meeting.created_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Updated:</strong></td>
+                            <td>{{ meeting.updated_at|date:"M d, Y" }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Council:</strong></td>
+                            <td>{{ meeting.council.name }}</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Attendees:</strong></td>
+                            <td>{{ meeting.attendees.count }}</td>
+                        </tr>
+                    </table>
+                    </div>
+           </div>
+           {% endif %}
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+   // Initialize tooltips
+   $('[title]').tooltip();
+   
+   // Add animations
+   $('.card').hide().fadeIn(800);
+   $('.form-header').hide().slideDown(600);
+   
+   // Form validation feedback
+   $('form').on('submit', function() {
+       $('.btn-save').html('<i class="fas fa-spinner fa-spin"></i> Saving...').prop('disabled', true);
+   });
+   
+   // Auto-populate council if passed as parameter
+   var urlParams = new URLSearchParams(window.location.search);
+   var councilId = urlParams.get('council');
+   if (councilId) {
+       $('#{{ form.council.id_for_label }}').val(councilId);
+   }
+   
+   // Date validation - prevent past dates for new meetings
+   {% if not meeting %}
+   var today = new Date().toISOString().split('T')[0];
+   $('#{{ form.date.id_for_label }}').attr('min', today);
+   {% endif %}
+   
+   // Time formatting
+   $('#{{ form.time.id_for_label }}').on('change', function() {
+       var time = $(this).val();
+       if (time) {
+           // Format time display
+           console.log('Time selected:', time);
+       }
+   });
+   
+   // Council change handler - load attendees
+   $('#{{ form.council.id_for_label }}').on('change', function() {
+       var councilId = $(this).val();
+       if (councilId) {
+           // Load council members for attendee selection
+           $.ajax({
+               url: '/governance/ajax/council-members/',
+               data: { 'council_id': councilId },
+               success: function(data) {
+                   // Update attendees options
+                   var attendeesField = $('#{{ form.attendees.id_for_label }}');
+                   if (attendeesField.length) {
+                       attendeesField.empty();
+                       $.each(data.members, function(index, member) {
+                           attendeesField.append(
+                               $('<option></option>').val(member.id).text(member.name + ' (' + member.role + ')')
+                           );
+                       });
+                   }
+               }
+           });
+       }
+   });
+   
+   // Auto-resize textarea
+   $('textarea').each(function() {
+       $(this).on('input', function() {
+           this.style.height = 'auto';
+           this.style.height = (this.scrollHeight) + 'px';
+       });
+   });
+});
+</script>
+{% endblock %}

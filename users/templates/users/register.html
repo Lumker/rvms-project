@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="text-center mb-4">
+                        <h3>Create Your Account</h3>
+                        <p class="text-muted">Fill in the information below to register</p>
+                    </div>
+                    
+                    {% if form.errors %}
+                        <div class="alert alert-danger">
+                            {% for field, errors in form.errors.items %}
+                                <strong>{{ field|title }}:</strong>
+                                {% for error in errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                    
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_username">Username</label>
+                                    <input type="text" name="username" class="form-control" id="id_username" 
+                                           value="{{ form.username.value|default:'' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_email">Email</label>
+                                    <input type="email" name="email" class="form-control" id="id_email" 
+                                           value="{{ form.email.value|default:'' }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_first_name">First Name</label>
+                                    <input type="text" name="first_name" class="form-control" id="id_first_name" 
+                                           value="{{ form.first_name.value|default:'' }}" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_last_name">Last Name</label>
+                                    <input type="text" name="last_name" class="form-control" id="id_last_name" 
+                                           value="{{ form.last_name.value|default:'' }}" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_phone_number">Phone Number</label>
+                                    <input type="text" name="phone_number" class="form-control" id="id_phone_number" 
+                                           value="{{ form.phone_number.value|default:'' }}" 
+                                           placeholder="+27XXXXXXXXX">
+                                    <small class="form-text text-muted">Phone number in format: +27XXXXXXXXX or 0XXXXXXXXX</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_id_number">ID Number</label>
+                                    <input type="text" name="id_number" class="form-control" id="id_id_number" 
+                                           value="{{ form.id_number.value|default:'' }}" 
+                                           placeholder="13-digit ID number">
+                                    <small class="form-text text-muted">South African ID Number (13 digits)</small>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_date_of_birth">Date of Birth</label>
+                                    <input type="date" name="date_of_birth" class="form-control" id="id_date_of_birth" 
+                                           value="{{ form.date_of_birth.value|default:'' }}">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_role">Role</label>
+                                    <select name="role" class="form-control" id="id_role">
+                                        {% for value, label in form.role.field.choices %}
+                                            <option value="{{ value }}" {% if form.role.value == value %}selected{% endif %}>
+                                                {{ label }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_address">Address</label>
+                            <textarea name="address" class="form-control" id="id_address" rows="3" 
+                                      placeholder="Full address">{{ form.address.value|default:'' }}</textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="id_practice_number">Practice Number</label>
+                            <input type="text" name="practice_number" class="form-control" id="id_practice_number" 
+                                   value="{{ form.practice_number.value|default:'' }}" 
+                                   placeholder="Practice number (if applicable)">
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_password1">Password</label>
+                                    <input type="password" name="password1" class="form-control" id="id_password1" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="id_password2">Confirm Password</label>
+                                    <input type="password" name="password2" class="form-control" id="id_password2" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-primary btn-block">Register</button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <p>
+                                Already have an account? 
+                                <a href="{% url 'users:login' %}">Login here</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

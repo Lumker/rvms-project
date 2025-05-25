@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% load core_tags %}
+
+{% block title %}{{ user_obj.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ user_obj.get_full_name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'users:user_list' %}">Users</a></li>
+                    <li class="breadcrumb-item active">{{ user_obj.username }}</li>
+                </ul>
+            </div>
+            {% if request.user.is_staff %}
+            <div class="col-auto">
+                <a href="{% url 'users:user_update' user_obj.pk %}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit User
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">User Information</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Username:</strong></td>
+                                    <td>{{ user_obj.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Full Name:</strong></td>
+                                    <td>{{ user_obj.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ user_obj.email }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Phone:</strong></td>
+                                    <td>{{ user_obj.phone_number|format_phone|default:"Not provided" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Role:</strong></td>
+                                    <td>{{ user_obj.profile.get_role_display|status_badge }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Date Joined:</strong></td>
+                                    <td>{{ user_obj.date_joined|date:"M d, Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if user_obj.is_active %}
+                                            <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                            <span class="badge badge-danger">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Verified:</strong></td>
+                                    <td>
+                                        {% if user_obj.profile.is_verified %}
+                                            <span class="badge badge-success">
+                                                <i class="fas fa-check"></i> Verified
+                                            </span>
+                                            {% if user_obj.profile.verification_date %}
+                                                <br><small class="text-muted">{{ user_obj.profile.verification_date|date:"M d, Y H:i" }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge badge-warning">
+                                                <i class="fas fa-clock"></i> Pending
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    {% if user_obj.profile.address %}
+                    <div class="mt-3">
+                        <h6>Address</h6>
+                        <p class="text-muted">{{ user_obj.profile.address|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if user_obj.profile.practice_number %}
+                    <div class="mt-3">
+                        <h6>Practice Number</h6>
+                        <p class="text-muted">{{ user_obj.profile.practice_number }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Quick Stats</h5>
+                    {% if user_obj.profile.is_council_member %}
+                        <div class="alert alert-info">
+                            <i class="fas fa-users"></i> Council Member
+                        </div>
+                    {% endif %}
+                    
+                    {% if user_obj.profile.is_governance_admin %}
+                        <div class="alert alert-success">
+                            <i class="fas fa-shield-alt"></i> Governance Administrator
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

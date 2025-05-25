@@ -1,0 +1,470 @@
+<!-- infrastructure/templates/infrastructure/water/source_list.html -->
+
+{% extends "base.html" %}
+{% load static %}
+{% load infrastructure_tags %}
+
+{% block title %}Water Sources - Infrastructure{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .source-type-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+    .capacity-indicator {
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+    .quality-indicator {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-tint text-info"></i> Water Sources
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item active">Water Sources</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'infrastructure:water_source_create' %}" class="btn btn-info">
+                        <i class="fas fa-plus"></i> Add Water Source
+                    </a>
+                    <a href="{% url 'infrastructure:water_distribution_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-faucet"></i> Distribution Points
+                    </a>
+                    <a href="{% url 'infrastructure:water_coverage_report' %}" class="btn btn-outline-success">
+                        <i class="fas fa-chart-bar"></i> Coverage Report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_sources }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-tint"></i> Total Water Sources
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">{{ operational_sources }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-check-circle"></i> Operational Sources
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ total_capacity|floatformat:0 }}</div>
+                <div class="stats-label">
+                    <i class="fas fa-water"></i> Daily Capacity (L)
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">
+                    {% if total_sources > 0 %}
+                        {{ operational_sources|percentage:total_sources }}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </div>
+                <div class="stats-label">
+                    <i class="fas fa-percentage"></i> Operational Rate
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Source name or pump type..." value="{{ current_filters.search }}">
+            </div>
+            <div class="col-md-2">
+                <label for="source_type" class="form-label">Source Type</label>
+                <select name="source_type" id="source_type" class="form-control">
+                    <option value="">All Types</option>
+                    {% for value, label in source_types %}
+                    <option value="{{ value }}" {% if current_filters.source_type == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="water_quality" class="form-label">Water Quality</label>
+                <select name="water_quality" id="water_quality" class="form-control">
+                    <option value="">All Qualities</option>
+                    {% for value, label in water_qualities %}
+                    <option value="{{ value }}" {% if current_filters.water_quality == value %}selected{% endif %}>
+                        {{ label }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="village" class="form-label">Village</label>
+                <select name="village" id="village" class="form-control">
+                    <option value="">All Villages</option>
+                    {% for village in villages %}
+                    <option value="{{ village.id }}" {% if current_filters.village == village.id|stringformat:"s" %}selected{% endif %}>
+                        {{ village.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="operational" class="form-label">Status</label>
+                <div class="input-group">
+                    <select name="operational" id="operational" class="form-control">
+                        <option value="">All Status</option>
+                        <option value="true" {% if current_filters.operational == 'true' %}selected{% endif %}>Operational</option>
+                        <option value="false" {% if current_filters.operational == 'false' %}selected{% endif %}>Non-Operational</option>
+                    </select>
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-info">
+                            <i class="fas fa-search"></i>
+                        </button>
+                        <a href="{% url 'infrastructure:water_source_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Water Sources Table -->
+    <div class="card">
+        <div class="card-header">
+            <h4 class="card-title">
+                <i class="fas fa-tint"></i> Water Sources
+            </h4>
+            <div class="card-options">
+                <a href="{% url 'infrastructure:water_source_create' %}" class="btn btn-sm btn-outline-info">
+                    <i class="fas fa-plus"></i> New Source
+                </a>
+            </div>
+        </div>
+        <div class="card-body">
+            {% if water_sources %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="thead-light">
+                            <tr>
+                                <th width="5%">#</th>
+                                <th width="20%">Source</th>
+                                <th width="12%">Type</th>
+                                <th width="15%">Village</th>
+                                <th width="12%">Quality</th>
+                                <th width="12%">Capacity</th>
+                                <th width="8%">Status</th>
+                                <th width="16%">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for source in water_sources %}
+                            <tr>
+                                <td>{{ forloop.counter|add:page_obj.start_index|add:"-1" }}</td>
+                                <td>
+                                    <strong>
+                                        <a href="{% url 'infrastructure:water_source_detail' source.pk %}" class="text-decoration-none">
+                                            {{ source.name }}
+                                        </a>
+                                    </strong>
+                                    {% if source.asset_id %}
+                                    <br><small class="text-muted">{{ source.asset_id }}</small>
+                                    {% endif %}
+                                    {% if source.pump_type %}
+                                    <br><small class="capacity-indicator">{{ source.pump_type }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge badge-primary source-type-badge">
+                                        {{ source.get_source_type_display }}
+                                    </span>
+                                    {% if source.power_source %}
+                                    <br><small class="text-muted">{{ source.get_power_source_display }}</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'governance:village_detail' source.village.pk %}" class="text-decoration-none">
+                                        {{ source.village.name }}
+                                    </a>
+                                    {% if source.gps_coordinates %}
+                                    <br><small class="text-muted">
+                                        <i class="fas fa-map-marker-alt"></i> {{ source.gps_coordinates }}
+                                    </small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="quality-indicator {% if source.water_quality == 'excellent' %}text-success{% elif source.water_quality == 'good' %}text-info{% elif source.water_quality == 'acceptable' %}text-warning{% else %}text-danger{% endif %}">
+                                        {{ source.get_water_quality_display }}
+                                    </span>
+                                    {% if source.last_water_test_date %}
+                                    <br><small class="text-muted">
+                                        Last tested: {{ source.last_water_test_date|date:"M d, Y" }}
+                                    </small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if source.daily_capacity_litres %}
+                                        <strong>{{ source.daily_capacity_litres|floatformat:0 }}L</strong>
+                                        <small class="capacity-indicator">/day</small>
+                                    {% else %}
+                                        <span class="text-muted">Not specified</span>
+                                    {% endif %}
+                                    {% if source.yield_litres_per_hour %}
+                                    <br><small class="capacity-indicator">{{ source.yield_litres_per_hour }}L/hr yield</small>
+                                    {% endif %}
+                                    {% if source.depth_meters %}
+                                    <br><small class="capacity-indicator">{{ source.depth_meters }}m depth</small>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if source.operational_status %}
+                                        <span class="badge badge-success">Operational</span>
+                                    {% else %}
+                                        <span class="badge badge-danger">Non-Operational</span>
+                                    {% endif %}
+                                    <br>{% condition_badge source.condition 'sm' %}
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <a href="{% url 'infrastructure:water_source_detail' source.pk %}" 
+                                           class="btn btn-sm btn-outline-info" 
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="{% url 'infrastructure:water_source_update' source.pk %}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           title="Edit Source">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'infrastructure:water_distribution_create' %}?source={{ source.pk }}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           title="Add Distribution Point">
+                                            <i class="fas fa-faucet"></i>
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-warning" 
+                                                title="Schedule Maintenance"
+                                                onclick="scheduleMaintenanceModal({{ source.pk }})">
+                                            <i class="fas fa-wrench"></i>
+                                        </button>
+                                        {% if not source.operational_status %}
+                                        <button type="button" 
+                                                class="btn btn-sm btn-outline-danger" 
+                                                title="Report Issue"
+                                                onclick="reportIssueModal({{ source.pk }})">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Pagination -->
+                {% if is_paginated %}
+                <nav aria-label="Water sources pagination" class="mt-4">
+                    <ul class="pagination justify-content-center">
+                        {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Previous
+                            </a>
+                        </li>
+                        {% endif %}
+                        
+                        {% for num in page_obj.paginator.page_range %}
+                        {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ num }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                {{ num }}
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% endfor %}
+                        
+                        {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in current_filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}">
+                                Next
+                            </a>
+                        </li>
+                        {% endif %}
+                    </ul>
+                </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-tint fa-3x text-muted mb-3"></i>
+                    <h5 class="text-muted">No Water Sources Found</h5>
+                    <p class="text-muted">Start by adding the first water source to track rural water infrastructure.</p>
+                    <a href="{% url 'infrastructure:water_source_create' %}" class="btn btn-info">
+                        <i class="fas fa-plus"></i> Add First Water Source
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Quick Action Modals -->
+<div class="modal fade" id="maintenanceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-wrench"></i> Schedule Maintenance
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Schedule maintenance for this water source.</p>
+                <!-- Quick maintenance form would go here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning">Schedule Maintenance</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="issueModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle"></i> Report Issue
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Report a service interruption or issue with this water source.</p>
+                <!-- Quick issue reporting form would go here -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger">Report Issue</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    console.log('Water sources page loaded');
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Form submission for filters
+    $('#search, #source_type, #water_quality, #village, #operational').change(function() {
+        $(this).closest('form').submit();
+    });
+});
+
+function scheduleMaintenanceModal(sourceId) {
+    $('#maintenanceModal').modal('show');
+    // You can load specific source data here via AJAX
+}
+
+function reportIssueModal(sourceId) {
+    $('#issueModal').modal('show');
+    // You can load specific source data here via AJAX
+}
+
+// Export function
+function exportWaterSources() {
+    const currentParams = new URLSearchParams(window.location.search);
+    window.location.href = '{% url "infrastructure:export_water_sources" %}?' + currentParams.toString();
+}
+</script>
+{% endblock %}

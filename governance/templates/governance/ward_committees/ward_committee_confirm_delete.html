@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Delete {{ ward_committee.name }} - Ward Committee{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card border-danger">
+                <div class="card-header bg-danger text-white">
+                    <h4 class="card-title mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Deletion
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <p class="lead">Are you sure you want to delete the ward committee:</p>
+                    <div class="alert alert-warning">
+                        <strong>Ward {{ ward_committee.ward_number }} - {{ ward_committee.name }}</strong><br>
+                        <small>{{ ward_committee.municipality.name }}</small>
+                    </div>
+                    
+                    <div class="alert alert-danger">
+                        <strong>Warning:</strong> This action cannot be undone. All associated data including:
+                        <ul class="mb-0">
+                            <li>Committee members</li>
+                            <li>Traditional council assignments</li>
+                            <li>Historical records</li>
+                        </ul>
+                        will be permanently deleted.
+                    </div>
+                    
+                    <form method="post" class="d-inline">
+                        {% csrf_token %}
+                        <a href="{% url 'governance:ward_committee_detail' ward_committee.pk %}" class="btn btn-secondary mr-2">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Yes, Delete Committee
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

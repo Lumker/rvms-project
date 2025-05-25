@@ -1,0 +1,537 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}{{ member.user.get_full_name }} - Council Members{% endblock %}
+
+{% block extra_css %}
+<style>
+    .member-header {
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        color: white;
+        border-radius: 15px;
+        padding: 30px;
+        margin-bottom: 30px;
+    }
+    .info-card {
+        border-radius: 10px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: all 0.3s ease;
+    }
+    .info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+    }
+    .member-avatar-large {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 3rem;
+        font-weight: bold;
+        margin: 0 auto 20px;
+    }
+    .role-badge-large {
+        font-size: 1rem;
+        padding: 0.5rem 1rem;
+    }
+    .term-status {
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 15px;
+    }
+    .term-active {
+        background-color: #d4edda;
+        border: 1px solid #c3e6cb;
+        color: #155724;
+    }
+    .term-expired {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+    .attendance-card {
+        border-left: 4px solid #28a745;
+        margin-bottom: 10px;
+    }
+    .attendance-card:hover {
+        background-color: #f8f9fa;
+    }
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #e9ecef;
+    }
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    .timeline-marker {
+        position: absolute;
+        left: -37px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 2px #e9ecef;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">{{ member.user.get_full_name }}</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'governance:council_member_list' %}">Council Members</a></li>
+                    <li class="breadcrumb-item active">{{ member.user.get_full_name }}</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <div class="btn-group">
+                    <a href="{% url 'governance:council_member_update' member.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit
+                    </a>
+                    <button type="button" class="btn btn-primary dropdown-toggle dropdown-toggle-split" data-toggle="dropdown">
+                        <span class="sr-only">Toggle Dropdown</span>
+                    </button>
+                    <div class="dropdown-menu">
+                        {% if member.is_active %}
+                        <a class="dropdown-item text-warning" href="#" onclick="deactivateMember({{ member.pk }})">
+                            <i class="fas fa-pause"></i> Deactivate Member
+                        </a>
+                        {% else %}
+                        <a class="dropdown-item text-success" href="#" onclick="activateMember({{ member.pk }})">
+                            <i class="fas fa-play"></i> Activate Member
+                        </a>
+                        {% endif %}
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item text-danger" href="{% url 'governance:council_member_delete' member.pk %}">
+                            <i class="fas fa-trash"></i> Remove Member
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Overview -->
+    <div class="member-header">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                <div class="member-avatar-large">
+                    {{ member.user.first_name|first }}{{ member.user.last_name|first }}
+                </div>
+            </div>
+            <div class="col-md-9">
+                <h2 class="mb-2">{{ member.user.get_full_name }}</h2>
+                <p class="mb-2">
+                    {% if member.role == 'chairperson' %}
+                    <span class="badge badge-light role-badge-large">{{ member.get_role_display }}</span>
+                    {% elif member.role == 'deputy' %}
+                    <span class="badge badge-light role-badge-large">{{ member.get_role_display }}</span>
+                    {% elif member.role == 'secretary' %}
+                    <span class="badge badge-light role-badge-large">{{ member.get_role_display }}</span>
+                    {% elif member.role == 'treasurer' %}
+                    <span class="badge badge-light role-badge-large">{{ member.get_role_display }}</span>
+                    {% elif member.role == 'elder' %}
+                    <span class="badge badge-light role-badge-large">{{ member.get_role_display }}</span>
+                    {% else %}
+                    <span class="badge badge-light role-badge-large">{{ member.get_role_display }}</span>
+                    {% endif %}
+                </p>
+                <p class="mb-0">
+                    <i class="fas fa-users"></i> {{ member.council.name }}
+                    <br><i class="fas fa-building"></i> {{ member.council.municipality.name }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Main Content -->
+        <div class="col-lg-8">
+            <!-- Member Information -->
+            <div class="card info-card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-user text-primary"></i> Member Information
+                    </h4>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Full Name:</strong></td>
+                                    <td>{{ member.user.get_full_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ member.user.email|default:"Not provided" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Role:</strong></td>
+                                    <td>{{ member.get_role_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Appointed:</strong></td>
+                                    <td>{{ member.appointed_date|date:"F d, Y" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Council:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:council_detail' member.council.pk %}" class="text-decoration-none">
+                                            {{ member.council.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Municipality:</strong></td>
+                                    <td>
+                                        <a href="{% url 'governance:municipality_detail' member.council.municipality.pk %}" class="text-decoration-none">
+                                            {{ member.council.municipality.name }}
+                                        </a>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Term End:</strong></td>
+                                    <td>
+                                        {% if member.term_end_date %}
+                                        {{ member.term_end_date|date:"F d, Y" }}
+                                        {% else %}
+                                        No end date set
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Status:</strong></td>
+                                    <td>
+                                        {% if member.is_active %}
+                                        <span class="badge badge-success">Active</span>
+                                        {% else %}
+                                        <span class="badge badge-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Term Status -->
+                    {% if member.term_end_date %}
+                    <div class="{% if member.term_end_date >= today %}term-active{% else %}term-expired{% endif %} term-status">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>
+                                    {% if member.term_end_date >= today %}
+                                    <i class="fas fa-check-circle"></i> Term Active
+                                    {% else %}
+                                    <i class="fas fa-exclamation-triangle"></i> Term Expired
+                                    {% endif %}
+                                </strong>
+                                <br>
+                                <small>
+                                    {% if member.term_end_date >= today %}
+                                    Term expires on {{ member.term_end_date|date:"F d, Y" }}
+                                    {% else %}
+                                    Term expired on {{ member.term_end_date|date:"F d, Y" }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div>
+                                {% if member.term_end_date >= today %}
+                                {% with days_left=member.term_end_date|timeuntil %}
+                                <span class="badge badge-success">{{ days_left }} remaining</span>
+                                {% endwith %}
+                                {% else %}
+                                {% with days_past=member.term_end_date|timesince %}
+                                <span class="badge badge-danger">{{ days_past }} ago</span>
+                                {% endwith %}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Meeting Attendance -->
+            <div class="card info-card mt-4">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-calendar-check text-success"></i> Meeting Attendance
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if attended_meetings %}
+                        {% for meeting in attended_meetings %}
+                        <div class="card attendance-card">
+                            <div class="card-body py-2">
+                                <div class="row align-items-center">
+                                    <div class="col-md-6">
+                                        <strong>{{ meeting.title }}</strong>
+                                        <br><small class="text-muted">{{ meeting.date|date:"F d, Y" }} at {{ meeting.time|time:"H:i" }}</small>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <span class="badge badge-{{ meeting.status|yesno:'success,warning' }}">{{ meeting.get_status_display }}</span>
+                                    </div>
+                                    <div class="col-md-3 text-right">
+                                        <a href="{% url 'governance:meeting_detail' meeting.pk %}" class="btn btn-sm btn-outline-primary">
+                                           <i class="fas fa-eye"></i> View
+                                       </a>
+                                   </div>
+                               </div>
+                           </div>
+                       </div>
+                       {% endfor %}
+                       
+                       {% if attended_meetings|length > 5 %}
+                       <div class="text-center mt-3">
+                           <a href="{% url 'governance:meeting_list' %}?attendee={{ member.pk }}" class="btn btn-outline-success">
+                               <i class="fas fa-list"></i> View All Attended Meetings
+                           </a>
+                       </div>
+                       {% endif %}
+                   {% else %}
+                       <div class="text-center py-4">
+                           <i class="fas fa-calendar-times fa-2x text-muted mb-2"></i>
+                           <br>
+                           <span class="text-muted">No meeting attendance recorded</span>
+                       </div>
+                   {% endif %}
+               </div>
+           </div>
+       </div>
+
+       <!-- Sidebar -->
+       <div class="col-lg-4">
+           <!-- Statistics -->
+           <div class="card info-card">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-chart-bar text-primary"></i> Member Statistics
+                   </h5>
+               </div>
+               <div class="card-body text-center">
+                   <div class="row">
+                       <div class="col-6">
+                           <h3 class="text-primary">{{ attended_meetings.count }}</h3>
+                           <p class="text-muted mb-0">Meetings Attended</p>
+                       </div>
+                       <div class="col-6">
+                           <h3 class="text-success">{{ proposed_resolutions.count }}</h3>
+                           <p class="text-muted mb-0">Resolutions Proposed</p>
+                       </div>
+                   </div>
+                   <hr>
+                   <div class="row">
+                       <div class="col-12">
+                           <h4 class="text-info">
+                               {% if member.term_end_date %}
+                               {% with service_time=member.term_end_date|timeuntil:member.appointed_date %}
+                               {{ service_time }}
+                               {% endwith %}
+                               {% else %}
+                               {% with service_time=member.appointed_date|timesince %}
+                               {{ service_time }}
+                               {% endwith %}
+                               {% endif %}
+                           </h4>
+                           <small class="text-muted">Service Duration</small>
+                       </div>
+                   </div>
+               </div>
+           </div>
+
+           <!-- Service Timeline -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-clock text-warning"></i> Service Timeline
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="timeline">
+                       <div class="timeline-item">
+                           <div class="timeline-marker bg-primary"></div>
+                           <div class="timeline-content">
+                               <h6>Appointed</h6>
+                               <small class="text-muted">{{ member.appointed_date|date:"M d, Y" }}</small>
+                           </div>
+                       </div>
+                       
+                       {% if member.term_end_date %}
+                       <div class="timeline-item">
+                           <div class="timeline-marker {% if member.term_end_date >= today %}bg-success{% else %}bg-warning{% endif %}"></div>
+                           <div class="timeline-content">
+                               <h6>
+                                   {% if member.term_end_date >= today %}
+                                   Term Ends
+                                   {% else %}
+                                   Term Expired
+                                   {% endif %}
+                               </h6>
+                               <small class="text-muted">{{ member.term_end_date|date:"M d, Y" }}</small>
+                           </div>
+                       </div>
+                       {% endif %}
+                       
+                       {% if not member.is_active %}
+                       <div class="timeline-item">
+                           <div class="timeline-marker bg-secondary"></div>
+                           <div class="timeline-content">
+                               <h6>Deactivated</h6>
+                               <small class="text-muted">{{ member.updated_at|date:"M d, Y" }}</small>
+                           </div>
+                       </div>
+                       {% endif %}
+                   </div>
+               </div>
+           </div>
+
+           <!-- Council Information -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-users text-info"></i> Council Information
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <table class="table table-borderless table-sm">
+                       <tr>
+                           <td><strong>Council:</strong></td>
+                           <td>{{ member.council.name }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Leader:</strong></td>
+                           <td>{{ member.council.leader_title }} {{ member.council.leader_name }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Municipality:</strong></td>
+                           <td>{{ member.council.municipality.name }}</td>
+                       </tr>
+                       <tr>
+                           <td><strong>Total Members:</strong></td>
+                           <td>{{ member.council.council_members.filter.is_active=True.count }}</td>
+                       </tr>
+                   </table>
+               </div>
+           </div>
+
+           <!-- Quick Actions -->
+           <div class="card info-card mt-3">
+               <div class="card-header">
+                   <h5 class="card-title">
+                       <i class="fas fa-bolt text-primary"></i> Quick Actions
+                   </h5>
+               </div>
+               <div class="card-body">
+                   <div class="d-grid gap-2">
+                       <a href="{% url 'governance:council_member_update' member.pk %}" class="btn btn-outline-primary">
+                           <i class="fas fa-edit"></i> Edit Member
+                       </a>
+                       <a href="{% url 'governance:council_detail' member.council.pk %}" class="btn btn-outline-info">
+                           <i class="fas fa-users"></i> View Council
+                       </a>
+                       <a href="{% url 'governance:meeting_list' %}?attendee={{ member.pk }}" class="btn btn-outline-success">
+                           <i class="fas fa-calendar-check"></i> View Meetings
+                       </a>
+                       <a href="{% url 'governance:council_member_list' %}" class="btn btn-outline-secondary">
+                           <i class="fas fa-list"></i> Back to Members
+                       </a>
+                   </div>
+               </div>
+           </div>
+       </div>
+   </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+   // Initialize tooltips
+   $('[title]').tooltip();
+   
+   // Add animations
+   $('.card').hide().fadeIn(800);
+   $('.member-header').hide().slideDown(600);
+   
+   // Add hover effects to attendance cards
+   $('.attendance-card').hover(
+       function() {
+           $(this).addClass('shadow-sm');
+       },
+       function() {
+           $(this).removeClass('shadow-sm');
+       }
+   );
+});
+
+function activateMember(memberId) {
+   if (confirm('Are you sure you want to activate this member?')) {
+       $.ajax({
+           url: '/governance/council-members/' + memberId + '/activate/',
+           method: 'POST',
+           data: {
+               'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+           },
+           success: function(data) {
+               if (data.success) {
+                   location.reload();
+               } else {
+                   alert('Error activating member');
+               }
+           },
+           error: function() {
+               alert('Error activating member');
+           }
+       });
+   }
+}
+
+function deactivateMember(memberId) {
+   if (confirm('Are you sure you want to deactivate this member?')) {
+       $.ajax({
+           url: '/governance/council-members/' + memberId + '/deactivate/',
+           method: 'POST',
+           data: {
+               'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+           },
+           success: function(data) {
+               if (data.success) {
+                   location.reload();
+               } else {
+                   alert('Error deactivating member');
+               }
+           },
+           error: function() {
+               alert('Error deactivating member');
+           }
+       });
+   }
+}
+</script>
+{% endblock %}

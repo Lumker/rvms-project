@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}User List{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/plugins/datatables/datatables.min.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Users</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'households:dashboard' %}">Dashboard</a></li>
+                    <li class="breadcrumb-item active">Users</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="#" onclick="showComingSoon('Add User')" class="btn btn-primary">
+                    <i class="fe fe-plus"></i> Add User
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table id="usersTable" class="table table-hover table-center mb-0">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Name</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Date Joined</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user_obj in users %}
+                        <tr>
+                            <td>{{ user_obj.username }}</td>
+                            <td>{{ user_obj.first_name }} {{ user_obj.last_name }}</td>
+                            <td>{{ user_obj.email }}</td>
+                            <td>
+                                <span class="badge badge-{% if user_obj.profile.role == 'admin' %}primary{% elif user_obj.profile.role == 'governance_admin' %}success{% else %}info{% endif %}">
+                                    {{ user_obj.profile.get_role_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if user_obj.is_active %}
+                                    <span class="badge badge-success">Active</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user_obj.date_joined|date:"M d, Y" }}</td>
+                            <td class="text-right">
+                                <div class="actions">
+                                    <a href="#" class="btn btn-sm bg-success-light mr-2">
+                                        <i class="fe fe-eye"></i> View
+                                    </a>
+                                    <a href="#" onclick="showComingSoon('Edit User')" class="btn btn-sm bg-info-light mr-2">
+                                        <i class="fe fe-edit"></i> Edit
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted">
+                                <i class="fe fe-users fe-2x mb-3"></i>
+                                <p>No users found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{% static 'assets/plugins/datatables/jquery.dataTables.min.js' %}"></script>
+<script src="{% static 'assets/plugins/datatables/datatables.min.js' %}"></script>
+<script>
+$(document).ready(function() {
+    console.log('Initializing Users DataTable');
+    
+    // Destroy existing DataTable if it exists
+    if ($.fn.DataTable.isDataTable('#usersTable')) {
+        $('#usersTable').DataTable().destroy();
+    }
+    
+    // Initialize DataTable with specific ID
+    $('#usersTable').DataTable({
+        "order": [[0, "asc"]],
+        "pageLength": 10,
+        "lengthMenu": [[10, 25, 50, 100], [10, 25, 50, 100]],
+        "language": {
+            search: "<i class='fe fe-search'></i>",
+            searchPlaceholder: "Search Users...",
+            lengthMenu: "Show _MENU_ entries",
+            info: "Showing _START_ to _END_ of _TOTAL_ entries",
+            infoEmpty: "Showing 0 to 0 of 0 entries",
+            infoFiltered: "(filtered from _MAX_ total entries)",
+            paginate: {
+                first: "First",
+                last: "Last",
+                next: "Next",
+                previous: "Previous"
+            }
+        },
+        "responsive": true,
+        "processing": false,
+        "serverSide": false,
+        "destroy": true,
+        "columnDefs": [
+            {
+                "targets": -1, // Last column (Actions)
+                "orderable": false,
+                "searchable": false
+            }
+        ]
+    });
+});
+</script>
+{% endblock %}

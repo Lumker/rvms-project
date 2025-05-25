@@ -1,0 +1,359 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Districts - Governance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 15px;
+        margin-bottom: 20px;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .badge-lg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .info-group {
+        margin-bottom: 1rem;
+    }
+    .info-group label {
+        color: #495057;
+        margin-bottom: 0.25rem;
+        display: block;
+        font-weight: bold;
+    }
+    .info-group p {
+        margin-bottom: 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Districts</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item active">Districts</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'governance:district_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add District
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ districts.paginator.count }}</div>
+                <div class="stats-label">Total Districts</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #fd7e14 0%, #e83e8c 100%);">
+                <div class="stats-number">{{ provinces.count }}</div>
+                <div class="stats-label">Provinces</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="filter-card">
+                <form method="GET" class="row align-items-end">
+                    <div class="col-md-4">
+                        <label for="search">Search Districts</label>
+                        <input type="text" name="search" class="form-control" 
+                               placeholder="Search by name, code, or province..." 
+                               value="{{ search_query }}">
+                    </div>
+                    <div class="col-md-4">
+                        <label for="province">Filter by Province</label>
+                        <select name="province" class="form-control">
+                            <option value="">All Provinces</option>
+                            {% for province in provinces %}
+                                <option value="{{ province.pk }}" 
+                                        {% if selected_province == province.pk|stringformat:"s" %}selected{% endif %}>
+                                    {{ province.name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <button type="submit" class="btn btn-primary me-2">
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                        <a href="{% url 'governance:district_list' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-times"></i> Clear
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Districts Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-city"></i> District Municipalities
+                        {% if search_query or selected_province %}
+                            <small class="text-muted">
+                                ({{ districts.paginator.count }} result{{ districts.paginator.count|pluralize }})
+                            </small>
+                        {% endif %}
+                    </h4>
+                </div>
+                <div class="card-body">
+                    {% if districts %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="20%">District Code</th>
+                                        <th width="30%">District Name</th>
+                                        <th width="20%">Province</th>
+                                        <th width="10%">Municipalities</th>
+                                        <th width="15%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for district in districts %}
+                                    <tr>
+                                        <td>{{ forloop.counter0|add:districts.start_index }}</td>
+                                        <td>
+                                            <span class="badge badge-success badge-lg">{{ district.code }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ district.name }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-primary">{{ district.province.code }}</span>
+                                            {{ district.province.name }}
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ district.municipality_count }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{% url 'governance:district_detail' district.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'governance:district_update' district.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Edit District">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-success" 
+                                                        title="Quick View"
+                                                        onclick="
+                                                            $('#modalDistrictName').text('{{ district.name|escapejs }}');
+                                                            $('#modalDistrictNameDetail').text('{{ district.name|escapejs }}');
+                                                            $('#modalDistrictCode').text('{{ district.code }}');
+                                                            $('#modalDistrictProvince').text('{{ district.province.name|escapejs }}');
+                                                            $('#modalMunicipalityCount').text('{{ district.municipality_count }} municipalit{{ district.municipality_count|pluralize:"y,ies" }}');
+                                                            $('#modalDistrictCreated').text('{{ district.created_at|date:"F d, Y H:i" }}');
+                                                            $('#modalDistrictUpdated').text('{{ district.updated_at|date:"F d, Y H:i" }}');
+                                                            $('#modalDistrictEditLink').attr('href', '{% url "governance:district_update" district.pk %}');
+                                                            $('#modalDistrictDetailLink').attr('href', '{% url "governance:district_detail" district.pk %}');
+                                                            $('#districtDetailModal').modal('show');
+                                                        ">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if districts.has_other_pages %}
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center">
+                                {% if districts.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ districts.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_province %}&province={{ selected_province }}{% endif %}">Previous</a>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for num in districts.paginator.page_range %}
+                                    {% if districts.number == num %}
+                                        <li class="page-item active">
+                                            <span class="page-link">{{ num }}</span>
+                                        </li>
+                                    {% elif num > districts.number|add:'-3' and num < districts.number|add:'3' %}
+                                        <li class="page-item">
+                                            <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_province %}&province={{ selected_province }}{% endif %}">{{ num }}</a>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if districts.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ districts.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if selected_province %}&province={{ selected_province }}{% endif %}">Next</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-city fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Districts Found</h5>
+                            {% if search_query or selected_province %}
+                                <p class="text-muted">No districts match your search criteria.</p>
+                                <a href="{% url 'governance:district_list' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-times"></i> Clear Filters
+                                </a>
+                            {% else %}
+                                <p class="text-muted">Start by adding the first district to the system.</p>
+                                <a href="{% url 'governance:district_create' %}" class="btn btn-primary">
+                                    <i class="fas fa-plus"></i> Add First District
+                                </a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- District Detail Modal -->
+<div class="modal fade" id="districtDetailModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-city"></i> <span id="modalDistrictName">District Details</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>District Name:</label>
+                            <p id="modalDistrictNameDetail" class="text-success font-weight-bold"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>District Code:</label>
+                            <p><span id="modalDistrictCode" class="badge badge-success badge-lg"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Province:</label>
+                            <p id="modalDistrictProvince" class="font-weight-bold"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Municipalities:</label>
+                            <p><span id="modalMunicipalityCount" class="badge badge-info badge-lg"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Created:</label>
+                            <p id="modalDistrictCreated" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Last Updated:</label>
+                            <p id="modalDistrictUpdated" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="modalDistrictDetailLink" class="btn btn-info">
+                    <i class="fas fa-eye"></i> View Full Details
+                </a>
+                <a href="#" id="modalDistrictEditLink" class="btn btn-success">
+                    <i class="fas fa-edit"></i> Edit District
+                </a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+});
+</script>
+{% endblock %}

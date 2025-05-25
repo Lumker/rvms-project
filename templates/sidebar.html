@@ -1,0 +1,414 @@
+<!-- templates/sidebar.html (updated) -->
+{% load static %}
+<div class="sidebar" id="sidebar">
+    <div class="sidebar-inner slimscroll">
+        <div id="sidebar-menu" class="sidebar-menu">
+            <ul>
+                <li class="menu-title">
+                    <span>Main Menu</span>
+                </li>
+                
+                <!-- Dashboard Section -->
+                <li class="submenu {% if 'dashboard' in request.path and not 'governance' in request.path and not 'households' in request.path and not 'documents' in request.path and not 'infrastructure' in request.path %}active{% endif %}">
+                    <a href="#"><i class="feather-grid"></i> <span>Dashboard</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="/" class="{% if request.path == '/' %}active{% endif %}">Main Dashboard</a></li>
+                        <li><a href="{% url 'governance:dashboard' %}" class="{% if 'governance' in request.path and 'dashboard' in request.path %}active{% endif %}">Governance Overview</a></li>
+                        <li><a href="{% url 'households:dashboard' %}" class="{% if 'households' in request.path and 'dashboard' in request.path %}active{% endif %}">Demographics Overview</a></li>
+                        <li><a href="{% url 'documents:dashboard' %}" class="{% if 'documents' in request.path and 'dashboard' in request.path %}active{% endif %}">Documents Overview</a></li>
+                        <li><a href="{% url 'infrastructure:dashboard' %}" class="{% if 'infrastructure' in request.path and 'dashboard' in request.path %}active{% endif %}">Infrastructure Overview</a></li>
+                    </ul>
+                </li>
+
+                <!-- Governance Section -->
+                <li class="submenu {% if 'governance' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-landmark"></i> <span>Governance</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'governance:dashboard' %}" class="{% if 'governance' in request.path and 'dashboard' in request.path %}active{% endif %}">Dashboard</a></li>
+                        <li><a href="{% url 'governance:province_list' %}" class="{% if 'province' in request.path %}active{% endif %}">Provinces</a></li>
+                        <li><a href="{% url 'governance:district_list' %}" class="{% if 'district' in request.path %}active{% endif %}">Districts</a></li>
+                        <li><a href="{% url 'governance:municipality_list' %}" class="{% if 'municipality' in request.path %}active{% endif %}">Municipalities</a></li>
+                        <li><a href="{% url 'governance:ward_committee_list' %}" class="{% if 'ward-committee' in request.path %}active{% endif %}">Ward Committees</a></li>
+                        <li><a href="{% url 'governance:council_list' %}" class="{% if 'council' in request.path and 'ward' not in request.path %}active{% endif %}">Traditional Councils</a></li>
+                        <li><a href="{% url 'governance:village_list' %}" class="{% if 'village' in request.path %}active{% endif %}">Villages</a></li>
+                        <li><a href="{% url 'governance:meeting_list' %}" class="{% if 'meeting' in request.path %}active{% endif %}">Meetings</a></li>
+                        <li><a href="{% url 'governance:council_member_list' %}" class="{% if 'council-member' in request.path %}active{% endif %}">Council Members</a></li>
+                    </ul>
+                </li>
+
+                <!-- Households & Residents Section -->
+                <li class="submenu {% if 'households' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-home"></i> <span>Households</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'households:dashboard' %}" class="{% if 'households' in request.path and 'dashboard' in request.path %}active{% endif %}">Dashboard</a></li>
+                        <li><a href="{% url 'households:household_list' %}" class="{% if 'households' in request.path and 'household' in request.path and 'resident' not in request.path %}active{% endif %}">Households</a></li>
+                        <li><a href="{% url 'households:resident_list' %}" class="{% if 'households' in request.path and 'resident' in request.path %}active{% endif %}">Residents</a></li>
+                        <li><a href="{% url 'households:service_list' %}" class="{% if 'households' in request.path and 'service' in request.path %}active{% endif %}">Services</a></li>
+                        <li><a href="{% url 'households:reports' %}" class="{% if 'households' in request.path and 'reports' in request.path %}active{% endif %}">Reports</a></li>
+                    </ul>
+                </li>
+
+                <!-- Documents Section -->
+                <li class="submenu {% if 'documents' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-file-alt"></i> <span>Documents</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'documents:dashboard' %}" class="{% if 'documents' in request.path and 'dashboard' in request.path %}active{% endif %}">Dashboard</a></li>
+                        <li><a href="{% url 'documents:proof_list' %}" class="{% if 'documents' in request.path and 'proof' in request.path %}active{% endif %}">Proof of Residence</a></li>
+                        <li><a href="{% url 'documents:template_list' %}" class="{% if 'documents' in request.path and 'template' in request.path %}active{% endif %}">Document Templates</a></li>
+                        <li><a href="{% url 'documents:batch_list' %}" class="{% if 'documents' in request.path and 'batch' in request.path %}active{% endif %}">Batch Processing</a></li>
+                        <li><a href="{% url 'documents:generate_report' %}" class="{% if 'documents' in request.path and 'generate' in request.path %}active{% endif %}">Generate Reports</a></li>
+                        <li><a href="#" onclick="showComingSoon('Birth Certificates')">Birth Certificates</a></li>
+                        <li><a href="#" onclick="showComingSoon('Death Certificates')">Death Certificates</a></li>
+                        <li><a href="#" onclick="showComingSoon('Marriage Certificates')">Marriage Certificates</a></li>
+                        <li><a href="#" onclick="showComingSoon('Business Permits')">Business Permits</a></li>
+                        <li><a href="#" onclick="showComingSoon('Land Documents')">Land Documents</a></li>
+                    </ul>
+                </li>
+
+                <!-- Infrastructure Section -->
+                <li class="submenu {% if 'infrastructure' in request.path and 'dashboard' not in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-tools"></i> <span>Infrastructure</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'infrastructure:dashboard' %}" class="{% if 'infrastructure' in request.path and 'dashboard' in request.path %}active{% endif %}">Dashboard</a></li>
+                        <li><a href="{% url 'infrastructure:asset_list' %}" class="{% if 'infrastructure' in request.path and 'assets' in request.path %}active{% endif %}">All Assets</a></li>
+                        <li class="submenu-item">
+                            <a href="#"><i class="fas fa-tint text-info"></i> Water Infrastructure <span class="menu-arrow"></span></a>
+                            <ul class="submenu-list">
+                                <li><a href="{% url 'infrastructure:water_source_list' %}" class="{% if 'water' in request.path and 'source' in request.path %}active{% endif %}">Water Sources</a></li>
+                                <li><a href="{% url 'infrastructure:water_distribution_list' %}" class="{% if 'water' in request.path and 'distribution' in request.path %}active{% endif %}">Distribution Points</a></li>
+                                <li><a href="{% url 'infrastructure:water_coverage_report' %}" class="{% if 'water-coverage' in request.path %}active{% endif %}">Coverage Report</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="{% url 'infrastructure:maintenance_list' %}" class="{% if 'infrastructure' in request.path and 'maintenance' in request.path %}active{% endif %}">Maintenance</a></li>
+                        <li><a href="{% url 'infrastructure:inspection_list' %}" class="{% if 'infrastructure' in request.path and 'inspection' in request.path %}active{% endif %}">Inspections</a></li>
+                        <li><a href="{% url 'infrastructure:interruption_list' %}" class="{% if 'infrastructure' in request.path and 'interruption' in request.path %}active{% endif %}">Service Interruptions</a></li>
+                        <li><a href="{% url 'infrastructure:analytics' %}" class="{% if 'infrastructure' in request.path and 'analytics' in request.path %}active{% endif %}">Analytics & Reports</a></li>
+                        <li><a href="#" onclick="showComingSoon('Electricity Grid')">Electricity Grid</a></li>
+                        <li><a href="#" onclick="showComingSoon('Roads & Transport')">Roads & Transport</a></li>
+                        <li><a href="#" onclick="showComingSoon('Communication')">Communication</a></li>
+                        <li><a href="#" onclick="showComingSoon('Health Facilities')">Health Facilities</a></li>
+                        <li><a href="#" onclick="showComingSoon('Education Facilities')">Education Facilities</a></li>
+                    </ul>
+                </li>
+
+                <!-- Service Delivery Section (Future) -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-clipboard-list"></i> <span>Service Delivery</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Service Dashboard')">Service Dashboard</a></li>
+                        <li><a href="#" onclick="showComingSoon('Community Issues')">Community Issues</a></li>
+                        <li><a href="#" onclick="showComingSoon('Service Requests')">Service Requests</a></li>
+                        <li><a href="#" onclick="showComingSoon('Maintenance Tracking')">Maintenance Tracking</a></li>
+                        <li><a href="#" onclick="showComingSoon('Project Management')">Project Management</a></li>
+                        <li><a href="#" onclick="showComingSoon('Service Quality')">Service Quality</a></li>
+                        <li><a href="#" onclick="showComingSoon('Public Complaints')">Public Complaints</a></li>
+                        <li><a href="#" onclick="showComingSoon('Emergency Response')">Emergency Response</a></li>
+                    </ul>
+                </li>
+
+                <!-- Economic Development Section (Future) -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-chart-line"></i> <span>Development</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Development Dashboard')">Development Dashboard</a></li>
+                        <li><a href="#" onclick="showComingSoon('Economic Projects')">Economic Projects</a></li>
+                        <li><a href="#" onclick="showComingSoon('Agriculture Programs')">Agriculture Programs</a></li>
+                        <li><a href="#" onclick="showComingSoon('Small Business Support')">Small Business Support</a></li>
+                        <li><a href="#" onclick="showComingSoon('Employment Programs')">Employment Programs</a></li>
+                        <li><a href="#" onclick="showComingSoon('Skills Development')">Skills Development</a></li>
+                        <li><a href="#" onclick="showComingSoon('Tourism Development')">Tourism Development</a></li>
+                        <li><a href="#" onclick="showComingSoon('Cooperative Support')">Cooperative Support</a></li>
+                    </ul>
+                </li>
+
+                <!-- Budget & Finance Section (Future) -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-calculator"></i> <span>Finance</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Finance Dashboard')">Finance Dashboard</a></li>
+                        <li><a href="#" onclick="showComingSoon('Budget Planning')">Budget Planning</a></li>
+                        <li><a href="#" onclick="showComingSoon('Revenue Collection')">Revenue Collection</a></li>
+                        <li><a href="#" onclick="showComingSoon('Expenditure Tracking')">Expenditure Tracking</a></li>
+                        <li><a href="#" onclick="showComingSoon('Project Funding')">Project Funding</a></li>
+                        <li><a href="#" onclick="showComingSoon('Financial Reports')">Financial Reports</a></li>
+                        <li><a href="#" onclick="showComingSoon('Grant Management')">Grant Management</a></li>
+                        <li><a href="#" onclick="showComingSoon('Asset Valuation')">Asset Valuation</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-title">
+                    <span>User Management</span>
+                </li>
+
+                <!-- User Management Section -->
+                <li class="submenu {% if 'users' in request.path %}active{% endif %}">
+                    <a href="#"><i class="fas fa-users"></i> <span>Users</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'users:user_list' %}" class="{% if 'users' in request.path and 'list' in request.path %}active{% endif %}">All Users</a></li>
+                        <li><a href="#" onclick="showComingSoon('Pending Registrations')">Pending Registrations</a></li>
+                        <li><a href="#" onclick="showComingSoon('Register User')">Register User</a></li>
+                        <li><a href="#" onclick="showComingSoon('User Roles')">User Roles</a></li>
+                        <li><a href="#" onclick="showComingSoon('Permissions')">Permissions</a></li>
+                        <li><a href="#" onclick="showComingSoon('Activity Logs')">Activity Logs</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-title">
+                    <span>Reports & Analytics</span>
+                </li>
+
+                <!-- Reports Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-chart-bar"></i> <span>Reports</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'households:demographics_report' %}">Demographics Report</a></li>
+                        <li><a href="{% url 'households:services_report' %}">Services Report</a></li>
+                        <li><a href="{% url 'documents:generate_report' %}">Document Reports</a></li>
+                        <li><a href="{% url 'infrastructure:maintenance_report' %}">Maintenance Report</a></li>
+                        <li><a href="{% url 'infrastructure:asset_condition_report' %}">Asset Condition Report</a></li>
+                        <li><a href="#" onclick="showComingSoon('Governance Report')">Governance Report</a></li>
+                        <li><a href="#" onclick="showComingSoon('Financial Report')">Financial Report</a></li>
+                        <li><a href="#" onclick="showComingSoon('Development Report')">Development Report</a></li>
+                        <li><a href="#" onclick="showComingSoon('Monthly Summary')">Monthly Summary</a></li>
+                        <li><a href="#" onclick="showComingSoon('Annual Report')">Annual Report</a></li>
+                    </ul>
+                </li>
+
+                <!-- Analytics Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-analytics"></i> <span>Analytics</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="{% url 'infrastructure:analytics' %}">Infrastructure Analytics</a></li>
+                        <li><a href="#" onclick="showComingSoon('Population Trends')">Population Trends</a></li>
+                        <li><a href="#" onclick="showComingSoon('Service Usage Analytics')">Service Usage Analytics</a></li>
+                        <li><a href="#" onclick="showComingSoon('Document Analytics')">Document Analytics</a></li>
+                        <li><a href="#" onclick="showComingSoon('Economic Indicators')">Economic Indicators</a></li>
+                        <li><a href="#" onclick="showComingSoon('Development Metrics')">Development Metrics</a></li>
+                        <li><a href="#" onclick="showComingSoon('Resource Allocation')">Resource Allocation</a></li>
+                        <li><a href="#" onclick="showComingSoon('Performance Metrics')">Performance Metrics</a></li>
+                        <li><a href="#" onclick="showComingSoon('Predictive Analytics')">Predictive Analytics</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-title">
+                    <span>System</span>
+                </li>
+
+                <!-- Data Management Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-database"></i> <span>Data Management</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('Data Import')">Data Import</a></li>
+                        <li><a href="#" onclick="showComingSoon('Data Export')">Data Export</a></li>
+                        <li><a href="">Export Assets</a></li>
+                        <li><a href="{% url 'infrastructure:export_maintenance' %}">Export Maintenance</a></li>
+                        <li><a href="{% url 'infrastructure:export_water_sources' %}">Export Water Sources</a></li>
+                        <li><a href="#" onclick="showComingSoon('Data Validation')">Data Validation</a></li>
+                        <li><a href="#" onclick="showComingSoon('Backup & Restore')">Backup & Restore</a></li>
+                        <li><a href="#" onclick="showComingSoon('Data Cleanup')">Data Cleanup</a></li>
+                        <li><a href="#" onclick="showComingSoon('Document Archive')">Document Archive</a></li>
+                    </ul>
+                </li>
+
+                <!-- Settings Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-cog"></i> <span>Settings</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('System Settings')">System Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('User Preferences')">User Preferences</a></li>
+                        <li><a href="#" onclick="showComingSoon('Document Settings')">Document Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('Notification Settings')">Notification Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('Integration Settings')">Integration Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('Security Settings')">Security Settings</a></li>
+                        <li><a href="#" onclick="showComingSoon('Audit Logs')">Audit Logs</a></li>
+                        <li><a href="#" onclick="showComingSoon('System Monitor')">System Monitor</a></li>
+                    </ul>
+                </li>
+
+                <!-- Help & Support Section -->
+                <li class="submenu">
+                    <a href="#"><i class="fas fa-question-circle"></i> <span>Help & Support</span> <span class="menu-arrow"></span></a>
+                    <ul>
+                        <li><a href="#" onclick="showComingSoon('User Guide')">User Guide</a></li>
+                        <li><a href="#" onclick="showComingSoon('Video Tutorials')">Video Tutorials</a></li>
+                        <li><a href="#" onclick="showComingSoon('Documentation')">Documentation</a></li>
+                        <li><a href="#" onclick="showComingSoon('Training Materials')">Training Materials</a></li>
+                        <li><a href="#" onclick="showComingSoon('FAQ')">FAQ</a></li>
+                        <li><a href="#" onclick="showComingSoon('Support Tickets')">Support Tickets</a></li>
+                        <li><a href="#" onclick="showComingSoon('System Status')">System Status</a></li>
+                        <li><a href="#" onclick="showComingSoon('Contact Support')">Contact Support</a></li>
+                        <li><a href="#" onclick="showComingSoon('Feedback')">Send Feedback</a></li>
+                    </ul>
+                </li>
+                
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- Coming Soon Modal -->
+<div class="modal fade" id="comingSoonModal" tabindex="-1" role="dialog" aria-labelledby="comingSoonModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient text-white">
+                <h5 class="modal-title" id="comingSoonModalLabel">
+                    <i class="fas fa-rocket"></i> Coming Soon
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center">
+                <div class="mb-3">
+                    <i class="fas fa-tools fa-3x text-warning"></i>
+                </div>
+                <h5 id="featureName">Feature Name</h5>
+                <p class="text-muted">This feature is currently under development and will be available in a future update.</p>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="alert alert-success">
+                            <h6><strong>✅ Currently Available:</strong></h6>
+                            <ul class="list-unstyled mb-0 small">
+                                <li>• Complete Infrastructure Management</li>
+                                <li>• Water Systems Tracking</li>
+                                <li>• Maintenance & Inspections</li>
+                                <li>• Proof of Residence Documents</li>
+                                <li>• Household & Resident Management</li>
+                                <li>• Governance Structure</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="alert alert-info">
+                            <h6><strong>🚧 Development Status:</strong></h6>
+                            <div class="progress mb-2">
+                                <div class="progress-bar bg-info" style="width: 60%"></div>
+                            </div>
+                            <small>Infrastructure Module: <strong>Complete</strong><br>
+                            Next Phase: Service Delivery<br>
+                            Expected: Q3 2025</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-gradient" onclick="showRequestFeature()">
+                    <i class="fas fa-lightbulb"></i> Request Feature
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.bg-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+}
+
+.btn-gradient {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+}
+
+.btn-gradient:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.submenu-item {
+    position: relative;
+}
+
+.submenu-list {
+    display: none;
+    padding-left: 20px;
+}
+
+.submenu-item.show .submenu-list {
+    display: block;
+}
+
+.submenu-item .menu-arrow {
+    transition: transform 0.3s ease;
+}
+
+.submenu-item.show .menu-arrow {
+    transform: rotate(90deg);
+}
+
+.text-info {
+    color: #17a2b8 !important;
+}
+
+/* Sidebar enhancements */
+.sidebar-menu ul li a {
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu ul li a:hover {
+    background-color: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+}
+
+.sidebar-menu ul li.active > a {
+    background-color: #667eea;
+    color: white;
+}
+
+/* Infrastructure submenu styling */
+.submenu-item a {
+    font-size: 13px;
+    padding-left: 15px;
+}
+
+.submenu-list li a {
+    font-size: 12px;
+    padding-left: 25px;
+    color: #6c757d;
+}
+
+.submenu-list li a:hover {
+    color: #667eea;
+    background-color: rgba(102, 126, 234, 0.05);
+}
+</style>
+
+<script>
+function showComingSoon(featureName) {
+    document.getElementById('featureName').textContent = featureName;
+    $('#comingSoonModal').modal('show');
+    return false; // Prevent link navigation
+}
+
+function showRequestFeature() {
+    // You can implement this to send feature requests to your backend
+    alert('Feature request functionality will be implemented soon. Please contact your system administrator for feature requests.\n\nFor now, focus on the fully functional Infrastructure module!');
+    $('#comingSoonModal').modal('hide');
+}
+
+// Enhanced sidebar functionality
+$(document).ready(function() {
+    // Handle submenu toggles
+    $('.submenu-item > a').click(function(e) {
+        e.preventDefault();
+        $(this).parent().toggleClass('show');
+    });
+    
+    // Auto-expand active submenus
+    $('.submenu-item').each(function() {
+        if ($(this).find('a.active').length > 0) {
+            $(this).addClass('show');
+        }
+    });
+    
+    // Highlight infrastructure section when on infrastructure pages
+    if (window.location.pathname.includes('/infrastructure/')) {
+        $('.submenu').removeClass('active');
+        $('a[href*="/infrastructure/"]').closest('.submenu').addClass('active');
+    }
+});
+</script>

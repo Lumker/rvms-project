@@ -1,0 +1,326 @@
+{% extends "base.html" %}
+{% load static %}
+{% load core_tags %}
+
+{% block title %}Provinces - Governance{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .info-group {
+        margin-bottom: 1rem;
+    }
+    .info-group label {
+        color: #495057;
+        margin-bottom: 0.25rem;
+        display: block;
+        font-weight: bold;
+    }
+    .info-group p {
+        margin-bottom: 0;
+    }
+    .badge-lg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .modal-header.bg-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Provinces</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'governance:dashboard' %}">Governance</a></li>
+                    <li class="breadcrumb-item active">Provinces</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'governance:province_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Province
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ provinces|length }}</div>
+                <div class="stats-label">Total Provinces</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <div class="stats-number">
+                    {% with total_districts=0 %}
+                        {% for province in provinces %}
+                            {% with total_districts=total_districts|add:province.district_count %}
+                            {% endwith %}
+                        {% endfor %}
+                        {{ total_districts }}
+                    {% endwith %}
+                </div>
+                <div class="stats-label">Total Districts</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Provinces Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-map-marked-alt"></i> South African Provinces
+                    </h4>
+                    <div class="card-options">
+                        <a href="{% url 'governance:province_create' %}" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if provinces %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="25%">Province Code</th>
+                                        <th width="35%">Province Name</th>
+                                        <th width="15%">Districts</th>
+                                        <th width="15%">Created</th>
+                                        <th width="15%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for province in provinces %}
+                                    <tr>
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>
+                                            <span class="badge badge-primary badge-lg">{{ province.code }}</span>
+                                        </td>
+                                        <td>
+                                            <strong>{{ province.name }}</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info">{{ province.district_count }} district{{ province.district_count|pluralize }}</span>
+                                        </td>
+                                        <td>
+                                            <small class="text-muted">{{ province.created_at|date:"M d, Y" }}</small>
+                                        </td>
+                                     <!-- In the table actions column, update to include Add District button -->
+<td>
+    <div class="action-buttons">
+        <a href="{% url 'governance:province_detail' province.pk %}" 
+           class="btn btn-sm btn-outline-info" 
+           title="View Full Details">
+            <i class="fas fa-eye"></i>
+        </a>
+        <a href="{% url 'governance:province_update' province.pk %}" 
+           class="btn btn-sm btn-outline-primary" 
+           title="Edit Province">
+            <i class="fas fa-edit"></i>
+        </a>
+        <a href="{% url 'governance:district_create' %}?province={{ province.pk }}" 
+           class="btn btn-sm btn-outline-success" 
+           title="Add District">
+            <i class="fas fa-plus"></i>
+        </a>
+        <button type="button" 
+                class="btn btn-sm btn-outline-secondary view-details-btn" 
+                title="Quick View"
+                data-province-id="{{ province.pk }}"
+                data-province-name="{{ province.name }}"
+                data-province-code="{{ province.code }}"
+                data-district-count="{{ province.district_count }}"
+                data-created="{{ province.created_at|date:'F d, Y H:i' }}"
+                data-updated="{{ province.updated_at|date:'F d, Y H:i' }}">
+            <i class="fas fa-info-circle"></i>
+        </button>
+    </div>
+</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Provinces Found</h5>
+                            <p class="text-muted">Start by adding the first province to the system.</p>
+                            <a href="{% url 'governance:province_create' %}" class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Add First Province
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Province Detail Modal -->
+<div class="modal fade" id="provinceDetailModal" tabindex="-1" role="dialog" aria-labelledby="provinceDetailModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="provinceDetailModalLabel">
+                    <i class="fas fa-map-marked-alt"></i> <span id="modalProvinceName">Province Details</span>
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Province Name:</label>
+                            <p id="modalProvinceNameDetail" class="text-primary font-weight-bold"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Province Code:</label>
+                            <p><span id="modalProvinceCode" class="badge badge-primary badge-lg"></span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Total Districts:</label>
+                            <p><span id="modalDistrictCount" class="badge badge-info badge-lg"></span></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Status:</label>
+                            <p><span class="badge badge-success badge-lg">Active</span></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Created:</label>
+                            <p id="modalCreatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="info-group">
+                            <label>Last Updated:</label>
+                            <p id="modalUpdatedDate" class="text-muted"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Update the Province Detail Modal footer section -->
+            <div class="modal-footer">
+                <a href="#" id="modalEditLink" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Province
+                </a>
+                <!-- Add this new button -->
+                <a href="#" id="modalAddDistrictLink" class="btn btn-success">
+                    <i class="fas fa-plus"></i> Add District
+                </a>
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script type="text/javascript">
+$(document).ready(function() {
+    console.log('Province list page loaded - jQuery version:', $.fn.jquery);
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add some nice animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+    
+    // Handle view details button click
+    $(document).on('click', '.view-details-btn', function(e) {
+        e.preventDefault();
+        console.log('View details button clicked');
+        
+        // Get data from button attributes
+        var provinceId = $(this).data('province-id');
+        var provinceName = $(this).data('province-name');
+        var provinceCode = $(this).data('province-code');
+        var districtCount = $(this).data('district-count');
+        var createdDate = $(this).data('created');
+        var updatedDate = $(this).data('updated');
+        
+        // Populate modal with data
+        $('#modalProvinceName').text(provinceName);
+        $('#modalProvinceNameDetail').text(provinceName);
+        $('#modalProvinceCode').text(provinceCode);
+        $('#modalDistrictCount').text(districtCount + ' district' + (districtCount != 1 ? 's' : ''));
+        $('#modalCreatedDate').text(createdDate);
+        $('#modalUpdatedDate').text(updatedDate);
+        
+        // Update edit link
+        var editUrl = "{% url 'governance:province_update' 0 %}".replace('0', provinceId);
+        $('#modalEditLink').attr('href', editUrl);
+        
+        // Update add district link - pass province as parameter
+        var addDistrictUrl = "{% url 'governance:district_create' %}?province=" + provinceId;
+        $('#modalAddDistrictLink').attr('href', addDistrictUrl);
+        
+        // Show modal
+        $('#provinceDetailModal').modal('show');
+    });
+});
+</script>
+{% endblock %}

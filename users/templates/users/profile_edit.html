@@ -1,0 +1,530 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Edit Profile{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">Edit Profile</h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'users:profile' %}">Profile</a></li>
+                    <li class="breadcrumb-item active">Edit</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Profile Picture Section -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-camera"></i> Profile Picture
+                    </h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="avatar avatar-xl mb-3">
+                        {% if profile.profile_picture %}
+                            <img src="{{ profile.profile_picture.url }}" alt="Profile Picture" class="avatar-img rounded-circle" id="profile-image">
+                        {% else %}
+                            <img src="{% static 'assets/img/profiles/avatar-01.jpg' %}" alt="Default Picture" class="avatar-img rounded-circle" id="profile-image">
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm" onclick="openProfilePictureModal()">
+                        <i class="fas fa-camera"></i> Change Picture
+                    </button>
+                    <p class="text-muted mt-2">
+                        <small>Recommended: 400x400px, Max: 2MB</small>
+                    </p>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-chart-bar"></i> Account Stats
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <h4 class="text-primary">{{ profile.login_count|default:0 }}</h4>
+                            <small class="text-muted">Total Logins</small>
+                        </div>
+                        <div class="col-6">
+                            <h4 class="text-success">{{ user.notifications.count }}</h4>
+                            <small class="text-muted">Notifications</small>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <small class="text-muted">
+                            <i class="fas fa-calendar"></i> Member since {{ user.date_joined|date:"M Y" }}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Profile Form Section -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-user-edit"></i> Personal Information
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <!-- First Name -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="first_name" class="form-label">First Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                                           value="{{ user.first_name }}" required>
+                                </div>
+                            </div>
+
+                            <!-- Last Name -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="last_name" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                                           value="{{ user.last_name }}" required>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Email (Read-only) -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="email" class="form-label">Email Address</label>
+                                    <input type="email" class="form-control" id="email" 
+                                           value="{{ user.email }}" readonly>
+                                    <small class="form-text text-muted">Contact admin to change email</small>
+                                </div>
+                            </div>
+
+                            <!-- Phone Number -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="phone_number" class="form-label">Phone Number</label>
+                                    <input type="tel" class="form-control" id="phone_number" name="phone_number" 
+                                           value="{{ user.phone_number }}" placeholder="+27123456789">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <!-- Date of Birth -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="date_of_birth" class="form-label">Date of Birth</label>
+                                    <input type="date" class="form-control" id="date_of_birth" name="date_of_birth" 
+                                           value="{{ user.date_of_birth|date:'Y-m-d' }}">
+                                </div>
+                            </div>
+
+                            <!-- Department -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="department" class="form-label">Department</label>
+                                    <input type="text" class="form-control" id="department" name="department" 
+                                           value="{{ profile.department }}" placeholder="Your department or division">
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Bio -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="bio" class="form-label">Bio</label>
+                                    <textarea class="form-control" id="bio" name="bio" rows="3" 
+                                              placeholder="Tell us about yourself...">{{ profile.bio }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Address -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="address" class="form-label">Address</label>
+                                    <textarea class="form-control" id="address" name="address" rows="2" 
+                                              placeholder="Your residential address">{{ profile.address }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-md-12">
+                                <hr>
+                                <div class="form-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save Changes
+                                    </button>
+                                    <a href="{% url 'users:profile' %}" class="btn btn-secondary">
+                                        <i class="fas fa-times"></i> Cancel
+                                    </a>
+                                    <button type="button" class="btn btn-info float-right" onclick="openSettingsModal()">
+                                        <i class="fas fa-cog"></i> Account Settings
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Security Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">
+                        <i class="fas fa-shield-alt"></i> Account Security
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Last Login:</strong> {{ user.last_login|date:"F d, Y H:i" }}</p>
+                            <p><strong>Account Status:</strong> 
+                                {% if user.is_active %}
+                                    <span class="badge badge-success">Active</span>
+                                {% else %}
+                                    <span class="badge badge-danger">Inactive</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            {% if profile.last_login_ip %}
+                            <p><strong>Last IP:</strong> {{ profile.last_login_ip }}</p>
+                            {% endif %}
+                            <p><strong>Profile Status:</strong> 
+                                {% if profile.is_verified %}
+                                    <span class="badge badge-success">Verified</span>
+                                {% else %}
+                                    <span class="badge badge-warning">Pending Verification</span>
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <a href="#" onclick="showComingSoon('Change Password')" class="btn btn-outline-warning btn-sm">
+                            <i class="fas fa-key"></i> Change Password
+                        </a>
+                        <a href="#" onclick="showComingSoon('Two-Factor Authentication')" class="btn btn-outline-info btn-sm">
+                            <i class="fas fa-mobile-alt"></i> Enable 2FA
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Profile Picture Modal (same as in header) -->
+<div class="modal fade" id="profilePictureModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-camera"></i> Update Profile Picture
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="profilePictureForm" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <div class="avatar avatar-xl">
+                            {% if profile.profile_picture %}
+                                <img src="{{ profile.profile_picture.url }}" alt="Current Picture" class="avatar-img rounded-circle" id="current-picture">
+                            {% else %}
+                                <img src="{% static 'assets/img/profiles/avatar-01.jpg' %}" alt="Default Picture" class="avatar-img rounded-circle" id="current-picture">
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="profile_picture">Choose New Picture</label>
+                        <input type="file" class="form-control" id="profile_picture" name="profile_picture" accept="image/*" required>
+                        <small class="form-text text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Accepted formats: JPG, PNG, GIF. Max size: 2MB. Recommended: 400x400px
+                        </small>
+                    </div>
+                    <div class="form-group">
+                        <img id="image-preview" src="#" alt="Preview" 
+                             style="display: none; max-width: 100%; height: 200px; object-fit: cover;" 
+                             class="rounded border">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cancel
+                    </button>
+                    <button type="submit" class="btn btn-primary" id="upload-btn">
+                        <i class="fas fa-upload"></i> Upload Picture
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal (same as in header) -->
+<div class="modal fade" id="settingsModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-cog"></i> Account Settings
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="settingsForm">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Theme Preference</label>
+                                <select class="form-control" name="theme_preference">
+                                    <option value="light" {% if profile.theme_preference == 'light' %}selected{% endif %}>Light</option>
+                                    <option value="dark" {% if profile.theme_preference == 'dark' %}selected{% endif %}>Dark</option>
+                                    <option value="auto" {% if profile.theme_preference == 'auto' %}selected{% endif %}>Auto</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label>Language</label>
+                                <select class="form-control" name="language_preference">
+                                    <option value="en" {% if profile.language_preference == 'en' %}selected{% endif %}>English</option>
+                                    <option value="af" {% if profile.language_preference == 'af' %}selected{% endif %}>Afrikaans</option>
+                                    <option value="zu" {% if profile.language_preference == 'zu' %}selected{% endif %}>Zulu</option>
+                                    <option value="xh" {% if profile.language_preference == 'xh' %}selected{% endif %}>Xhosa</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Notification Preferences</label>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="email_notifications" 
+                                           {% if profile.notification_settings.email_notifications %}checked{% endif %}>
+                                    <label class="form-check-label">Email Notifications</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="document_updates" 
+                                           {% if profile.notification_settings.document_updates %}checked{% endif %}>
+                                    <label class="form-check-label">Document Updates</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="meeting_reminders" 
+                                           {% if profile.notification_settings.meeting_reminders %}checked{% endif %}>
+                                    <label class="form-check-label">Meeting Reminders</label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="system_updates" 
+                                           {% if profile.notification_settings.system_updates %}checked{% endif %}>
+                                    <label class="form-check-label">System Updates</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="weekly_digest" 
+                                           {% if profile.notification_settings.weekly_digest %}checked{% endif %}>
+                                    <label class="form-check-label">Weekly Digest</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-info" onclick="saveSettings()">
+                    <i class="fas fa-save"></i> Save Settings
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    // Profile picture functionality
+    $('#profile_picture').change(function() {
+        const file = this.files[0];
+        if (file) {
+            // Validate file size (2MB limit)
+            if (file.size > 2 * 1024 * 1024) {
+                showAlert('File size must be less than 2MB', 'error');
+                this.value = '';
+                return;
+            }
+            
+            // Validate file type
+            const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+            if (!allowedTypes.includes(file.type)) {
+                showAlert('Please select a valid image file (JPG, PNG, GIF)', 'error');
+                this.value = '';
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                $('#image-preview').attr('src', e.target.result).show();
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Profile picture form submission
+    $('#profilePictureForm').submit(function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const $uploadBtn = $('#upload-btn');
+        
+        $uploadBtn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Uploading...');
+        
+        $.ajax({
+            url: '{% url "users:update_profile_picture" %}',
+            type: 'POST',
+            data: formData,
+            processData: false,
+            contentType: false,
+            success: function(response) {
+                if (response.success) {
+                    // Update all profile images on the page
+                    const newImageUrl = response.image_url + '?t=' + new Date().getTime();
+                    $('#profile-image, #current-picture').attr('src', newImageUrl);
+                    
+                    $('#profilePictureModal').modal('hide');
+                    showAlert('Profile picture updated successfully!', 'success');
+                    
+                    // Reset form
+                    $('#profilePictureForm')[0].reset();
+                    $('#image-preview').hide();
+                } else {
+                    showAlert(response.error || 'Error updating profile picture', 'error');
+                }
+            },
+            error: function(xhr) {
+                let errorMsg = 'Error updating profile picture';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                showAlert(errorMsg, 'error');
+            },
+            complete: function() {
+                $uploadBtn.prop('disabled', false).html('<i class="fas fa-upload"></i> Upload Picture');
+            }
+        });
+    });
+});
+
+function openProfilePictureModal() {
+    $('#profilePictureModal').modal('show');
+}
+
+function openSettingsModal() {
+    $('#settingsModal').modal('show');
+}
+
+function saveSettings() {
+    const formData = new FormData($('#settingsForm')[0]);
+    
+    $.ajax({
+        url: '{% url "users:update_settings" %}',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(response) {
+            if (response.success) {
+                $('#settingsModal').modal('hide');
+                showAlert('Settings updated successfully!', 'success');
+                
+                // Apply theme changes if needed
+                if (response.theme_changed) {
+                    applyTheme(response.new_theme);
+                }
+            } else {
+                showAlert(response.error || 'Error updating settings', 'error');
+            }
+        },
+        error: function() {
+            showAlert('Error updating settings', 'error');
+        }
+    });
+}
+
+function showComingSoon(featureName) {
+    alert(`${featureName} feature is coming soon!`);
+}
+
+function showAlert(message, type = 'info') {
+    const alertClass = {
+        'success': 'alert-success',
+        'error': 'alert-danger',
+        'warning': 'alert-warning',
+        'info': 'alert-info'
+    }[type] || 'alert-info';
+    
+    const icon = {
+        'success': 'fa-check-circle',
+        'error': 'fa-exclamation-circle',
+        'warning': 'fa-exclamation-triangle',
+        'info': 'fa-info-circle'
+    }[type] || 'fa-info-circle';
+    
+    const alertHtml = `
+        <div class="alert ${alertClass} alert-dismissible fade show" style="position: fixed; top: 20px; right: 20px; z-index: 9999;">
+            <i class="fas ${icon}"></i> ${message}
+            <button type="button" class="close" data-dismiss="alert">
+                <span>&times;</span>
+            </button>
+        </div>
+    `;
+    
+    $('body').append(alertHtml);
+    
+    setTimeout(function() {
+        $('.alert').fadeOut();
+    }, 3000);
+}
+
+function applyTheme(theme) {
+    if (theme === 'dark') {
+        $('body').addClass('dark-theme');
+    } else if (theme === 'light') {
+        $('body').removeClass('dark-theme');
+    }
+}
+</script>
+{% endblock %}

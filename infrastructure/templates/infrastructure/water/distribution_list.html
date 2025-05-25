@@ -1,0 +1,441 @@
+<!-- infrastructure/templates/infrastructure/water/distribution_list.html -->
+
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Water Distribution Points - Infrastructure{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.15);
+    }
+    .stats-card.warning {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    }
+    .stats-card.info {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+    .stats-card.success {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    }
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .stats-label {
+        font-size: 0.9rem;
+        opacity: 0.9;
+    }
+    .table-hover tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+    .action-buttons .btn {
+        margin-right: 5px;
+        transition: all 0.2s ease;
+    }
+    .action-buttons .btn:hover {
+        transform: scale(1.05);
+    }
+    .filter-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    .badge-lg {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    .status-active { background-color: #d4edda !important; color: #155724; }
+    .status-inactive { background-color: #f8d7da !important; color: #721c24; }
+    .status-maintenance { background-color: #fff3cd !important; color: #856404; }
+    .condition-excellent { color: #28a745; }
+    .condition-good { color: #17a2b8; }
+    .condition-fair { color: #ffc107; }
+    .condition-poor { color: #dc3545; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content container-fluid">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="row align-items-center">
+            <div class="col">
+                <h3 class="page-title">
+                    <i class="fas fa-tint text-primary"></i> Water Distribution Points
+                </h3>
+                <ul class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'infrastructure:dashboard' %}">Infrastructure</a></li>
+                    <li class="breadcrumb-item"><a href="#">Water Systems</a></li>
+                    <li class="breadcrumb-item active">Distribution Points</li>
+                </ul>
+            </div>
+            <div class="col-auto">
+                <a href="{% url 'infrastructure:water_distribution_create' %}" class="btn btn-warning">
+                    <i class="fas fa-plus"></i> Add Distribution Point
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row">
+        <div class="col-md-3">
+            <div class="stats-card">
+                <div class="stats-number">{{ total_count }}</div>
+                <div class="stats-label">Total Distribution Points</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card success">
+                <div class="stats-number">{{ active_count }}</div>
+                <div class="stats-label">Active Points</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card warning">
+                <div class="stats-number">{{ maintenance_count }}</div>
+                <div class="stats-label">Under Maintenance</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card info">
+                <div class="stats-number">{{ villages_served }}</div>
+                <div class="stats-label">Villages Served</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="filter-card">
+        <form method="get" class="row align-items-end">
+            <div class="col-md-3">
+                <label for="search" class="form-label">Search</label>
+                <input type="text" name="search" id="search" class="form-control" 
+                       placeholder="Distribution point name..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-2">
+                <label for="village" class="form-label">Village</label>
+                <select name="village" id="village" class="form-control">
+                    <option value="">All Villages</option>
+                    {% for village in villages %}
+                    <option value="{{ village.id }}" {% if current_filters.village == village.id|stringformat:"s" %}selected{% endif %}>
+                        {{ village.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="status" class="form-label">Status</label>
+                <select name="status" id="status" class="form-control">
+                    <option value="">All Status</option>
+                    <option value="active" {% if current_filters.status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if current_filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="maintenance" {% if current_filters.status == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label for="condition" class="form-label">Condition</label>
+                <select name="condition" id="condition" class="form-control">
+                    <option value="">All Conditions</option>
+                    <option value="excellent" {% if current_filters.condition == 'excellent' %}selected{% endif %}>Excellent</option>
+                    <option value="good" {% if current_filters.condition == 'good' %}selected{% endif %}>Good</option>
+                    <option value="fair" {% if current_filters.condition == 'fair' %}selected{% endif %}>Fair</option>
+                    <option value="poor" {% if current_filters.condition == 'poor' %}selected{% endif %}>Poor</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button type="submit" class="btn btn-warning">
+                    <i class="fas fa-search"></i> Filter
+                </button>
+                <a href="{% url 'infrastructure:water_distribution_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-times"></i> Clear
+                </a>
+                <a href="?export=csv" class="btn btn-success">
+                    <i class="fas fa-download"></i> Export
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Distribution Points Table -->
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">
+                        <i class="fas fa-tint"></i> Water Distribution Points
+                    </h4>
+                    <div class="card-options">
+                        <a href="{% url 'infrastructure:water_distribution_create' %}" class="btn btn-sm btn-outline-warning">
+                            <i class="fas fa-plus"></i> Add New
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    {% if object_list %}
+                        <div class="table-responsive">
+                            <table class="table table-hover table-striped">
+                                <thead class="thead-light">
+                                    <tr>
+                                        <th width="5%">#</th>
+                                        <th width="20%">Distribution Point</th>
+                                        <th width="15%">Village</th>
+                                        <th width="12%">Type</th>
+                                        <th width="10%">Capacity</th>
+                                        <th width="10%">Status</th>
+                                        <th width="10%">Condition</th>
+                                        <th width="10%">Last Service</th>
+                                        <th width="13%">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for point in object_list %}
+                                    <tr class="
+                                        {% if point.status == 'active' %}status-active
+                                        {% elif point.status == 'maintenance' %}status-maintenance
+                                        {% else %}status-inactive
+                                        {% endif %}
+                                    ">
+                                        <td>{{ forloop.counter }}</td>
+                                        <td>
+                                            <strong>{{ point.name }}</strong>
+                                            {% if point.description %}
+                                            <br><small class="text-muted">{{ point.description|truncatechars:50 }}</small>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'governance:village_detail' point.village.pk %}" class="text-decoration-none">
+                                                {{ point.village.name }}
+                                            </a>
+                                            <br><small class="text-muted">{{ point.village.traditional_council.name }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-info badge-lg">
+                                                {{ point.get_infrastructure_type_display|default:"Water Point" }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if point.capacity %}
+                                                <strong>{{ point.capacity|floatformat:0 }}</strong>
+                                                <br><small class="text-muted">{{ point.capacity_unit|default:"L" }}</small>
+                                            {% else %}
+                                                <span class="text-muted">Not specified</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if point.status == 'active' %}badge-success
+                                                {% elif point.status == 'maintenance' %}badge-warning
+                                                {% else %}badge-danger
+                                                {% endif %} badge-lg">
+                                                {{ point.get_status_display|default:point.status|title }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if point.condition %}
+                                                <i class="fas fa-circle condition-{{ point.condition }}"></i>
+                                                <span class="condition-{{ point.condition }}">
+                                                    {{ point.get_condition_display|default:point.condition|title }}
+                                                </span>
+                                            {% else %}
+                                                <span class="text-muted">Unknown</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if point.last_maintenance_date %}
+                                                {{ point.last_maintenance_date|date:"M d, Y" }}
+                                            {% else %}
+                                                <span class="text-muted">Never</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="action-buttons">
+                                                <a href="{% url 'infrastructure:water_distribution_detail' point.pk %}" 
+                                                   class="btn btn-sm btn-outline-info" 
+                                                   title="View Details">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                <a href="{% url 'infrastructure:water_distribution_update' point.pk %}" 
+                                                   class="btn btn-sm btn-outline-primary" 
+                                                   title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-success" 
+                                                        title="Service Record"
+                                                        onclick="openServiceModal({{ point.pk }})">
+                                                    <i class="fas fa-wrench"></i>
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-secondary" 
+                                                        title="Quick Info"
+                                                        onclick="showQuickInfo('{{ point.name }}', '{{ point.village.name }}', '{{ point.status }}', '{{ point.installation_date|date:"M d, Y"|default:"Unknown" }}')">
+                                                    <i class="fas fa-info-circle"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- Pagination -->
+                        {% if is_paginated %}
+                        <nav aria-label="Distribution points pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.village %}&village={{ current_filters.village }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.condition %}&condition={{ current_filters.condition }}{% endif %}">
+                                        Previous
+                                    </a>
+                                </li>
+                                {% endif %}
+                                
+                                {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ num }}</span>
+                                </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.village %}&village={{ current_filters.village }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.condition %}&condition={{ current_filters.condition }}{% endif %}">
+                                        {{ num }}
+                                    </a>
+                                </li>
+                                {% endif %}
+                                {% endfor %}
+                                
+                                {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if current_filters.village %}&village={{ current_filters.village }}{% endif %}{% if current_filters.status %}&status={{ current_filters.status }}{% endif %}{% if current_filters.condition %}&condition={{ current_filters.condition }}{% endif %}">
+                                        Next
+                                    </a>
+                                </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                        {% endif %}
+                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-tint fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Water Distribution Points Found</h5>
+                            <p class="text-muted">Start by adding the first water distribution point to the system.</p>
+                            <a href="{% url 'infrastructure:water_distribution_create' %}" class="btn btn-warning">
+                                <i class="fas fa-plus"></i> Add First Distribution Point
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Info Modal -->
+<div class="modal fade" id="quickInfoModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-tint"></i> Distribution Point Info
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Name:</strong>
+                        <p id="modalPointName"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Village:</strong>
+                        <p id="modalVillageName"></p>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        <strong>Status:</strong>
+                        <p id="modalStatus"></p>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Installation Date:</strong>
+                        <p id="modalInstallationDate"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Record Modal -->
+<div class="modal fade" id="serviceModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-wrench"></i> Service Record
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Service record functionality coming soon...</p>
+                <p class="text-muted">This will track maintenance history and schedule future services.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+$(document).ready(function() {
+    console.log('Water distribution points page loaded');
+    
+    // Initialize tooltips
+    $('[title]').tooltip();
+    
+    // Add animations
+    $('.card').hide().fadeIn(800);
+    $('.stats-card').each(function(i) {
+        $(this).delay(i * 100).fadeIn(600);
+    });
+});
+
+function showQuickInfo(name, village, status, installationDate) {
+    $('#modalPointName').text(name);
+    $('#modalVillageName').text(village);
+    $('#modalStatus').text(status);
+    $('#modalInstallationDate').text(installationDate);
+    $('#quickInfoModal').modal('show');
+}
+
+function openServiceModal(pointId) {
+    console.log('Opening service modal for point:', pointId);
+    $('#serviceModal').modal('show');
+}
+</script>
+{% endblock %}
